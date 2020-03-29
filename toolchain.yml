@@ -495,23 +495,6 @@ Resources:
         Value: !Sub climbassist-S3Bucket
       VersioningConfiguration:
         Status: Enabled
-  SourceEventRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ClimbAssistCloudWatchEventRuleRole
-      AssumeRolePolicyDocument:
-        Statement:
-        - Action: sts:AssumeRole
-          Effect: Allow
-          Principal:
-            Service: events.amazonaws.com
-      Policies:
-      - PolicyName: CloudWatchEventPolicy
-        PolicyDocument:
-          Statement:
-          - Action: codepipeline:StartPipelineExecution
-            Effect: Allow
-            Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${ProjectPipeline}
   IntegrationTestsCodeBuildProject:
     Type: AWS::CodeBuild::Project
     DependsOn: CodeBuildPolicy
