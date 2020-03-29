@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: openjdk8
+    commands:
+    - pip install --upgrade awscli
+  pre_build:
+    commands:
+    - cp -r $CODEBUILD_SRC_DIR_ClimbAssistUIBuildArtifact ClimbAssistUI
+    - mvn clean compile test
+  build:
+    commands:
+    - mvn war:exploded
+  post_build:
+    commands:
+    - aws cloudformation package --template template.yml --s3-bucket $S3_BUCKET --output-template-file template-export.yml
+artifacts:
+  files:
+  - template-export.yml

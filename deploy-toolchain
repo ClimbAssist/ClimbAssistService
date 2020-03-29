@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+sam package --template-file toolchain.yml --s3-bucket toolchain \
+--output-template-file packaged-toolchain.yml && \
+sam deploy --template-file packaged-toolchain.yml --stack-name awscodestar-climbassist \
+--capabilities CAPABILITY_NAMED_IAM
+rm packaged-toolchain.yml

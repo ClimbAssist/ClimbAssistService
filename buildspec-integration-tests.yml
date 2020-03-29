@@ -1,0 +1,12 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      java: openjdk8
+      nodejs: 12
+    commands:
+    - pip install --upgrade awscli
+    - npm install -g json
+  build:
+    commands:
+    - mvn verify -DapplicationEndpoint=https://climbassist$ResourceNameSuffix.$AWS_REGION.elasticbeanstalk.com -Dregion=$AWS_REGION -DuserPoolId=$(cat $CODEBUILD_SRC_DIR_ClimbAssistBetaDeployArtifact/cloudformation-output.json | json CognitoUserPoolId)

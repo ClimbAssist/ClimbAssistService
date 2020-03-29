@@ -1,0 +1,3 @@
+[submodule "ClimbAssistUI"]
+	path = ClimbAssistUI
+	url = https://github.com/ClimbAssist/ClimbAssistUI
