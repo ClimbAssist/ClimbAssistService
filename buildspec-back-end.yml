@@ -8,7 +8,7 @@ phases:
     - pip install --upgrade awscli
   pre_build:
     commands:
-    - cp -r $CODEBUILD_SRC_DIR_ClimbAssistUIBuildArtifact ClimbAssistUI
+    - cp -a $CODEBUILD_SRC_DIR_ClimbAssistUIBuildArtifact/. ClimbAssistUI/
     - mvn clean compile test
   build:
     commands:
