@@ -316,6 +316,8 @@ class PitchControllerTest {
     private PitchNotEmptyExceptionFactory mockPitchNotEmptyExceptionFactory;
     @Mock
     private CreatePitchResultFactory mockCreatePitchResultFactory;
+    @Mock
+    private PitchConsistencyWaiter mockPitchConsistencyWaiter;
 
     private PitchController pitchController;
 
@@ -332,6 +334,7 @@ class PitchControllerTest {
                 .routeNotFoundExceptionFactory(mockRouteNotFoundExceptionFactory)
                 .pitchNotEmptyExceptionFactory(mockPitchNotEmptyExceptionFactory)
                 .createPitchResultFactory(mockCreatePitchResultFactory)
+                .pitchConsistencyWaiter(mockPitchConsistencyWaiter)
                 .build();
     }
 
@@ -384,7 +387,8 @@ class PitchControllerTest {
     }
 
     @Test
-    void createResource_createsPitchAndUpdatesRoute() throws ResourceNotFoundException {
+    void createResource_createsPitchAndUpdatesRoute()
+            throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
         when(mockRoutesDao.getResource(any())).thenReturn(Optional.of(ROUTE_1));
         when(mockPitchFactory.create(any())).thenReturn(PITCH_1);
         when(mockPitchesDao.getResources(any())).thenReturn(ImmutableSet.of(PITCH_1, PITCH_2, PITCH_3));
@@ -395,6 +399,7 @@ class PitchControllerTest {
         verify(mockRoutesDao).getResource(ROUTE_1.getId());
         verify(mockPitchFactory).create(NEW_PITCH_1);
         verify(mockPitchesDao).saveResource(PITCH_1);
+        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_1.getRouteId(), PITCH_1, true);
         verify(mockPitchesDao).getResources(ROUTE_1.getId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_1_FROM_NEW_PITCH);
         verify(mockCreatePitchResultFactory).create(PITCH_1.getPitchId());
@@ -427,7 +432,8 @@ class PitchControllerTest {
     }
 
     @Test
-    void updateResource_updatesPitchAndRoute_whenRouteIsNotChangedAndExists() throws ResourceNotFoundException {
+    void updateResource_updatesPitchAndRoute_whenRouteIsNotChangedAndExists()
+            throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
         when(mockPitchesDao.getResource(any())).thenReturn(Optional.of(PITCH_1));
         when(mockRoutesDao.getResource(any())).thenReturn(Optional.of(ROUTE_1));
         when(mockPitchesDao.getResources(any())).thenReturn(
@@ -440,6 +446,7 @@ class PitchControllerTest {
         verify(mockPitchesDao).getResource(UPDATED_PITCH_1_SAME_ROUTE.getId());
         verify(mockRoutesDao).getResource(ROUTE_1.getId());
         verify(mockPitchesDao).saveResource(UPDATED_PITCH_1_SAME_ROUTE);
+        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_1.getRouteId(), UPDATED_PITCH_1_SAME_ROUTE, true);
         verify(mockPitchesDao).getResources(UPDATED_PITCH_1_SAME_ROUTE.getRouteId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_1_FROM_UPDATED_PITCH);
     }
@@ -448,7 +455,7 @@ class PitchControllerTest {
     // potentially in a rare race condition
     @Test
     void updateResource_updatesPitchAndNewRoute_whenRouteIsChangedAndOldRouteDoesNotExist()
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
         when(mockPitchesDao.getResource(any())).thenReturn(Optional.of(PITCH_1));
         doReturn(Optional.of(ROUTE_2)).when(mockRoutesDao)
                 .getResource(UPDATED_PITCH_1_NEW_ROUTE.getRouteId());
@@ -464,15 +471,18 @@ class PitchControllerTest {
         verify(mockPitchesDao).getResource(UPDATED_PITCH_1_NEW_ROUTE.getPitchId());
         verify(mockRoutesDao).getResource(UPDATED_PITCH_1_NEW_ROUTE.getRouteId());
         verify(mockPitchesDao).saveResource(UPDATED_PITCH_1_NEW_ROUTE);
+        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_2.getRouteId(), UPDATED_PITCH_1_NEW_ROUTE, true);
+        verify(mockPitchesDao).getResources(ROUTE_2.getRouteId());
         verify(mockRoutesDao).getResource(ROUTE_2.getRouteId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_2);
         verify(mockRoutesDao).getResource(PITCH_1.getRouteId());
         verify(mockRoutesDao, never()).saveResource(UPDATED_ROUTE_1_FROM_UPDATED_PITCH);
+        verify(mockPitchesDao, never()).getResources(ROUTE_1.getRouteId());
     }
 
     @Test
     void updateResource_updatesPitchAndBothRoutes_whenRouteIsChangedAndBothRoutesExist()
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
         when(mockPitchesDao.getResource(any())).thenReturn(Optional.of(PITCH_1));
         doReturn(Optional.of(ROUTE_2)).when(mockRoutesDao)
                 .getResource(UPDATED_PITCH_1_NEW_ROUTE.getRouteId());
@@ -490,10 +500,13 @@ class PitchControllerTest {
         verify(mockPitchesDao).getResource(UPDATED_PITCH_1_NEW_ROUTE.getPitchId());
         verify(mockRoutesDao).getResource(UPDATED_PITCH_1_NEW_ROUTE.getRouteId());
         verify(mockPitchesDao).saveResource(UPDATED_PITCH_1_NEW_ROUTE);
+        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_2.getRouteId(), UPDATED_PITCH_1_NEW_ROUTE, true);
+        verify(mockPitchesDao).getResources(ROUTE_2.getRouteId());
         verify(mockRoutesDao).getResource(ROUTE_2.getRouteId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_2);
         verify(mockRoutesDao).getResource(PITCH_1.getRouteId());
-        verify(mockPitchesDao).getResources(PITCH_1.getRouteId());
+        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_1.getRouteId(), UPDATED_PITCH_1_NEW_ROUTE, true);
+        verify(mockPitchesDao).getResources(ROUTE_1.getRouteId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_1_FROM_DELETION);
     }
 
@@ -523,7 +536,8 @@ class PitchControllerTest {
     // potentially in a rare race condition
     @Test
     void deletePitch_deletesPitch_whenPitchIsEmptyAndRouteDoesNotExist()
-            throws ResourceNotFoundException, ResourceNotEmptyException {
+            throws ResourceNotFoundException, ResourceNotEmptyException, PitchConsistencyException,
+            InterruptedException {
         when(mockPitchesDao.getResource(any())).thenReturn(Optional.of(PITCH_1));
         when(mockPointsDao.getResources(any())).thenReturn(ImmutableSet.of());
         when(mockRoutesDao.getResource(any())).thenReturn(Optional.empty());
@@ -541,7 +555,8 @@ class PitchControllerTest {
 
     @Test
     void deletePitch_deletesPitchAndUpdatesRoute_whenPitchIsEmptyAndRouteExists()
-            throws ResourceNotFoundException, ResourceNotEmptyException {
+            throws ResourceNotFoundException, ResourceNotEmptyException, PitchConsistencyException,
+            InterruptedException {
         when(mockPitchesDao.getResource(any())).thenReturn(Optional.of(PITCH_1));
         when(mockPointsDao.getResources(any())).thenReturn(ImmutableSet.of());
         when(mockRoutesDao.getResource(any())).thenReturn(Optional.of(ROUTE_1));
@@ -554,6 +569,7 @@ class PitchControllerTest {
         verify(mockPitchesDao).getResource(PITCH_1.getPitchId());
         verify(mockPointsDao).getResources(PITCH_1.getPitchId());
         verify(mockRoutesDao).getResource(PITCH_1.getRouteId());
+        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_1.getRouteId(), PITCH_1, false);
         verify(mockPitchesDao).getResources(ROUTE_1.getRouteId());
         verify(mockPitchesDao).deleteResource(PITCH_1.getPitchId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_1_FROM_DELETION);

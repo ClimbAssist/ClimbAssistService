@@ -63,6 +63,8 @@ public class PitchController {
     private final CreatePitchResultFactory createPitchResultFactory;
     @NonNull
     private final PitchNotEmptyExceptionFactory pitchNotEmptyExceptionFactory;
+    @NonNull
+    private final PitchConsistencyWaiter pitchConsistencyWaiter;
 
     @Metrics(api = "GetPitch")
     @RequestMapping(path = "/v1/pitches/{pitchId}", method = RequestMethod.GET)
@@ -84,11 +86,12 @@ public class PitchController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/pitches", method = RequestMethod.PUT)
     public CreateResourceResult<Pitch> createResource(@NonNull @Valid @RequestBody NewPitch newPitch)
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
         Route route = routesDao.getResource(newPitch.getParentId())
                 .orElseThrow(() -> routeNotFoundExceptionFactory.create(newPitch.getParentId()));
         Pitch pitch = pitchFactory.create(newPitch);
         pitchesDao.saveResource(pitch);
+        pitchConsistencyWaiter.waitForConsistency(route.getRouteId(), pitch, true);
         updateRouteGrade(route);
         return createPitchResultFactory.create(pitch.getId());
     }
@@ -97,12 +100,13 @@ public class PitchController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/pitches", method = RequestMethod.POST)
     public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Pitch pitch)
-            throws ResourceNotFoundException {
+            throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
         Pitch oldPitch = pitchesDao.getResource(pitch.getPitchId())
                 .orElseThrow(() -> pitchNotFoundExceptionFactory.create(pitch.getId()));
         Route newRoute = routesDao.getResource(pitch.getRouteId())
                 .orElseThrow(() -> routeNotFoundExceptionFactory.create(pitch.getRouteId()));
         pitchesDao.saveResource(pitch);
+        pitchConsistencyWaiter.waitForConsistency(newRoute.getRouteId(), pitch, true);
         updateRouteGrade(newRoute);
         // update the route that the pitch used to belong to, if it has been moved to a new route
         if (!oldPitch.getRouteId()
@@ -112,6 +116,8 @@ public class PitchController {
                 log.info(String.format("The route for pitch %s has changed. Updating the grades for the old route %s.",
                         pitch.getPitchId(), maybeOldRoute.get()
                                 .getRouteId()));
+                pitchConsistencyWaiter.waitForConsistency(maybeOldRoute.get()
+                        .getRouteId(), pitch, true);
                 updateRouteGrade(maybeOldRoute.get());
             }
         }
@@ -124,7 +130,8 @@ public class PitchController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/pitches/{pitchId}", method = RequestMethod.DELETE)
     public DeleteResourceResult deleteResource(@NonNull @ValidPitchId @PathVariable String pitchId)
-            throws ResourceNotFoundException, ResourceNotEmptyException {
+            throws ResourceNotFoundException, ResourceNotEmptyException, PitchConsistencyException,
+            InterruptedException {
         Pitch pitch = pitchesDao.getResource(pitchId)
                 .orElseThrow(() -> pitchNotFoundExceptionFactory.create(pitchId));
         if (!pointsDao.getResources(pitchId)
@@ -133,7 +140,11 @@ public class PitchController {
         }
         Optional<Route> maybeRoute = routesDao.getResource(pitch.getRouteId());
         pitchesDao.deleteResource(pitchId);
-        maybeRoute.ifPresent(this::updateRouteGrade);
+        if (maybeRoute.isPresent()) {
+            pitchConsistencyWaiter.waitForConsistency(maybeRoute.get()
+                    .getRouteId(), pitch, false);
+            updateRouteGrade(maybeRoute.get());
+        }
         return DeleteResourceResult.builder()
                 .successful(true)
                 .build();

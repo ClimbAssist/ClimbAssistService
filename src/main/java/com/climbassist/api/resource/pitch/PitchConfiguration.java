@@ -70,6 +70,9 @@ public class PitchConfiguration {
                 .routeNotFoundExceptionFactory(routeNotFoundExceptionFactory)
                 .createPitchResultFactory(createPitchResultFactory)
                 .pitchNotEmptyExceptionFactory(pitchNotEmptyExceptionFactory)
+                .pitchConsistencyWaiter(PitchConsistencyWaiter.builder()
+                        .pitchesDao(pitchesDao)
+                        .build())
                 .build();
     }
 }
