@@ -62,6 +62,9 @@ public class ExceptionUtils {
         assertSpecificException(apiResponse, 404, "WallNotFoundException");
     }
 
+    public static void assertRouteNotFoundException(ApiResponse<?> apiResponse) {
+        assertSpecificException(apiResponse, 404, "RouteNotFoundException");
+    }
 
     public static void assertSpecificException(ApiResponse<?> apiResponse, int code, String type) {
         assertThat(apiResponse.getData(), is(nullValue()));

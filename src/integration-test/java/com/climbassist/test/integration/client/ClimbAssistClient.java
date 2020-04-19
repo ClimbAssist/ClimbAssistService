@@ -26,6 +26,7 @@ import com.climbassist.api.resource.region.NewRegion;
 import com.climbassist.api.resource.region.Region;
 import com.climbassist.api.resource.route.CreateRouteResult;
 import com.climbassist.api.resource.route.NewRoute;
+import com.climbassist.api.resource.route.Route;
 import com.climbassist.api.resource.subarea.CreateSubAreaResult;
 import com.climbassist.api.resource.subarea.NewSubArea;
 import com.climbassist.api.resource.subarea.SubArea;
@@ -329,6 +330,27 @@ public class ClimbAssistClient {
 
     public ApiResponse<CreateRouteResult> createRoute(@NonNull NewRoute newRoute, @NonNull Set<Cookie> cookies) {
         return put("/v1/routes", newRoute, cookies, new TypeReference<ApiResponse<CreateRouteResult>>() {});
+    }
+
+    public ApiResponse<Route> getRoute(@NonNull String routeId) {
+        return get("/v1/routes/" + routeId, new TypeReference<ApiResponse<Route>>() {});
+    }
+
+    public ApiResponse<Route> getRoute(@NonNull String routeId, int depth) {
+        return get("/v1/routes/" + routeId + "?depth=" + depth, new TypeReference<ApiResponse<Route>>() {});
+    }
+
+    public ApiResponse<List<Route>> listRoutes(@NonNull String wallId) {
+        return get("/v1/walls/" + wallId + "/routes", new TypeReference<ApiResponse<List<Route>>>() {});
+    }
+
+    public ApiResponse<List<Route>> listRoutes(@NonNull String wallId, boolean ordered) {
+        return get("/v1/walls/" + wallId + "/routes?ordered=" + ordered,
+                new TypeReference<ApiResponse<List<Route>>>() {});
+    }
+
+    public ApiResponse<UpdateResourceResult> updateRoute(@NonNull Route route, @NonNull Set<Cookie> cookies) {
+        return post("/v1/routes", route, cookies, new TypeReference<ApiResponse<UpdateResourceResult>>() {});
     }
 
     public ApiResponse<DeleteResourceResult> deleteRoute(@NonNull String routeId, @NonNull Set<Cookie> cookies) {

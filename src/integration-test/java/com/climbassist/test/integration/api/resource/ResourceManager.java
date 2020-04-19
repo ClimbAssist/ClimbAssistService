@@ -347,11 +347,12 @@ public class ResourceManager {
         return crag;
     }
 
-    public Wall createWall(String cragId, Set<Cookie> cookies, boolean first, int depth) {
+    public Wall createWall(@NonNull String cragId, @NonNull Set<Cookie> cookies, boolean first, int depth) {
         return createWall(cragId, cookies, first, Optional.empty(), depth);
     }
 
-    public Wall createWall(String cragId, Set<Cookie> cookies, boolean first, String next, int depth) {
+    public Wall createWall(@NonNull String cragId, @NonNull Set<Cookie> cookies, boolean first, @NonNull String next,
+                           int depth) {
         return createWall(cragId, cookies, first, Optional.of(next), depth);
     }
 
@@ -360,6 +361,22 @@ public class ResourceManager {
         Wall wall2 = createWall(cragId, cookies, false, wall3.getWallId(), 0);
         Wall wall1 = createWall(cragId, cookies, true, wall2.getWallId(), 0);
         return ImmutableList.of(wall1, wall2, wall3);
+    }
+
+    public Route createRoute(@NonNull String wallId, @NonNull Set<Cookie> cookies, boolean first, int depth) {
+        return createRoute(wallId, cookies, first, Optional.empty(), depth);
+    }
+
+    public Route createRoute(@NonNull String wallId, @NonNull Set<Cookie> cookies, boolean first, @NonNull String next,
+                             int depth) {
+        return createRoute(wallId, cookies, first, Optional.of(next), depth);
+    }
+
+    public List<Route> createRoutes(String wallId, Set<Cookie> cookies) {
+        Route route3 = createRoute(wallId, cookies, false, 0);
+        Route route2 = createRoute(wallId, cookies, false, route3.getRouteId(), 0);
+        Route route1 = createRoute(wallId, cookies, true, route2.getRouteId(), 0);
+        return ImmutableList.of(route1, route2, route3);
     }
 
     public Path createPath(String cragId, Set<Cookie> cookies, int depth) {
@@ -413,6 +430,12 @@ public class ResourceManager {
 
     public Wall getWall(@NonNull Country country) {
         return getCrag(country).getWalls()
+                .iterator()
+                .next();
+    }
+
+    public Route getRoute(@NonNull Country country) {
+        return getWall(country).getRoutes()
                 .iterator()
                 .next();
     }
