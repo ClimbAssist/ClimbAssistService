@@ -38,6 +38,12 @@ out to the development team and have them run your changes and confirm that they
 However, if you do have access to the AWS account and you would like to try running the service locally, the
 instructions are as follows:
 
+Documentation
+-------------
+
+All the APIs in ClimbAssistService are documented in [docs/api_documentation.md](docs/api_documentation.md). This
+documentation should be kept up-to-date as APIs are added and modified.
+
 Deploying a Development Stack
 -----------------------------
 

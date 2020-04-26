@@ -20,9 +20,11 @@ interested in front-end development, check out [ClimbAssistUI](TODO).
  
 Check out the [README](README.md) for details on cloning, running, and testing. In general, features should be
 implemented in a new branch, and if they correspond with a bug/feature request, it's useful to include the tracking
-number in the branch name. Once you've made code changes and you're confident that they work, submit a pull request and
-one of our moderators will take a look at it as soon as they can. We only have one maintainer right now, so it might
-take some time before your request can be looked at, but we promise we will review it as soon as we can!
+number in the branch name. Additionally, please ensure than any new or modified APIs are reflected in 
+[docs/api_documentation.md](docs/api_documentation.md). Once you've made code changes and you're confident that they
+work, submit a pull request and one of our moderators will take a look at it as soon as they can. We only have one
+maintainer right now, so it might take some time before your request can be looked at, but we promise we will review
+it as soon as we can!
 
 I Want to Help but I Don't Know Anything About Climbing!
 --------------------------------------------------------
