@@ -60,7 +60,8 @@ public class UserAuthenticationController {
     @RequestMapping(path = "/v1/user/sign-in", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public SignInUserResult signIn(@NonNull @Valid @RequestBody SignInUserRequest signInUserRequest,
                                    @NonNull HttpServletResponse httpServletResponse)
-            throws UserAuthenticationException, UserNotFoundException {
+            throws UserNotFoundException, UserNotVerifiedException, EmailNotVerifiedException,
+            IncorrectPasswordException {
         Alias alias = new Alias(Optional.ofNullable(signInUserRequest.getUsername()),
                 Optional.ofNullable(signInUserRequest.getEmail()));
         UserSessionData userSessionData = userManager.signIn(alias, signInUserRequest.getPassword());
@@ -103,7 +104,7 @@ public class UserAuthenticationController {
     public UserData verifyEmail(
             @SessionAttribute(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME) @NonNull String accessToken,
             @NonNull @Valid @RequestBody VerifyEmailRequest verifyEmailRequest)
-            throws InvalidVerificationCodeException, EmailAlreadyVerifiedException {
+            throws IncorrectVerificationCodeException, EmailAlreadyVerifiedException {
         userManager.verifyEmail(accessToken, verifyEmailRequest.getVerificationCode());
         return userManager.getUserData(accessToken);
     }
@@ -123,7 +124,8 @@ public class UserAuthenticationController {
     @RequestMapping(path = "/v1/user/change-password", method = RequestMethod.POST)
     public UserData changePassword(
             @SessionAttribute(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME) @NonNull String accessToken,
-            @NonNull @Valid @RequestBody ChangePasswordRequest changePasswordRequest) throws InvalidPasswordException {
+            @NonNull @Valid @RequestBody ChangePasswordRequest changePasswordRequest)
+            throws IncorrectPasswordException {
         userManager.changePassword(accessToken, changePasswordRequest.getCurrentPassword(),
                 changePasswordRequest.getNewPassword());
         return userManager.getUserData(accessToken);
@@ -144,7 +146,7 @@ public class UserAuthenticationController {
     @Metrics(api = "ResetPassword")
     @RequestMapping(path = "/v1/user/reset-password", method = RequestMethod.POST)
     public ResetPasswordResult resetPassword(@NonNull @Valid @RequestBody ResetPasswordRequest resetPasswordRequest)
-            throws UserNotFoundException, UserNotVerifiedException, InvalidVerificationCodeException,
+            throws UserNotFoundException, UserNotVerifiedException, IncorrectVerificationCodeException,
             EmailNotVerifiedException {
         Alias alias = new Alias(Optional.ofNullable(resetPasswordRequest.getUsername()),
                 Optional.ofNullable(resetPasswordRequest.getEmail()));

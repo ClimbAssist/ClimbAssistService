@@ -69,7 +69,7 @@ class AdministratorAuthorizationHandlerTest {
 
     @Test
     void checkAuthorization_returnsOriginalSessionData_whenUserIsSignedInAndIsAdministrator()
-            throws UserAuthorizationException {
+            throws AuthorizationException {
         when(mockUserManager.isSignedIn(any())).thenReturn(true);
         when(mockUserManager.getUserData(any())).thenReturn(USER_DATA_ADMINISTRATOR);
         assertThat(administratorAuthorizationHandler.checkAuthorization(USER_SESSION_DATA),
@@ -79,7 +79,7 @@ class AdministratorAuthorizationHandlerTest {
 
     @Test
     void checkAuthorization_refreshesTokenAndReturnsNewSessionData_whenUserIsSignedInAndAdministratorButAccessTokenIsExpired()
-            throws UserAuthorizationException {
+            throws AuthorizationException {
         doThrow(new AccessTokenExpiredException(null)).when(mockUserManager)
                 .isSignedIn(USER_SESSION_DATA.getAccessToken());
         when(mockUserManager.refreshAccessToken(any())).thenReturn(NEW_USER_SESSION_DATA.getAccessToken());
@@ -96,16 +96,16 @@ class AdministratorAuthorizationHandlerTest {
     }
 
     @Test
-    void checkAuthorization_throwsUserAuthorizationException_whenUserIsSignedInAndIsNotAdministrator() {
+    void checkAuthorization_throwsAuthorizationException_whenUserIsSignedInAndIsNotAdministrator() {
         when(mockUserManager.isSignedIn(any())).thenReturn(true);
         when(mockUserManager.getUserData(any())).thenReturn(USER_DATA_NOT_ADMINISTRATOR);
-        assertThrows(UserAuthorizationException.class,
+        assertThrows(AuthorizationException.class,
                 () -> administratorAuthorizationHandler.checkAuthorization(USER_SESSION_DATA));
         verify(mockUserManager).isSignedIn(USER_SESSION_DATA.getAccessToken());
     }
 
     @Test
-    void checkAuthorization_refreshesTokenAndThrowsUserAuthorizationException_whenUserIsSignedInAndAdministratorButAccessTokenIsExpired()
+    void checkAuthorization_refreshesTokenAndThrowsAuthorizationException_whenUserIsSignedInAndAdministratorButAccessTokenIsExpired()
             throws SessionExpiredException {
         doThrow(new AccessTokenExpiredException(null)).when(mockUserManager)
                 .isSignedIn(USER_SESSION_DATA.getAccessToken());
@@ -114,7 +114,7 @@ class AdministratorAuthorizationHandlerTest {
         doReturn(true).when(mockUserManager)
                 .isSignedIn(NEW_USER_SESSION_DATA.getAccessToken());
 
-        assertThrows(UserAuthorizationException.class,
+        assertThrows(AuthorizationException.class,
                 () -> administratorAuthorizationHandler.checkAuthorization(USER_SESSION_DATA));
 
         verify(mockUserManager).isSignedIn(USER_SESSION_DATA.getAccessToken());
@@ -123,15 +123,15 @@ class AdministratorAuthorizationHandlerTest {
     }
 
     @Test
-    void checkAuthorization_throwsUserAuthorizationException_whenUserIsNotSignedIn() {
+    void checkAuthorization_throwsAuthorizationException_whenUserIsNotSignedIn() {
         when(mockUserManager.isSignedIn(any())).thenReturn(false);
-        assertThrows(UserAuthorizationException.class,
+        assertThrows(AuthorizationException.class,
                 () -> administratorAuthorizationHandler.checkAuthorization(USER_SESSION_DATA));
         verify(mockUserManager).isSignedIn(USER_SESSION_DATA.getAccessToken());
     }
 
     @Test
-    void checkAuthorization_throwsUserAuthorizationException_whenUserIsNotSignedInAfterRefreshingToken()
+    void checkAuthorization_throwsAuthorizationException_whenUserIsNotSignedInAfterRefreshingToken()
             throws SessionExpiredException {
         doThrow(new AccessTokenExpiredException(null)).when(mockUserManager)
                 .isSignedIn(USER_SESSION_DATA.getAccessToken());
@@ -139,7 +139,7 @@ class AdministratorAuthorizationHandlerTest {
         doReturn(false).when(mockUserManager)
                 .isSignedIn(NEW_USER_SESSION_DATA.getAccessToken());
 
-        assertThrows(UserAuthorizationException.class,
+        assertThrows(AuthorizationException.class,
                 () -> administratorAuthorizationHandler.checkAuthorization(USER_SESSION_DATA));
 
         verify(mockUserManager).isSignedIn(USER_SESSION_DATA.getAccessToken());

@@ -52,7 +52,7 @@ class AuthenticatedAuthorizationHandlerTest {
     }
 
     @Test
-    void checkAuthorization_returnsOriginalSessionData_whenUserIsSignedIn() throws UserAuthorizationException {
+    void checkAuthorization_returnsOriginalSessionData_whenUserIsSignedIn() throws AuthorizationException {
         when(mockUserManager.isSignedIn(any())).thenReturn(true);
         assertThat(authenticatedAuthorizationHandler.checkAuthorization(USER_SESSION_DATA),
                 is(equalTo(USER_SESSION_DATA)));
@@ -61,7 +61,7 @@ class AuthenticatedAuthorizationHandlerTest {
 
     @Test
     void checkAuthorization_refreshesTokenAndReturnsNewSessionData_whenUserIsSignedInButAccessTokenIsExpired()
-            throws UserAuthorizationException {
+            throws AuthorizationException {
         doThrow(new AccessTokenExpiredException(null)).when(mockUserManager)
                 .isSignedIn(USER_SESSION_DATA.getAccessToken());
         when(mockUserManager.refreshAccessToken(any())).thenReturn(NEW_USER_SESSION_DATA.getAccessToken());
@@ -77,15 +77,15 @@ class AuthenticatedAuthorizationHandlerTest {
     }
 
     @Test
-    void checkAuthorization_throwsUserAuthorizationException_whenUserIsNotSignedIn() {
+    void checkAuthorization_throwsAuthorizationException_whenUserIsNotSignedIn() {
         when(mockUserManager.isSignedIn(any())).thenReturn(false);
-        assertThrows(UserAuthorizationException.class,
+        assertThrows(AuthorizationException.class,
                 () -> authenticatedAuthorizationHandler.checkAuthorization(USER_SESSION_DATA));
         verify(mockUserManager).isSignedIn(USER_SESSION_DATA.getAccessToken());
     }
 
     @Test
-    void checkAuthorization_throwsUserAuthorizationException_whenUserIsNotSignedInAfterRefreshingToken()
+    void checkAuthorization_throwsAuthorizationException_whenUserIsNotSignedInAfterRefreshingToken()
             throws SessionExpiredException {
         doThrow(new AccessTokenExpiredException(null)).when(mockUserManager)
                 .isSignedIn(USER_SESSION_DATA.getAccessToken());
@@ -93,7 +93,7 @@ class AuthenticatedAuthorizationHandlerTest {
         doReturn(false).when(mockUserManager)
                 .isSignedIn(NEW_USER_SESSION_DATA.getAccessToken());
 
-        assertThrows(UserAuthorizationException.class,
+        assertThrows(AuthorizationException.class,
                 () -> authenticatedAuthorizationHandler.checkAuthorization(USER_SESSION_DATA));
 
         verify(mockUserManager).isSignedIn(USER_SESSION_DATA.getAccessToken());

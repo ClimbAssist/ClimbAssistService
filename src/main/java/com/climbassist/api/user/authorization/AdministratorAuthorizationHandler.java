@@ -10,11 +10,11 @@ public class AdministratorAuthorizationHandler extends AuthenticatedAuthorizatio
 
     @Override
     public UserSessionData checkAuthorization(@NonNull UserSessionData userSessionData)
-            throws UserAuthorizationException {
+            throws AuthorizationException {
         UserSessionData newUserSessionData = super.checkAuthorization(userSessionData);
         if (!userManager.getUserData(newUserSessionData.getAccessToken())
                 .isAdministrator()) {
-            throw new UserAuthorizationException();
+            throw new AuthorizationException();
         }
         return newUserSessionData;
     }

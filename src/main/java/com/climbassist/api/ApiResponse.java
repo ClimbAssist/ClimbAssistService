@@ -23,7 +23,6 @@ public class ApiResponse {
     @NoArgsConstructor
     public static class Error {
 
-        private int code;
         private String type;
         private String message;
     }

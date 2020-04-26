@@ -9,7 +9,6 @@ import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegat
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.ValidDepth;
-import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.crag.Crag;
 import com.climbassist.api.resource.crag.ValidCragId;
 import com.climbassist.api.user.authorization.AdministratorAuthorizationHandler;
@@ -53,7 +52,7 @@ public class PathController {
     @Metrics(api = "ListPaths")
     @RequestMapping(path = "/v1/crags/{cragId}/paths", method = RequestMethod.GET)
     public Set<Path> getResourcesForParent(@ValidCragId @NonNull @PathVariable String cragId)
-            throws InvalidOrderingException, ResourceNotFoundException {
+            throws ResourceNotFoundException {
         return resourceWithParentControllerDelegate.getResourcesForParent(cragId);
     }
 

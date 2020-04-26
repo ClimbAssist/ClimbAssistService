@@ -39,6 +39,7 @@ import com.climbassist.api.resource.wall.CreateWallResult;
 import com.climbassist.api.resource.wall.NewWall;
 import com.climbassist.api.resource.wall.Wall;
 import com.climbassist.test.integration.api.ApiResponse;
+import com.climbassist.test.integration.api.ExceptionUtils;
 import com.climbassist.test.integration.client.ClimbAssistClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -54,8 +55,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertThat;
 
@@ -187,7 +186,7 @@ public class ResourceManager {
                 .name(RESOURCE_NAME)
                 .build();
         ApiResponse<CreateCountryResult> apiResponse = climbAssistClient.createCountry(newCountry, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Country.class, apiResponse.getData()
                 .getCountryId());
 
@@ -213,7 +212,7 @@ public class ResourceManager {
                 .countryId(countryId)
                 .build();
         ApiResponse<CreateRegionResult> apiResponse = climbAssistClient.createRegion(newRegion, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Region.class, apiResponse.getData()
                 .getRegionId());
 
@@ -240,7 +239,7 @@ public class ResourceManager {
                 .description(DESCRIPTION)
                 .build();
         ApiResponse<CreateAreaResult> apiResponse = climbAssistClient.createArea(newArea, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Area.class, apiResponse.getData()
                 .getAreaId());
 
@@ -268,7 +267,7 @@ public class ResourceManager {
                 .description(DESCRIPTION)
                 .build();
         ApiResponse<CreateSubAreaResult> apiResponse = climbAssistClient.createSubArea(newSubArea, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(SubArea.class, apiResponse.getData()
                 .getSubAreaId());
         assertThat(apiResponse.getData()
@@ -308,7 +307,7 @@ public class ResourceManager {
                         .build()))
                 .build();
         ApiResponse<CreateCragResult> apiResponse = climbAssistClient.createCrag(newCrag, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Crag.class, apiResponse.getData()
                 .getCragId());
         assertThat(apiResponse.getData()
@@ -384,7 +383,7 @@ public class ResourceManager {
                 .cragId(cragId)
                 .build();
         ApiResponse<CreatePathResult> apiResponse = climbAssistClient.createPath(newPath, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Path.class, apiResponse.getData()
                 .getPathId());
 
@@ -450,7 +449,7 @@ public class ResourceManager {
                 .next(maybeNext.orElse(null))
                 .build();
         ApiResponse<CreateWallResult> apiResponse = climbAssistClient.createWall(newWall, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Wall.class, apiResponse.getData()
                 .getWallId());
         assertThat(apiResponse.getData()
@@ -491,7 +490,7 @@ public class ResourceManager {
                 .next(maybeNext.orElse(null))
                 .build();
         ApiResponse<CreateRouteResult> apiResponse = climbAssistClient.createRoute(newRoute, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Route.class, apiResponse.getData()
                 .getRouteId());
         assertThat(apiResponse.getData()
@@ -555,7 +554,7 @@ public class ResourceManager {
                 .next(maybeNext.orElse(null))
                 .build();
         ApiResponse<CreatePitchResult> apiResponse = climbAssistClient.createPitch(newPitch, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Pitch.class, apiResponse.getData()
                 .getPitchId());
         assertThat(apiResponse.getData()
@@ -603,7 +602,7 @@ public class ResourceManager {
                 .next(maybeNext.orElse(null))
                 .build();
         ApiResponse<CreatePointResult> apiResponse = climbAssistClient.createPoint(newPoint, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(Point.class, apiResponse.getData()
                 .getPointId());
         assertThat(apiResponse.getData()
@@ -631,7 +630,7 @@ public class ResourceManager {
                 .next(maybeNext.orElse(null))
                 .build();
         ApiResponse<CreatePathPointResult> apiResponse = climbAssistClient.createPathPoint(newPathPoint, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         addResourceToResourceIds(PathPoint.class, apiResponse.getData()
                 .getPathPointId());
 

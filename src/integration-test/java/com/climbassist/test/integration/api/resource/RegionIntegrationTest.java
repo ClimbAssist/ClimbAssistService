@@ -71,7 +71,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void getRegion_returnsRegionNotFoundException_whenRegionDoesNotExist() {
         ApiResponse<Region> apiResponse = climbAssistClient.getRegion("does-not-exist");
-        ExceptionUtils.assertRegionNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -107,7 +107,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listRegions_returnsCountryNotFoundException_whenCountryDoesNotExist() {
         ApiResponse<Set<Region>> apiResponse = climbAssistClient.listRegions("does-not-exist");
-        ExceptionUtils.assertCountryNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1);
         ApiResponse<Set<Region>> apiResponse = climbAssistClient.listRegions(country.getCountryId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
     }
 
@@ -124,7 +124,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Region region = resourceManager.getRegion(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<Set<Region>> apiResponse = climbAssistClient.listRegions(region.getCountryId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(region))));
     }
 
@@ -135,7 +135,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
         Region region1 = resourceManager.createRegion(country.getCountryId(), cookies, 0);
         Region region2 = resourceManager.createRegion(country.getCountryId(), cookies, 0);
         ApiResponse<Set<Region>> apiResponse = climbAssistClient.listRegions(country.getCountryId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(region1, region2))));
     }
 
@@ -146,7 +146,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
                 .countryId("does-not-exist")
                 .name(NAME)
                 .build(), cookies);
-        ExceptionUtils.assertCountryNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -175,19 +175,19 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void createRegion_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void createRegion_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<CreateRegionResult> apiResponse = climbAssistClient.createRegion(NewRegion.builder()
                 .name(NAME)
                 .build(), ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void createRegion_returnsUserAuthorizationException_whenUserIsNotAdministrator() {
+    public void createRegion_returnsAuthorizationException_whenUserIsNotAdministrator() {
         ApiResponse<CreateRegionResult> apiResponse = climbAssistClient.createRegion(NewRegion.builder()
                 .name(NAME)
                 .build(), cookies);
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
@@ -199,7 +199,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
                 .regionId(region.getRegionId())
                 .name(NAME)
                 .build(), cookies);
-        ExceptionUtils.assertCountryNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -211,7 +211,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
                 .regionId("does-not-exist")
                 .name(NAME)
                 .build(), cookies);
-        ExceptionUtils.assertRegionNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -225,7 +225,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
                 .name(NAME + "-updated")
                 .build();
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateRegion(updatedRegion, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         Region actualRegion = climbAssistClient.getRegion(originalRegion.getRegionId())
@@ -234,23 +234,23 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void deleteRegion_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void deleteRegion_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRegion("does-not-exist",
                 ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void deleteRegion_returnsUserAuthorizationException_whenUserIsNotAdministrator() {
+    public void deleteRegion_returnsAuthorizationException_whenUserIsNotAdministrator() {
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRegion("does-not-exist", cookies);
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
     public void deleteRegion_returnsRegionNotFoundException_whenRegionDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRegion("does-not-exist", cookies);
-        ExceptionUtils.assertRegionNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -258,11 +258,11 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Region region = resourceManager.getRegion(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRegion(region.getRegionId(), cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         ApiResponse<Region> getRegionResult = climbAssistClient.getRegion(region.getRegionId());
-        ExceptionUtils.assertRegionNotFoundException(getRegionResult);
+        ExceptionUtils.assertResourceNotFoundException(getRegionResult);
     }
 
     @Test
@@ -270,7 +270,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Region region = resourceManager.getRegion(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRegion(region.getRegionId(), cookies);
-        ExceptionUtils.assertSpecificException(apiResponse, 409, "RegionNotEmptyException");
+        ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
 
     private void runGetRegionTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -280,7 +280,7 @@ public class RegionIntegrationTest extends AbstractTestNGSpringContextTests {
         resourceManager.removeChildren(region, Region.class, maybeRequestDepth.orElse(0));
         ApiResponse<Region> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getRegion(
                 region.getRegionId(), maybeRequestDepth.get()) : climbAssistClient.getRegion(region.getRegionId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(region)));
     }
 

@@ -122,13 +122,13 @@ class UserAuthenticationControllerTest {
     }
 
     @Test
-    void signIn_setsCookiesAndReturnsTrue_whenAliasIsEmail() throws UserAuthenticationException, UserNotFoundException {
+    void signIn_setsCookiesAndReturnsTrue_whenAliasIsEmail() throws AuthenticationException, UserNotFoundException {
         runSignInTest(Alias.AliasType.EMAIL);
     }
 
     @Test
     void signIn_setsCookiesAndReturnsTrue_whenAliasIsUsername()
-            throws UserAuthenticationException, UserNotFoundException {
+            throws AuthenticationException, UserNotFoundException {
         runSignInTest(Alias.AliasType.USERNAME);
     }
 
@@ -177,7 +177,7 @@ class UserAuthenticationControllerTest {
 
     @Test
     void verifyEmail_verifiesEmailAndReturnsUserData()
-            throws InvalidVerificationCodeException, EmailAlreadyVerifiedException {
+            throws IncorrectVerificationCodeException, EmailAlreadyVerifiedException {
         when(mockUserManager.getUserData(any())).thenReturn(USER_DATA);
         assertThat(userAuthenticationController.verifyEmail(ACCESS_TOKEN, VERIFY_EMAIL_REQUEST),
                 is(equalTo(USER_DATA)));
@@ -194,7 +194,7 @@ class UserAuthenticationControllerTest {
     }
 
     @Test
-    void changePassword_changesPasswordAndReturnsUserData() throws InvalidPasswordException {
+    void changePassword_changesPasswordAndReturnsUserData() throws IncorrectPasswordException {
         when(mockUserManager.getUserData(any())).thenReturn(USER_DATA);
         assertThat(userAuthenticationController.changePassword(ACCESS_TOKEN, CHANGE_PASSWORD_REQUEST),
                 is(equalTo(USER_DATA)));
@@ -223,7 +223,7 @@ class UserAuthenticationControllerTest {
     @Test
     void resetPassword_callsResetPasswordAndReturnsTrue_whenUsingUsername()
             throws UserNotFoundException, EmailNotVerifiedException, UserNotVerifiedException,
-            InvalidVerificationCodeException {
+            IncorrectVerificationCodeException {
         assertThat(userAuthenticationController.resetPassword(ResetPasswordRequest.builder()
                 .username(USERNAME)
                 .verificationCode(VERIFICATION_CODE)
@@ -235,7 +235,7 @@ class UserAuthenticationControllerTest {
     @Test
     void resetPassword_callsResetPasswordAndReturnsTrue_whenUsingEmail()
             throws UserNotFoundException, EmailNotVerifiedException, UserNotVerifiedException,
-            InvalidVerificationCodeException {
+            IncorrectVerificationCodeException {
         assertThat(userAuthenticationController.resetPassword(ResetPasswordRequest.builder()
                 .email(EMAIL)
                 .verificationCode(VERIFICATION_CODE)
@@ -244,7 +244,7 @@ class UserAuthenticationControllerTest {
         verify(mockUserManager).resetPassword(EMAIL_ALIAS, VERIFICATION_CODE, NEW_PASSWORD);
     }
 
-    private void runSignInTest(Alias.AliasType aliasType) throws UserAuthenticationException, UserNotFoundException {
+    private void runSignInTest(Alias.AliasType aliasType) throws AuthenticationException, UserNotFoundException {
         SignInUserRequest signInUserRequest;
         Alias alias;
         switch (aliasType) {

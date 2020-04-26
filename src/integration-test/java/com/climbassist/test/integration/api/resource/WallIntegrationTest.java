@@ -75,7 +75,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void getWall_returnsWallNotFoundException_whenWallDoesNotExist() {
         ApiResponse<Wall> apiResponse = climbAssistClient.getWall("does-not-exist");
-        ExceptionUtils.assertWallNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -111,7 +111,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_returnsCragNotFoundException_whenCragDoesNotExist() {
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls("does-not-exist");
-        ExceptionUtils.assertCragNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -119,7 +119,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
     }
 
@@ -128,7 +128,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall wall = resourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(wall.getCragId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableList.of(wall))));
     }
 
@@ -138,7 +138,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(walls.toArray()));
     }
 
@@ -148,7 +148,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId(), true);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(walls)));
     }
 
@@ -158,7 +158,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId(), false);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(walls.toArray()));
     }
 
@@ -179,7 +179,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         Wall wall1 = resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         Wall wall2 = resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId(), false);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(wall1, wall2));
     }
 
@@ -191,7 +191,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
                 .name(NAME)
                 .first(true)
                 .build(), cookies);
-        ExceptionUtils.assertCragNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -220,23 +220,23 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void createWall_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void createWall_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<CreateWallResult> apiResponse = climbAssistClient.createWall(NewWall.builder()
                 .cragId("does-not-exist")
                 .name(NAME)
                 .first(true)
                 .build(), ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void createWall_returnsUserAuthorizationException_whenUserIsNotAdministrator() {
+    public void createWall_returnsAuthorizationException_whenUserIsNotAdministrator() {
         ApiResponse<CreateWallResult> apiResponse = climbAssistClient.createWall(NewWall.builder()
                 .cragId("does-not-exist")
                 .name(NAME)
                 .first(true)
                 .build(), cookies);
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
@@ -249,7 +249,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
                 .name(NAME)
                 .first(true)
                 .build(), cookies);
-        ExceptionUtils.assertCragNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -262,7 +262,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
                 .name(NAME)
                 .first(true)
                 .build(), cookies);
-        ExceptionUtils.assertWallNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -280,7 +280,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
                 .next(nextWall.getWallId())
                 .build();
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateWall(updatedWall, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         Wall actualWall = climbAssistClient.getWall(originalWall.getWallId())
@@ -289,23 +289,23 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void deleteWall_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void deleteWall_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteWall("does-not-exist",
                 ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void deleteWall_returnsUserAuthorizationException_whenUserIsNotAdministrator() {
+    public void deleteWall_returnsAuthorizationException_whenUserIsNotAdministrator() {
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteWall("does-not-exist", cookies);
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
     public void deleteWall_returnsWallNotFoundException_whenWallDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteWall("does-not-exist", cookies);
-        ExceptionUtils.assertWallNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -313,11 +313,11 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall Wall = resourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteWall(Wall.getWallId(), cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         ApiResponse<Wall> getWallResult = climbAssistClient.getWall(Wall.getWallId());
-        ExceptionUtils.assertWallNotFoundException(getWallResult);
+        ExceptionUtils.assertResourceNotFoundException(getWallResult);
     }
 
     @Test
@@ -325,7 +325,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall Wall = resourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteWall(Wall.getWallId(), cookies);
-        ExceptionUtils.assertSpecificException(apiResponse, 409, "WallNotEmptyException");
+        ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
 
     private void runGetWallTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -335,7 +335,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
         resourceManager.removeChildren(Wall, Wall.class, maybeRequestDepth.orElse(0));
         ApiResponse<Wall> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getWall(Wall.getWallId(),
                 maybeRequestDepth.get()) : climbAssistClient.getWall(Wall.getWallId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(Wall)));
     }
 }

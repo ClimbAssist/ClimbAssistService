@@ -42,7 +42,6 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 //@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {ClimbAssistClientConfiguration.class, TestUserManagerConfiguration.class})
@@ -140,14 +139,14 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void signIn_returnsInvalidPasswordException_whenPasswordIsWrong() throws IOException {
+    public void signIn_returnsIncorrectPasswordException_whenPasswordIsWrong() throws IOException {
         TestUserContext testUserContext = testUserManager.registerUser(testId, testEmailContext);
         testUserManager.verifyNewAccountEmail(testUserContext);
         ApiResponse<SignInUserResult> apiResponse = climbAssistClient.signIn(SignInUserRequest.builder()
                 .username(testId)
                 .password("totally-wrong")
                 .build());
-        ExceptionUtils.assertInvalidPasswordException(apiResponse);
+        ExceptionUtils.assertIncorrectPasswordException(apiResponse);
     }
 
     @Test
@@ -176,7 +175,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                 .username(testId)
                 .password(PASSWORD)
                 .build());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
     }
@@ -241,24 +240,24 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.verifyNewAccountEmail(testUserContext);
         Set<Cookie> cookies = testUserManager.signIn(testUserContext);
         ApiResponse<DeleteUserResult> apiResponse = climbAssistClient.deleteUser(cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         verifyUserIsSignedOut(apiResponse.getCookies());
     }
 
     @Test
-    public void deleteUser_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void deleteUser_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<DeleteUserResult> apiResponse = climbAssistClient.deleteUser(ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void verifyEmail_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void verifyEmail_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<UserData> apiResponse = climbAssistClient.verifyEmail(VerifyEmailRequest.builder()
                 .verificationCode("324B21")
                 .build(), ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
@@ -273,7 +272,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void verifyEmail_returnsInvalidVerificationCodeException_whenVerificationCodeIsWrong() throws IOException {
+    public void verifyEmail_returnsIncorrectVerificationCodeException_whenVerificationCodeIsWrong() throws IOException {
         TestUserContext testUserContext = testUserManager.registerUser(testId, testEmailContext);
         testUserManager.verifyNewAccountEmail(testUserContext);
         Set<Cookie> cookies = testUserManager.signIn(testUserContext);
@@ -282,7 +281,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         ApiResponse<UserData> apiResponse = climbAssistClient.verifyEmail(VerifyEmailRequest.builder()
                 .verificationCode("324B21")
                 .build(), cookies);
-        ExceptionUtils.assertInvalidVerificationCodeException(apiResponse);
+        ExceptionUtils.assertIncorrectVerificationCodeException(apiResponse);
     }
 
     @Test
@@ -296,9 +295,9 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void sendVerificationEmail_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void sendVerificationEmail_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<UserData> apiResponse = climbAssistClient.sendVerificationEmail(ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
@@ -319,7 +318,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         TestEmailContext newTestEmailContext = testUserManager.setUpTestEmail(testId + "-updated");
         cookies = updateEmail(newTestEmailContext.getEmail(), cookies);
         ApiResponse<UserData> apiResponse = climbAssistClient.sendVerificationEmail(cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(apiResponse.getData()
@@ -342,16 +341,16 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void changePassword_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void changePassword_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<UserData> apiResponse = climbAssistClient.changePassword(ChangePasswordRequest.builder()
                 .currentPassword("current-password")
                 .newPassword("new-password")
                 .build(), ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void changePassword_returnsInvalidPasswordException_whenCurrentPasswordIsIncorrect() throws IOException {
+    public void changePassword_returnsIncorrectPasswordException_whenCurrentPasswordIsIncorrect() throws IOException {
         TestUserContext testUserContext = testUserManager.registerUser(testId, testEmailContext);
         testUserManager.verifyNewAccountEmail(testUserContext);
         Set<Cookie> cookies = testUserManager.signIn(testUserContext);
@@ -359,7 +358,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                 .currentPassword("current-password")
                 .newPassword("new-password")
                 .build(), cookies);
-        ExceptionUtils.assertInvalidPasswordException(apiResponse);
+        ExceptionUtils.assertIncorrectPasswordException(apiResponse);
     }
 
     @Test
@@ -486,7 +485,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void resetPassword_returnsInvalidVerificationCodeException_whenVerificationCodeIsWrong() throws IOException {
+    public void resetPassword_returnsIncorrectVerificationCodeException_whenVerificationCodeIsWrong() throws IOException {
         TestUserContext testUserContext = testUserManager.registerUser(testId, testEmailContext);
         testUserManager.verifyNewAccountEmail(testUserContext);
         ApiResponse<ResetPasswordResult> apiResponse = climbAssistClient.resetPassword(ResetPasswordRequest.builder()
@@ -494,7 +493,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                 .verificationCode("123456")
                 .username(testId)
                 .build());
-        ExceptionUtils.assertInvalidVerificationCodeException(apiResponse);
+        ExceptionUtils.assertIncorrectVerificationCodeException(apiResponse);
     }
 
     @Test
@@ -515,7 +514,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                         .verificationCode(passwordResetCode)
                         .username(testId)
                         .build());
-        assertThat(resetPasswordResult.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(resetPasswordResult);
         assertThat(resetPasswordResult.getData()
                 .isSuccessful(), is(true));
 
@@ -523,12 +522,12 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                 .username(testId)
                 .password(newPassword)
                 .build());
-        assertThat(signInUserResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(signInUserResponse);
         assertThat(signInUserResponse.getData()
                 .isSuccessful(), is(true));
 
         ApiResponse<UserData> getUserResponse = climbAssistClient.getUser(signInUserResponse.getCookies());
-        assertThat(getUserResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(getUserResponse);
         assertThat(getUserResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(getUserResponse.getData()
@@ -550,7 +549,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                 .verificationCode(passwordResetCode)
                 .username(testId)
                 .build());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
 
@@ -577,7 +576,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         String newEmail = testId + "-updated@test.climbassist.com";
         cookies = updateEmail(newEmail, cookies);
         ApiResponse<UserData> apiResponse = climbAssistClient.getUser(cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(apiResponse.getData()
@@ -597,7 +596,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         cookies = updateEmail(newTestEmailContext.getEmail(), cookies);
         verifyUpdatedAccountEmail(newTestEmailContext, cookies);
         ApiResponse<UserData> apiResponse = climbAssistClient.getUser(cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(apiResponse.getData()
@@ -615,7 +614,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         Set<Cookie> cookies = testUserManager.signIn(testUserContext);
         testUserManager.makeUserAdministrator(testId);
         ApiResponse<UserData> apiResponse = climbAssistClient.getUser(cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(apiResponse.getData()
@@ -655,7 +654,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         ApiResponse<UserData> apiResponse = climbAssistClient.verifyEmail(VerifyEmailRequest.builder()
                 .verificationCode(verificationCode)
                 .build(), cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(apiResponse.getData()
@@ -674,7 +673,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
 
     private void signOut() {
         ApiResponse<SignOutUserResult> apiResponse = climbAssistClient.signOut(ImmutableSet.of());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         verifyUserIsSignedOut(apiResponse.getCookies());
@@ -682,11 +681,11 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
 
     private void verifyUserIsSignedOut(Set<Cookie> cookies) {
         ApiResponse<UserData> apiResponse = climbAssistClient.getUser(cookies);
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     private void assertUserDataIsCorrectForNonAdminVerifiedEmail(ApiResponse<UserData> apiResponse) {
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(apiResponse.getData()
@@ -702,7 +701,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                 AliasRequest.builder()
                         .username(testId)
                         .build());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         Set<Message> messages = new HashSet<>();
@@ -728,7 +727,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
         ApiResponse<UserData> apiResponse = climbAssistClient.updateUser(UpdateUserRequest.builder()
                 .email(newEmail)
                 .build(), cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .getUsername(), is(equalTo(testId)));
         assertThat(apiResponse.getData()

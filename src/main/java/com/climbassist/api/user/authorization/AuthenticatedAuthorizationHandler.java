@@ -15,16 +15,16 @@ public class AuthenticatedAuthorizationHandler implements AuthorizationHandler {
 
     @Override
     public UserSessionData checkAuthorization(@NonNull UserSessionData userSessionData)
-            throws UserAuthorizationException {
+            throws AuthorizationException {
         UserSessionData newUserSessionData = userSessionData;
         try {
             if (!userManager.isSignedIn(userSessionData.getAccessToken())) {
-                throw new UserAuthorizationException();
+                throw new AuthorizationException();
             }
         } catch (AccessTokenExpiredException e) {
             String newAccessToken = userManager.refreshAccessToken(userSessionData.getRefreshToken());
             if (!userManager.isSignedIn(newAccessToken)) {
-                throw new UserAuthorizationException();
+                throw new AuthorizationException();
             }
             newUserSessionData = UserSessionData.builder()
                     .accessToken(newAccessToken)

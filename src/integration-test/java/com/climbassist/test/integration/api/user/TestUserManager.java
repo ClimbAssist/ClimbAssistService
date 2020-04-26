@@ -43,6 +43,7 @@ import com.climbassist.api.user.authentication.RegisterUserResult;
 import com.climbassist.api.user.authentication.SignInUserRequest;
 import com.climbassist.api.user.authentication.SignInUserResult;
 import com.climbassist.test.integration.api.ApiResponse;
+import com.climbassist.test.integration.api.ExceptionUtils;
 import com.climbassist.test.integration.client.ClimbAssistClient;
 import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
@@ -68,7 +69,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
 
 @Builder
 public class TestUserManager {
@@ -210,7 +210,7 @@ public class TestUserManager {
                         .email(testEmailContext.getEmail())
                         .password(TEST_PASSWORD)
                         .build());
-        assertThat(registerUserResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(registerUserResponse);
         testUsernames.add(username);
         RegisterUserResult registerUserResult = registerUserResponse.getData();
         assertThat(registerUserResult.getEmail(), is(equalTo(testEmailContext.getEmail())));
@@ -281,12 +281,12 @@ public class TestUserManager {
     public Set<Cookie> signIn(@NonNull SignInUserRequest signInUserRequest, @NonNull String expectedUsername,
                               @NonNull String expectedEmail) {
         ApiResponse<SignInUserResult> signInUserResponse = climbAssistClient.signIn(signInUserRequest);
-        assertThat(signInUserResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(signInUserResponse);
         assertThat(signInUserResponse.getData()
                 .isSuccessful(), is(true));
 
         ApiResponse<UserData> getUserResponse = climbAssistClient.getUser(signInUserResponse.getCookies());
-        assertThat(getUserResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(getUserResponse);
         assertThat(getUserResponse.getData()
                 .getUsername(), is(equalTo(expectedUsername)));
         assertThat(getUserResponse.getData()

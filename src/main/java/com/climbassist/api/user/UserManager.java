@@ -32,9 +32,8 @@ import com.climbassist.api.user.authentication.AccessTokenExpiredException;
 import com.climbassist.api.user.authentication.EmailAlreadyVerifiedException;
 import com.climbassist.api.user.authentication.EmailExistsException;
 import com.climbassist.api.user.authentication.EmailNotVerifiedException;
-import com.climbassist.api.user.authentication.InvalidPasswordException;
-import com.climbassist.api.user.authentication.InvalidVerificationCodeException;
-import com.climbassist.api.user.authentication.UserAuthenticationException;
+import com.climbassist.api.user.authentication.IncorrectPasswordException;
+import com.climbassist.api.user.authentication.IncorrectVerificationCodeException;
 import com.climbassist.api.user.authentication.UserNotVerifiedException;
 import com.climbassist.api.user.authentication.UserSessionData;
 import com.climbassist.api.user.authentication.UsernameExistsException;
@@ -95,7 +94,8 @@ public class UserManager {
     }
 
     public UserSessionData signIn(@NonNull Alias alias, @NonNull String password)
-            throws UserAuthenticationException, com.climbassist.api.user.authentication.UserNotFoundException {
+            throws com.climbassist.api.user.authentication.UserNotFoundException, UserNotVerifiedException,
+            EmailNotVerifiedException, IncorrectPasswordException {
         verifyUserIsInUsableState(alias);
 
         try {
@@ -111,7 +111,7 @@ public class UserManager {
                     .build();
         } catch (NotAuthorizedException e) {
             log.warn("Caught exception when signing-in user", e);
-            throw new InvalidPasswordException();
+            throw new IncorrectPasswordException();
         }
     }
 
@@ -151,7 +151,7 @@ public class UserManager {
     }
 
     public void verifyEmail(@NonNull String accessToken, @NonNull String verificationCode)
-            throws InvalidVerificationCodeException, EmailAlreadyVerifiedException {
+            throws IncorrectVerificationCodeException, EmailAlreadyVerifiedException {
         UserData userData = getUserData(accessToken);
         if (userData.isEmailVerified()) {
             throw new EmailAlreadyVerifiedException();
@@ -162,7 +162,7 @@ public class UserManager {
                     .withAccessToken(accessToken)
                     .withCode(verificationCode));
         } catch (ExpiredCodeException | CodeMismatchException e) {
-            throw new InvalidVerificationCodeException(e);
+            throw new IncorrectVerificationCodeException(e);
         }
     }
 
@@ -199,13 +199,13 @@ public class UserManager {
     }
 
     public void changePassword(@NonNull String accessToken, @NonNull String currentPassword,
-                               @NonNull String newPassword) throws InvalidPasswordException {
+                               @NonNull String newPassword) throws IncorrectPasswordException {
         try {
             awsCognitoIdentityProvider.changePassword(new ChangePasswordRequest().withAccessToken(accessToken)
                     .withPreviousPassword(currentPassword)
                     .withProposedPassword(newPassword));
         } catch (NotAuthorizedException e) {
-            throw new InvalidPasswordException();
+            throw new IncorrectPasswordException();
         }
     }
 
@@ -224,7 +224,7 @@ public class UserManager {
     }
 
     public void resetPassword(@NonNull Alias alias, @NonNull String verificationCode, @NonNull String newPassword)
-            throws InvalidVerificationCodeException, com.climbassist.api.user.authentication.UserNotFoundException,
+            throws IncorrectVerificationCodeException, com.climbassist.api.user.authentication.UserNotFoundException,
             UserNotVerifiedException, EmailNotVerifiedException {
         verifyUserIsInUsableState(alias);
         try {
@@ -234,7 +234,7 @@ public class UserManager {
                     .withConfirmationCode(verificationCode)
                     .withPassword(newPassword));
         } catch (CodeMismatchException | ExpiredCodeException e) {
-            throw new InvalidVerificationCodeException(e);
+            throw new IncorrectVerificationCodeException(e);
         }
     }
 

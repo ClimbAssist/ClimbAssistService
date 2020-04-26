@@ -17,4 +17,5 @@ public class ApiResponse<ResponseType> {
     private com.climbassist.api.ApiResponse.Error error;
     private ResponseType data;
     private Set<Cookie> cookies;
+    private int httpStatus;
 }

@@ -75,7 +75,7 @@ class AuthorizationInterceptorTest {
 
     @Test
     void preHandle_returnsTrue_whenHandlerDoesNotHaveAuthorizationAnnotation()
-            throws NoSuchMethodException, UserAuthorizationException {
+            throws NoSuchMethodException, AuthorizationException {
         class TestClass {
 
             public void testMethod() {
@@ -92,7 +92,7 @@ class AuthorizationInterceptorTest {
     }
 
     @Test
-    void preHandle_throwsUserAuthorizationException_whenRequestDoesNotHaveSessionCookies()
+    void preHandle_throwsAuthorizationException_whenRequestDoesNotHaveSessionCookies()
             throws NoSuchMethodException {
         class TestClass {
 
@@ -104,7 +104,7 @@ class AuthorizationInterceptorTest {
 
         HandlerMethod handlerMethod = new HandlerMethod(new TestClass(), TestClass.class.getMethod("testMethod"));
         when(mockHttpServletRequest.getCookies()).thenReturn(new Cookie[]{});
-        assertThrows(UserAuthorizationException.class,
+        assertThrows(AuthorizationException.class,
                 () -> authorizationInterceptor.preHandle(mockHttpServletRequest, mockHttpServletResponse,
                         handlerMethod));
         verify(mockHttpServletRequest, atLeastOnce()).getCookies();
@@ -114,7 +114,7 @@ class AuthorizationInterceptorTest {
 
     @Test
     void preHandle_setsCookiesAndSetsAccessTokenSessionAttributeAndReturnsTrue()
-            throws NoSuchMethodException, UserAuthorizationException {
+            throws NoSuchMethodException, AuthorizationException {
         class TestClass {
 
             @Authorization(NullAuthorizationHandler.class)

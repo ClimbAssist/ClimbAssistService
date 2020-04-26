@@ -10,16 +10,21 @@ import static org.hamcrest.Matchers.nullValue;
 @UtilityClass
 public class ExceptionUtils {
 
-    public static void assertUserAuthorizationException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 401, "UserAuthorizationException");
+    public static void assertNoException(ApiResponse<?> apiResponse) {
+        assertThat(apiResponse.getError(), is(nullValue()));
+        assertThat(apiResponse.getHttpStatus(), is(200));
+    }
+
+    public static void assertAuthorizationException(ApiResponse<?> apiResponse) {
+        assertSpecificException(apiResponse, 401, "AuthorizationException");
     }
 
     public static void assertEmailAlreadyVerifiedException(ApiResponse<?> apiResponse) {
         assertSpecificException(apiResponse, 409, "EmailAlreadyVerifiedException");
     }
 
-    public static void assertInvalidPasswordException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 401, "InvalidPasswordException");
+    public static void assertIncorrectPasswordException(ApiResponse<?> apiResponse) {
+        assertSpecificException(apiResponse, 401, "IncorrectPasswordException");
     }
 
     public static void assertEmailNotVerifiedException(ApiResponse<?> apiResponse) {
@@ -34,43 +39,22 @@ public class ExceptionUtils {
         assertSpecificException(apiResponse, 404, "UserNotFoundException");
     }
 
-    public static void assertInvalidVerificationCodeException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 401, "InvalidVerificationCodeException");
+    public static void assertIncorrectVerificationCodeException(ApiResponse<?> apiResponse) {
+        assertSpecificException(apiResponse, 401, "IncorrectVerificationCodeException");
     }
 
-    public static void assertCountryNotFoundException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 404, "CountryNotFoundException");
+    public static void assertResourceNotFoundException(ApiResponse<?> apiResponse) {
+        assertSpecificException(apiResponse, 404, "ResourceNotFoundException");
     }
 
-    public static void assertRegionNotFoundException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 404, "RegionNotFoundException");
+    public static void assertResourceNotEmptyException(ApiResponse<?> apiResponse) {
+        assertSpecificException(apiResponse, 409, "ResourceNotEmptyException");
     }
 
-    public static void assertAreaNotFoundException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 404, "AreaNotFoundException");
-    }
-
-    public static void assertSubAreaNotFoundException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 404, "SubAreaNotFoundException");
-    }
-
-    public static void assertCragNotFoundException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 404, "CragNotFoundException");
-    }
-
-    public static void assertWallNotFoundException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 404, "WallNotFoundException");
-    }
-
-    public static void assertRouteNotFoundException(ApiResponse<?> apiResponse) {
-        assertSpecificException(apiResponse, 404, "RouteNotFoundException");
-    }
-
-    public static void assertSpecificException(ApiResponse<?> apiResponse, int code, String type) {
+    public static void assertSpecificException(ApiResponse<?> apiResponse, int httpStatus, String type) {
         assertThat(apiResponse.getData(), is(nullValue()));
         assertThat(apiResponse.getError()
                 .getType(), is(equalTo(type)));
-        assertThat(apiResponse.getError()
-                .getCode(), is(equalTo(code)));
+        assertThat(apiResponse.getHttpStatus(), is(equalTo(httpStatus)));
     }
 }

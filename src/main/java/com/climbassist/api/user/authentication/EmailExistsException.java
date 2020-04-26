@@ -8,4 +8,9 @@ public class EmailExistsException extends AliasExistsException {
     public EmailExistsException(@NonNull String email) {
         super(new Alias(email, Alias.AliasType.EMAIL));
     }
+
+    @Override
+    public String getType() {
+        return "EmailExistsException";
+    }
 }

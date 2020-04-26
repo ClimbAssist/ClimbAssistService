@@ -69,7 +69,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void getCountry_returnsCountryNotFoundException_whenCountryDoesNotExist() {
         ApiResponse<Country> apiResponse = climbAssistClient.getCountry("does-not-exist");
-        ExceptionUtils.assertCountryNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -109,7 +109,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         Country country1 = resourceManager.createCountry(cookies, 0);
         Country country2 = resourceManager.createCountry(cookies, 0);
         ApiResponse<Set<Country>> apiResponse = climbAssistClient.listCountries();
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), hasItems(country1, country2));
     }
 
@@ -137,19 +137,19 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void createCountry_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void createCountry_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<CreateCountryResult> apiResponse = climbAssistClient.createCountry(NewCountry.builder()
                 .name(NAME)
                 .build(), ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void createCountry_returnsUserAuthorizationException_whenUserIsNotAdministrator() {
+    public void createCountry_returnsAuthorizationException_whenUserIsNotAdministrator() {
         ApiResponse<CreateCountryResult> apiResponse = climbAssistClient.createCountry(NewCountry.builder()
                 .name(NAME)
                 .build(), cookies);
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
@@ -159,7 +159,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
                 .countryId("does-not-exist")
                 .name(NAME)
                 .build(), cookies);
-        ExceptionUtils.assertCountryNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -171,7 +171,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
                 .name(NAME + "-updated")
                 .build();
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateCountry(updatedCountry, cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         Country actualCountry = climbAssistClient.getCountry(originalCountry.getCountryId())
@@ -180,23 +180,23 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void deleteCountry_returnsUserAuthorizationException_whenUserIsNotSignedIn() {
+    public void deleteCountry_returnsAuthorizationException_whenUserIsNotSignedIn() {
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCountry("does-not-exist",
                 ImmutableSet.of());
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
-    public void deleteCountry_returnsUserAuthorizationException_whenUserIsNotAdministrator() {
+    public void deleteCountry_returnsAuthorizationException_whenUserIsNotAdministrator() {
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCountry(NAME, cookies);
-        ExceptionUtils.assertUserAuthorizationException(apiResponse);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
     @Test
     public void deleteCountry_returnsCountryNotFoundException_whenCountryDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCountry("does-not-exist", cookies);
-        ExceptionUtils.assertCountryNotFoundException(apiResponse);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
     @Test
@@ -205,11 +205,11 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         Country country = resourceManager.createCountry(cookies, 0);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCountry(country.getCountryId(),
                 cookies);
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         ApiResponse<Country> getCountryResult = climbAssistClient.getCountry(country.getCountryId());
-        ExceptionUtils.assertCountryNotFoundException(getCountryResult);
+        ExceptionUtils.assertResourceNotFoundException(getCountryResult);
     }
 
     @Test
@@ -218,7 +218,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         Country country = resourceManager.createCountry(cookies, 1);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCountry(country.getCountryId(),
                 cookies);
-        ExceptionUtils.assertSpecificException(apiResponse, 409, "CountryNotEmptyException");
+        ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
 
     private void runGetCountryTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
@@ -228,7 +228,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         resourceManager.removeChildren(country, Country.class, maybeRequestDepth.orElse(0));
         ApiResponse<Country> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getCountry(
                 country.getCountryId(), maybeRequestDepth.get()) : climbAssistClient.getCountry(country.getCountryId());
-        assertThat(apiResponse.getError(), is(nullValue()));
+        ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(country)));
     }
 

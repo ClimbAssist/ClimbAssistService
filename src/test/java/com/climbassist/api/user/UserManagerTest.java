@@ -33,9 +33,9 @@ import com.climbassist.api.user.authentication.AccessTokenExpiredException;
 import com.climbassist.api.user.authentication.EmailAlreadyVerifiedException;
 import com.climbassist.api.user.authentication.EmailExistsException;
 import com.climbassist.api.user.authentication.EmailNotVerifiedException;
-import com.climbassist.api.user.authentication.InvalidPasswordException;
-import com.climbassist.api.user.authentication.InvalidVerificationCodeException;
-import com.climbassist.api.user.authentication.UserAuthenticationException;
+import com.climbassist.api.user.authentication.IncorrectPasswordException;
+import com.climbassist.api.user.authentication.IncorrectVerificationCodeException;
+import com.climbassist.api.user.authentication.AuthenticationException;
 import com.climbassist.api.user.authentication.UserNotVerifiedException;
 import com.climbassist.api.user.authentication.UserSessionData;
 import com.climbassist.api.user.authentication.UsernameExistsException;
@@ -223,17 +223,17 @@ class UserManagerTest {
     }
 
     @Test
-    void signIn_throwsInvalidPasswordException_whenPasswordIsIncorrect() {
+    void signIn_throwsIncorrectPasswordException_whenPasswordIsIncorrect() {
         when(mockAwsCognitoIdentityProvider.listUsers(any())).thenReturn(LIST_USERS_RESULT);
         when(mockAwsCognitoIdentityProvider.initiateAuth(any())).thenThrow(new NotAuthorizedException(""));
-        assertThrows(InvalidPasswordException.class, () -> userManager.signIn(USERNAME_ALIAS, PASSWORD));
+        assertThrows(IncorrectPasswordException.class, () -> userManager.signIn(USERNAME_ALIAS, PASSWORD));
         verify(mockAwsCognitoIdentityProvider).listUsers(EXPECTED_LIST_USERS_REQUEST_USERNAME);
         verify(mockAwsCognitoIdentityProvider).initiateAuth(EXPECTED_INITIATE_AUTH_REQUEST_FOR_SIGN_IN_USERNAME);
     }
 
     @Test
     void signIn_returnsUserSessionData_whenSigningInWithUsername()
-            throws UserAuthenticationException, com.climbassist.api.user.authentication.UserNotFoundException {
+            throws AuthenticationException, com.climbassist.api.user.authentication.UserNotFoundException {
         when(mockAwsCognitoIdentityProvider.listUsers(any())).thenReturn(LIST_USERS_RESULT);
         when(mockAwsCognitoIdentityProvider.initiateAuth(any())).thenReturn(
                 new InitiateAuthResult().withAuthenticationResult(
@@ -249,7 +249,7 @@ class UserManagerTest {
 
     @Test
     void signIn_returnsUserSessionData_whenSigningInWithEmail()
-            throws UserAuthenticationException, com.climbassist.api.user.authentication.UserNotFoundException {
+            throws AuthenticationException, com.climbassist.api.user.authentication.UserNotFoundException {
         when(mockAwsCognitoIdentityProvider.listUsers(any())).thenReturn(LIST_USERS_RESULT);
         when(mockAwsCognitoIdentityProvider.initiateAuth(any())).thenReturn(
                 new InitiateAuthResult().withAuthenticationResult(
@@ -330,12 +330,12 @@ class UserManagerTest {
     }
 
     @Test
-    void verifyEmail_throwsInvalidVerificationCodeException_whenCodeIsInvalid() {
+    void verifyEmail_throwsIncorrectVerificationCodeException_whenCodeIsInvalid() {
         when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(GET_USER_RESULT_EMAIL_NOT_VERIFIED);
         when(mockAwsCognitoIdentityProvider.adminListGroupsForUser(any())).thenReturn(
                 new AdminListGroupsForUserResult().withGroups());
         when(mockAwsCognitoIdentityProvider.verifyUserAttribute(any())).thenThrow(new CodeMismatchException(""));
-        assertThrows(InvalidVerificationCodeException.class,
+        assertThrows(IncorrectVerificationCodeException.class,
                 () -> userManager.verifyEmail(ACCESS_TOKEN, VERIFICATION_CODE));
         verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
         verify(mockAwsCognitoIdentityProvider).adminListGroupsForUser(EXPECTED_ADMIN_LIST_GROUPS_FOR_USER_REQUEST);
@@ -343,12 +343,12 @@ class UserManagerTest {
     }
 
     @Test
-    void verifyEmail_throwsInvalidVerificationCodeException_whenCodeIsExpired() {
+    void verifyEmail_throwsIncorrectVerificationCodeException_whenCodeIsExpired() {
         when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(GET_USER_RESULT_EMAIL_NOT_VERIFIED);
         when(mockAwsCognitoIdentityProvider.adminListGroupsForUser(any())).thenReturn(
                 new AdminListGroupsForUserResult().withGroups());
         when(mockAwsCognitoIdentityProvider.verifyUserAttribute(any())).thenThrow(new ExpiredCodeException(""));
-        assertThrows(InvalidVerificationCodeException.class,
+        assertThrows(IncorrectVerificationCodeException.class,
                 () -> userManager.verifyEmail(ACCESS_TOKEN, VERIFICATION_CODE));
         verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
         verify(mockAwsCognitoIdentityProvider).adminListGroupsForUser(EXPECTED_ADMIN_LIST_GROUPS_FOR_USER_REQUEST);
@@ -357,7 +357,7 @@ class UserManagerTest {
 
     @Test
     void verifyEmail_verifiesEmail_whenCodeIsValid()
-            throws InvalidVerificationCodeException, EmailAlreadyVerifiedException {
+            throws IncorrectVerificationCodeException, EmailAlreadyVerifiedException {
         when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(GET_USER_RESULT_EMAIL_NOT_VERIFIED);
         when(mockAwsCognitoIdentityProvider.adminListGroupsForUser(any())).thenReturn(
                 new AdminListGroupsForUserResult().withGroups());
@@ -425,10 +425,10 @@ class UserManagerTest {
     }
 
     @Test
-    void changePassword_throwsInvalidPasswordException_whenCurrentPasswordIsIncorrect() {
+    void changePassword_throwsIncorrectPasswordException_whenCurrentPasswordIsIncorrect() {
         String wrongPassword = "dammit-jim";
         when(mockAwsCognitoIdentityProvider.changePassword(any())).thenThrow(new NotAuthorizedException(""));
-        assertThrows(InvalidPasswordException.class,
+        assertThrows(IncorrectPasswordException.class,
                 () -> userManager.changePassword(ACCESS_TOKEN, wrongPassword, NEW_PASSWORD));
         verify(mockAwsCognitoIdentityProvider).changePassword(new ChangePasswordRequest().withAccessToken(ACCESS_TOKEN)
                 .withPreviousPassword(wrongPassword)
@@ -436,7 +436,7 @@ class UserManagerTest {
     }
 
     @Test
-    void changePassword_changesPassword() throws InvalidPasswordException {
+    void changePassword_changesPassword() throws IncorrectPasswordException {
         userManager.changePassword(ACCESS_TOKEN, PASSWORD, NEW_PASSWORD);
         verify(mockAwsCognitoIdentityProvider).changePassword(new ChangePasswordRequest().withAccessToken(ACCESS_TOKEN)
                 .withPreviousPassword(PASSWORD)
@@ -508,10 +508,10 @@ class UserManagerTest {
     }
 
     @Test
-    void resetPassword_throwsInvalidVerificationCodeException_whenCodeIsIncorrect() {
+    void resetPassword_throwsIncorrectVerificationCodeException_whenCodeIsIncorrect() {
         when(mockAwsCognitoIdentityProvider.listUsers(any())).thenReturn(LIST_USERS_RESULT);
         when(mockAwsCognitoIdentityProvider.confirmForgotPassword(any())).thenThrow(new CodeMismatchException(""));
-        assertThrows(InvalidVerificationCodeException.class,
+        assertThrows(IncorrectVerificationCodeException.class,
                 () -> userManager.resetPassword(USERNAME_ALIAS, VERIFICATION_CODE, NEW_PASSWORD));
         verify(mockAwsCognitoIdentityProvider).listUsers(EXPECTED_LIST_USERS_REQUEST_USERNAME);
         verify(mockAwsCognitoIdentityProvider).confirmForgotPassword(new ConfirmForgotPasswordRequest().withClientId(
@@ -522,10 +522,10 @@ class UserManagerTest {
     }
 
     @Test
-    void resetPassword_throwsInvalidVerificationCodeException_whenCodeIsExpired() {
+    void resetPassword_throwsIncorrectVerificationCodeException_whenCodeIsExpired() {
         when(mockAwsCognitoIdentityProvider.listUsers(any())).thenReturn(LIST_USERS_RESULT);
         when(mockAwsCognitoIdentityProvider.confirmForgotPassword(any())).thenThrow(new ExpiredCodeException(""));
-        assertThrows(InvalidVerificationCodeException.class,
+        assertThrows(IncorrectVerificationCodeException.class,
                 () -> userManager.resetPassword(USERNAME_ALIAS, VERIFICATION_CODE, NEW_PASSWORD));
         verify(mockAwsCognitoIdentityProvider).listUsers(EXPECTED_LIST_USERS_REQUEST_USERNAME);
         verify(mockAwsCognitoIdentityProvider).confirmForgotPassword(new ConfirmForgotPasswordRequest().withClientId(
@@ -538,7 +538,7 @@ class UserManagerTest {
     @Test
     void resetPassword_callsConfirmForgotPasswordWithUsername_whenUsernameIsPassedIn()
             throws com.climbassist.api.user.authentication.UserNotFoundException, EmailNotVerifiedException,
-            UserNotVerifiedException, InvalidVerificationCodeException {
+            UserNotVerifiedException, IncorrectVerificationCodeException {
         when(mockAwsCognitoIdentityProvider.listUsers(any())).thenReturn(LIST_USERS_RESULT);
         userManager.resetPassword(USERNAME_ALIAS, VERIFICATION_CODE, NEW_PASSWORD);
         verify(mockAwsCognitoIdentityProvider).listUsers(EXPECTED_LIST_USERS_REQUEST_USERNAME);
@@ -552,7 +552,7 @@ class UserManagerTest {
     @Test
     void resetPassword_callsForgotPasswordWithEmail_whenEmailIsPassedIn()
             throws com.climbassist.api.user.authentication.UserNotFoundException, EmailNotVerifiedException,
-            UserNotVerifiedException, InvalidVerificationCodeException {
+            UserNotVerifiedException, IncorrectVerificationCodeException {
         when(mockAwsCognitoIdentityProvider.listUsers(any())).thenReturn(LIST_USERS_RESULT);
         userManager.resetPassword(EMAIL_ALIAS, VERIFICATION_CODE, NEW_PASSWORD);
         verify(mockAwsCognitoIdentityProvider).listUsers(EXPECTED_LIST_USERS_REQUEST_EMAIL);

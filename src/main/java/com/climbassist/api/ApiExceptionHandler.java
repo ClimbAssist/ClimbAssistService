@@ -1,13 +1,5 @@
 package com.climbassist.api;
 
-import com.climbassist.api.resource.common.ResourceNotEmptyException;
-import com.climbassist.api.resource.common.ResourceNotFoundException;
-import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
-import com.climbassist.api.user.authentication.AliasExistsException;
-import com.climbassist.api.user.authentication.EmailAlreadyVerifiedException;
-import com.climbassist.api.user.authentication.UserAuthenticationException;
-import com.climbassist.api.user.authentication.UserNotFoundException;
-import com.climbassist.api.user.authorization.UserAuthorizationException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Builder;
@@ -54,42 +46,23 @@ public class ApiExceptionHandler {
      * of falling back to Spring's default exception handling
      */
     @RequestMapping(path = ApiConfiguration.API_PATH)
-    public void handleApiWithNoMapping(HttpServletRequest httpServletRequest) throws PathNotFoundException {
-        throw new PathNotFoundException(httpServletRequest.getServletPath());
+    public void handleApiWithNoMapping(HttpServletRequest httpServletRequest) throws ApiNotFoundException {
+        throw new ApiNotFoundException(httpServletRequest.getServletPath(), httpServletRequest.getMethod());
     }
 
-    @ExceptionHandler(
-            value = {ResourceNotFoundException.class, PathNotFoundException.class, UserNotFoundException.class})
-    public ResponseEntity<Object> handleNotFoundException(Exception exception) throws JsonProcessingException {
-        log.warn("Caught not found exception.", exception);
-        return buildResponseEntity(exception.getClass()
-                .getSimpleName(), exception.getMessage(), HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(
-            value = {AliasExistsException.class, EmailAlreadyVerifiedException.class, ResourceNotEmptyException.class})
-    public ResponseEntity<Object> handleConflictException(Exception exception) throws JsonProcessingException {
-        log.warn(String.format("Caught %s.", exception.getClass()
-                .getSimpleName()), exception);
-        return buildResponseEntity(exception.getClass()
-                .getSimpleName(), exception.getMessage(), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(value = {UserAuthenticationException.class, UserAuthorizationException.class})
-    public ResponseEntity<Object> handleUnauthorizedException(Exception exception) throws JsonProcessingException {
-        log.warn(String.format("Caught %s.", exception.getClass()
-                .getSimpleName()), exception);
-        return buildResponseEntity(exception.getClass()
-                .getSimpleName(), exception.getMessage(), HttpStatus.UNAUTHORIZED);
-    }
-
-    @ExceptionHandler(value = InvalidOrderingException.class)
-    public ResponseEntity<Object> handleInvalidOrderingException(InvalidOrderingException exception)
+    @ExceptionHandler(value = {ApiException.class})
+    public ResponseEntity<Object> handleApiException(@NonNull ApiException apiException)
             throws JsonProcessingException {
-        log.warn(String.format("Caught %s.", exception.getClass()
-                .getSimpleName()), exception);
-        return buildResponseEntity(exception.getClass()
-                .getSimpleName(), exception.getMessage(), HttpStatus.CONFLICT);
+        log.warn(String.format("Caught %s.", apiException.getType()), apiException);
+        return buildResponseEntity(apiException.getType(), apiException.getMessage(), apiException.getHttpStatus());
+    }
+
+    @ExceptionHandler(value = {RuntimeApiException.class})
+    public ResponseEntity<Object> handleRuntimeApiException(@NonNull RuntimeApiException runtimeApiException)
+            throws JsonProcessingException {
+        log.warn(String.format("Caught %s.", runtimeApiException.getType()), runtimeApiException);
+        return buildResponseEntity(runtimeApiException.getType(), runtimeApiException.getMessage(),
+                runtimeApiException.getHttpStatus());
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
@@ -98,16 +71,14 @@ public class ApiExceptionHandler {
         log.warn("Caught MethodArgumentNotValidException.", methodArgumentNotValidException);
         String errorMessage = getErrorMessageFromBindingResult(methodArgumentNotValidException.getBindingResult(),
                 methodArgumentNotValidException);
-        return buildResponseEntity(methodArgumentNotValidException.getClass()
-                .getSimpleName(), errorMessage, HttpStatus.BAD_REQUEST);
+        return handleInvalidRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = BindException.class)
     public ResponseEntity<Object> handleBindException(BindException bindException) throws JsonProcessingException {
         log.warn("Caught BindException.", bindException);
         String errorMessage = getErrorMessageFromBindingResult(bindException, bindException);
-        return buildResponseEntity(bindException.getClass()
-                .getSimpleName(), errorMessage, HttpStatus.BAD_REQUEST);
+        return handleInvalidRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = ConstraintViolationException.class)
@@ -118,8 +89,7 @@ public class ApiExceptionHandler {
                 .iterator()
                 .next()
                 .getMessage();
-        return buildResponseEntity(constraintViolationException.getClass()
-                .getSimpleName(), errorMessage, HttpStatus.BAD_REQUEST);
+        return handleInvalidRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = HttpMessageNotReadableException.class)
@@ -129,13 +99,13 @@ public class ApiExceptionHandler {
         if (httpMessageNotReadableException.getMessage() != null) {
             if (httpMessageNotReadableException.getMessage()
                     .contains("Required request body is missing")) {
-                return buildResponseEntity(httpMessageNotReadableException.getClass()
-                        .getSimpleName(), "Required request body is missing.", HttpStatus.BAD_REQUEST);
+                return handleInvalidRequestException("Required request body is missing.");
+
             }
             if (httpMessageNotReadableException.getMessage()
                     .contains("JSON parse error")) {
-                return buildResponseEntity(httpMessageNotReadableException.getClass()
-                        .getSimpleName(), "Unable to parse input.", HttpStatus.BAD_REQUEST);
+                return handleInvalidRequestException("Unable to parse input.");
+
             }
         }
         return buildGenericResponseEntity();
@@ -146,16 +116,14 @@ public class ApiExceptionHandler {
             MissingServletRequestPartException missingServletRequestPartException) throws JsonProcessingException {
         log.warn("Caught MissingServletRequestPartException.", missingServletRequestPartException);
         String errorMessage = missingServletRequestPartException.getMessage();
-        return buildResponseEntity(missingServletRequestPartException.getClass()
-                .getSimpleName(), errorMessage, HttpStatus.BAD_REQUEST);
+        return handleInvalidRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = MultipartException.class)
     public ResponseEntity<Object> handleMultipartException(MultipartException multipartException)
             throws JsonProcessingException {
         log.warn("Caught MultipartException.", multipartException);
-        return buildResponseEntity(multipartException.getClass()
-                .getSimpleName(), multipartException.getMessage(), HttpStatus.BAD_REQUEST);
+        return handleInvalidRequestException(multipartException.getMessage());
     }
 
     @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
@@ -166,14 +134,17 @@ public class ApiExceptionHandler {
                 methodArgumentTypeMismatchException.getParameter()
                         .getParameterType()
                         .getSimpleName());
-        return buildResponseEntity(methodArgumentTypeMismatchException.getClass()
-                .getSimpleName(), message, HttpStatus.BAD_REQUEST);
+        return handleInvalidRequestException(message);
     }
 
     @ExceptionHandler(value = Exception.class)
     public ResponseEntity<Object> handleException(Exception exception) throws JsonProcessingException {
         log.error("Encountered an unexpected failure.", exception);
         return buildGenericResponseEntity();
+    }
+
+    private ResponseEntity<Object> handleInvalidRequestException(String message) throws JsonProcessingException {
+        return buildResponseEntity("InvalidRequestException", message, HttpStatus.BAD_REQUEST);
     }
 
     // This grabs the first validation message and returns it
@@ -193,7 +164,6 @@ public class ApiExceptionHandler {
                                                        HttpStatus httpStatus) throws JsonProcessingException {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         String error = objectMapper.writeValueAsString(ApiResponse.Error.builder()
-                .code(httpStatus.value())
                 .type(exceptionType)
                 .message(exceptionMessage)
                 .build());

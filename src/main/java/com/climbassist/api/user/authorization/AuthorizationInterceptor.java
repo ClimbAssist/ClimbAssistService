@@ -17,14 +17,14 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                             Object handler) throws UserAuthorizationException {
+                             Object handler) throws AuthorizationException {
         HandlerMethod handlerMethod = (HandlerMethod) handler;
         Authorization authorization = handlerMethod.getMethodAnnotation(Authorization.class);
         if (authorization == null) {
             return true;
         }
         if (!SessionUtils.hasSessionCookies(httpServletRequest)) {
-            throw new UserAuthorizationException();
+            throw new AuthorizationException();
         }
 
         UserSessionData userSessionData = SessionUtils.getUserSessionData(httpServletRequest);

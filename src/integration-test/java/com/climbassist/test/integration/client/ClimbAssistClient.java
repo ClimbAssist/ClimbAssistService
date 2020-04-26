@@ -480,11 +480,13 @@ public class ClimbAssistClient {
             BasicCookieStore basicCookieStore = new BasicCookieStore();
             basicCookieStore.addCookies(cookies.toArray(new Cookie[0]));
             httpClientContext.setCookieStore(basicCookieStore);
-            Response apiResponse = objectMapper.readValue(call(httpRequestBase,
-                    Optional.of(httpClientContext)).getEntity()
+            HttpResponse httpResponse = call(httpRequestBase, Optional.of(httpClientContext));
+            Response apiResponse = objectMapper.readValue(httpResponse.getEntity()
                     .getContent(), responseTypeReference);
             apiResponse.setCookies(new HashSet<>(httpClientContext.getCookieStore()
                     .getCookies()));
+            apiResponse.setHttpStatus(httpResponse.getStatusLine()
+                    .getStatusCode());
             return apiResponse;
         } catch (IOException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             throw new ClimbAssistClientException(e);
