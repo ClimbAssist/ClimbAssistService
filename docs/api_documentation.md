@@ -1749,3 +1749,16 @@ Only one of username or email may be present, not both.
     "successful": true
 }
 ```
+
+#### GetRecaptchaSiteKey
+
+|Method|Path|Description|Authorization|
+|---|---|---|---|
+|`GET`|`/v1/recaptcha-site-key`|Returns the reCAPTCHA site key for this stage.|None|
+
+##### Output
+```json
+{
+    "siteKey": string
+}
+```

@@ -1,5 +1,6 @@
 package com.climbassist.test.integration.client;
 
+import com.climbassist.api.contact.GetRecaptchaSiteKeyResult;
 import com.climbassist.api.resource.area.Area;
 import com.climbassist.api.resource.area.CreateAreaResult;
 import com.climbassist.api.resource.area.NewArea;
@@ -86,17 +87,17 @@ import java.util.Set;
 public class ClimbAssistClient {
 
     @NonNull
-    private String applicationEndpoint;
+    private final String applicationEndpoint;
     // we have to use a factory instead of reusing an HttpClient because we need a clean state for every call
     @NonNull
-    private HttpClientFactory httpClientFactory;
+    private final HttpClientFactory httpClientFactory;
     @NonNull
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     // This is to avoid throttling from ClimbAssist dependencies. If we call too fast, it can cause InternalFailures.
     // (yes, obviously we should implement this server-side as well but we'll cross that bridge when we come to it.)
     @SuppressWarnings("UnstableApiUsage")
     @NonNull
-    private RateLimiter rateLimiter;
+    private final RateLimiter rateLimiter;
 
     public HttpResponse get(@NonNull String path) {
         try {
@@ -391,6 +392,10 @@ public class ClimbAssistClient {
                                                              @NonNull Set<Cookie> cookies) {
         return delete("/v1/path-points/" + pathPointId, cookies,
                 new TypeReference<ApiResponse<DeleteResourceResult>>() {});
+    }
+
+    public ApiResponse<GetRecaptchaSiteKeyResult> getRecaptchaSiteKey() {
+        return get("/v1/recaptcha-site-key", new TypeReference<ApiResponse<GetRecaptchaSiteKeyResult>>() {});
     }
 
     private <Response extends ApiResponse<?>> Response get(String path, Set<Cookie> cookies,

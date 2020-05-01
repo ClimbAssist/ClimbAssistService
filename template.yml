@@ -15,6 +15,12 @@ Parameters:
     - true
     - false
     Default: true
+  Stage:
+    Type: String
+    AllowedValues:
+    - dev
+    - beta
+    - prod
 
 Conditions:
   IsProd:
@@ -289,6 +295,9 @@ Resources:
           - !Sub
             - ${Name}@climbassist.com
             - { Name: !Select [1, !Split ['-', !Ref ResourceNameSuffix]] }
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: stage
+        Value: !Ref Stage
   EBInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Condition: CreateComputeResources
@@ -398,8 +407,10 @@ Resources:
             Resource: !GetAtt SesVerifiedEmailIdentity.Arn
           - Action: secretsmanager:GetSecretValue
             Effect: Allow
-            # This was created by hand
-            Resource: arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRsaPrivateKey-mzRTKi
+            Resource:
+            # These were created by hand
+            - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRsaPrivateKey-mzRTKi
+            - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRecaptchaKeys*
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
 

@@ -22,6 +22,11 @@ public class CommonConfiguration {
     }
 
     @Bean
+    public String stage(@Value("${stage}") @NonNull String stage) {
+        return stage;
+    }
+
+    @Bean
     public HttpClient httpClient() {
         return HttpClientBuilder.create()
                 .build();

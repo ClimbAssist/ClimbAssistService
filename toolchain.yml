@@ -377,10 +377,12 @@ Resources:
           Configuration:
             ActionMode: CREATE_UPDATE
             Capabilities: CAPABILITY_NAMED_IAM
+            # TODO maybe remove these somewhat duplicated parameters later
             ParameterOverrides: !Sub |
               {
                 "EBTrustRole": "${EBTrustRole}",
-                "ResourceNameSuffix": "-beta"
+                "ResourceNameSuffix": "-beta",
+                "Stage": "beta"
               }
             RoleArn: !GetAtt CloudFormationTrustRole.Arn
             StackName: !Sub awscodestar-climbassist-infrastructure-beta
@@ -417,7 +419,8 @@ Resources:
             Capabilities: CAPABILITY_NAMED_IAM
             ParameterOverrides: !Sub |
               {
-                "EBTrustRole": "${EBTrustRole}"
+                "EBTrustRole": "${EBTrustRole}",
+                "Stage": "prod"
               }
             RoleArn: !GetAtt CloudFormationTrustRole.Arn
             StackName: !Sub awscodestar-climbassist-infrastructure

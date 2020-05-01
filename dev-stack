@@ -31,6 +31,6 @@ mvn clean &&
   mvn -f pom.xml package &&
   sam package --template-file template.yml --s3-bucket "$NAME"-dev --output-template-file packaged-template.yml &&
   sam deploy --template-file packaged-template.yml --s3-bucket "$NAME"-dev --stack-name "$NAME"-dev \
-    --parameter-overrides EBTrustRole=CodeStarWorker-climbassist-EBService ResourceNameSuffix=-"$NAME" \
-    CreateComputeResources="$CREATE_COMPUTE_RESOURCES" --capabilities CAPABILITY_NAMED_IAM
+    --parameter-overrides EBTrustRole=ClimbAssistElasticBeanstalkTrustRole ResourceNameSuffix=-"$NAME" \
+    CreateComputeResources="$CREATE_COMPUTE_RESOURCES" Stage=dev --capabilities CAPABILITY_NAMED_IAM
 rm packaged-template.yml

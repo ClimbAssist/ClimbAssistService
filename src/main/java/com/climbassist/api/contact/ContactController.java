@@ -1,5 +1,7 @@
 package com.climbassist.api.contact;
 
+import com.amazonaws.services.secretsmanager.AWSSecretsManager;
+import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.Body;
 import com.amazonaws.services.simpleemail.model.Content;
@@ -7,6 +9,8 @@ import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
 import com.climbassist.metrics.Metrics;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import lombok.Builder;
 import lombok.NonNull;
@@ -26,9 +30,15 @@ import javax.validation.Valid;
 public class ContactController {
 
     @NonNull
-    final String climbAssistEmail;
+    private final String climbAssistEmail;
     @NonNull
-    final AmazonSimpleEmailService amazonSimpleEmailService;
+    private final AmazonSimpleEmailService amazonSimpleEmailService;
+    @NonNull
+    private final String recaptchaKeysSecretId;
+    @NonNull
+    private final AWSSecretsManager awsSecretsManager;
+    @NonNull
+    private final ObjectMapper objectMapper;
 
     @Metrics(api = "SendContactEmail")
     @RequestMapping(path = "/v1/contact", method = RequestMethod.POST)
@@ -41,6 +51,18 @@ public class ContactController {
                         new Body(new Content(sendContactEmailRequest.getBody())))));
         return SendContactEmailResult.builder()
                 .successful(true)
+                .build();
+    }
+
+    @Metrics(api = "GetRecaptchaSiteKey")
+    @RequestMapping(path = "/v1/recaptcha-site-key", method = RequestMethod.GET)
+    public GetRecaptchaSiteKeyResult getRecaptchaSiteKey() throws JsonProcessingException {
+        String secretString = awsSecretsManager.getSecretValue(
+                new GetSecretValueRequest().withSecretId(recaptchaKeysSecretId))
+                .getSecretString();
+        RecaptchaKeys recaptchaKeys = objectMapper.readValue(secretString, RecaptchaKeys.class);
+        return GetRecaptchaSiteKeyResult.builder()
+                .siteKey(recaptchaKeys.getSiteKey())
                 .build();
     }
 }
