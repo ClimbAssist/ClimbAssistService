@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration>
+<Configuration packages="com.climbassist.logging">
     <Appenders>
         <File name="FileAppender" fileName="${sys:catalina.base}/logs/application.log" immediateFlush="true"
               append="false">
-            <PatternLayout pattern="%X{RequestId} %d{yyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"/>
+            <PatternLayout>
+                <Pattern>%X{RequestId} %d{yyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</Pattern>
+            </PatternLayout>
         </File>
+        <Rewrite name="RedactingRewritePolicy">
+            <RedactingRewritePolicy/>
+            <AppenderRef ref="FileAppender"/>
+        </Rewrite>
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="FileAppender"/>
+            <AppenderRef ref="RedactingRewritePolicy"/>
         </Root>
     </Loggers>
 </Configuration>

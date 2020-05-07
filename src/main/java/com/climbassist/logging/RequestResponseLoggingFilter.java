@@ -2,6 +2,7 @@ package com.climbassist.logging;
 
 import com.climbassist.wrapper.request.RequestWrapper;
 import com.climbassist.wrapper.response.ResponseWrapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -40,7 +41,6 @@ public class RequestResponseLoggingFilter implements Filter {
         RequestWrapper requestWrapper = new RequestWrapper((HttpServletRequest) servletRequest);
 
         if (!isHealthCheck) {
-
             Map<String, String> queryParameters = UriComponentsBuilder.fromHttpRequest(
                     new ServletServerHttpRequest(requestWrapper))
                     .build()
@@ -50,6 +50,7 @@ public class RequestResponseLoggingFilter implements Filter {
                     .collect(Collectors.toMap(Map.Entry::getKey, queryParameter -> queryParameter.getValue()
                             .get(0)));
 
+            boolean isJson = isJson(requestWrapper.getBody());
             LoggableRequest loggableRequest = LoggableRequest.builder()
                     .protocol(requestWrapper.getProtocol())
                     .sender(requestWrapper.getRemoteAddr())
@@ -57,8 +58,9 @@ public class RequestResponseLoggingFilter implements Filter {
                     .path(((HttpServletRequest) servletRequest).getServletPath())
                     .queryString(requestWrapper.getQueryString())
                     .queryParameters(queryParameters)
-                    .headers(getHeaders(requestWrapper).toString())
-                    .body(requestWrapper.getBody())
+                    .headers(getHeaders(requestWrapper))
+                    .body(isJson ? null : requestWrapper.getBody())
+                    .jsonBody(isJson ? requestWrapper.getBody() : null)
                     .build();
             log.info("Request: " + objectMapper.writeValueAsString(loggableRequest));
         }
@@ -69,11 +71,13 @@ public class RequestResponseLoggingFilter implements Filter {
         long duration = System.currentTimeMillis() - startTime;
 
         if (!isHealthCheck) {
+            boolean isJson = isJson(responseWrapper.getBody());
             LoggableResponse loggableResponse = LoggableResponse.builder()
                     .duration(duration)
                     .status(responseWrapper.getStatus())
-                    .headers(getHeaders(responseWrapper).toString())
-                    .body(responseWrapper.getBody())
+                    .headers(getHeaders(responseWrapper))
+                    .body(isJson ? null : responseWrapper.getBody())
+                    .jsonBody(isJson ? responseWrapper.getBody() : null)
                     .build();
             log.info("Response: " + objectMapper.writeValueAsString(loggableResponse));
         }
@@ -103,5 +107,14 @@ public class RequestResponseLoggingFilter implements Filter {
             }
         }
         return headers;
+    }
+
+    private boolean isJson(String string) {
+        try {
+            objectMapper.readTree(string);
+            return true;
+        } catch (JsonProcessingException e) {
+            return false;
+        }
     }
 }

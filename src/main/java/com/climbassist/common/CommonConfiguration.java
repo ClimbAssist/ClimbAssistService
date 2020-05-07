@@ -4,6 +4,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.climbassist.api.resource.common.ResourceIdGenerator;
 import com.climbassist.common.s3.S3Proxy;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +20,9 @@ public class CommonConfiguration {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new GuavaModule());
+        return objectMapper;
     }
 
     @Bean

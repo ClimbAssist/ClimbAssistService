@@ -16,11 +16,11 @@ public class Alias {
         USERNAME("username"),
         EMAIL("email");
 
-        private String name;
+        private final String name;
     }
 
-    private String value;
-    private AliasType type;
+    String value;
+    AliasType type;
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public Alias(Optional<String> username, Optional<String> email) {
