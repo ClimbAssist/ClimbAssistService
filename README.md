@@ -110,7 +110,10 @@ the artifact to deploy.
 1. In the Configuration tab, replace the VM options with the following
 
     `-DresourceNameSuffix=-<name> -DaccountId=172776452117 -Dregion=us-west-2 -DuserPoolClientId=<user pool client ID
-     from your development stack> -DuserPoolId=<user pool ID from your development stack>`
+     from your development stack> -DuserPoolId=<user pool ID from your development stack> 
+     -DclimbAssistEmail=-<name>@climbassist.com`
+     
+     Alternatively, if you don't have an @climbassist.com email address, you can use dev@climbassist.com for the email.
 
 1. Choose OK to save the configuration, then choose the green arrow at the 
 top of the window to run the application. In a few seconds, Intellij will 
@@ -141,7 +144,10 @@ Running from the Command Line
 1. Open your Tomcat Properties application, navigate to the Java tab, and add the following to the Java Options:
 
     `-DresourceNameSuffix=-<name> -DaccountId=172776452117 -Dregion=us-west-2 -DuserPoolClientId=<user pool client ID
-     from your development stack> -DuserPoolId=<user pool ID from your development stack>`
+     from your development stack> -DuserPoolId=<user pool ID from your development stack>
+     -DclimbAssistEmail=-<name>@climbassist.com`
+     
+     Alternatively, if you don't have an @climbassist.com email address, you can use dev@climbassist.com for the email.
 
 1. Restart your tomcat server.
 

@@ -2,5 +2,8 @@
     "username": "%s",
     "email": "%s",
     "password": "%s",
-    "newPassword": "%s"
+    "newPassword": "%s",
+    "replyToEmail": "%s",
+    "subject": "%s",
+    "body": "%s"
 }

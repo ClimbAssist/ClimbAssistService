@@ -6,9 +6,13 @@
     "newPassword":
 
 
-"%s"
+"%s"        ,
 
 
 
+                    "replyToEmail": "%s",
+    "subject"
+    :
+    "%s", "body":"%s"
 
 }
