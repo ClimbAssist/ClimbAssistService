@@ -30,12 +30,12 @@ import com.amazonaws.services.cognitoidp.model.UserStatusType;
 import com.amazonaws.services.cognitoidp.model.UserType;
 import com.amazonaws.services.cognitoidp.model.VerifyUserAttributeRequest;
 import com.climbassist.api.user.authentication.AccessTokenExpiredException;
+import com.climbassist.api.user.authentication.AuthenticationException;
 import com.climbassist.api.user.authentication.EmailAlreadyVerifiedException;
 import com.climbassist.api.user.authentication.EmailExistsException;
 import com.climbassist.api.user.authentication.EmailNotVerifiedException;
 import com.climbassist.api.user.authentication.IncorrectPasswordException;
 import com.climbassist.api.user.authentication.IncorrectVerificationCodeException;
-import com.climbassist.api.user.authentication.AuthenticationException;
 import com.climbassist.api.user.authentication.UserNotVerifiedException;
 import com.climbassist.api.user.authentication.UserSessionData;
 import com.climbassist.api.user.authentication.UsernameExistsException;
@@ -49,6 +49,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -66,6 +68,7 @@ class UserManagerTest {
     private static final String EMAIL = "spock@enterprise.com";
     private static final String PASSWORD = "fascinating";
     private static final String NEW_PASSWORD = "illogical";
+    private static final String USER_ID = "S179-276SP";
     private static final String USER_POOL_ID = "userPoolId";
     private static final String USER_POOL_CLIENT_ID = "clientId";
     private static final String ACCESS_TOKEN = "access-token";
@@ -422,6 +425,30 @@ class UserManagerTest {
         assertThrows(InvalidUserDataException.class, () -> userManager.getUserData(ACCESS_TOKEN));
         verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
         verify(mockAwsCognitoIdentityProvider, never()).adminListGroupsForUser(any());
+    }
+
+    @Test
+    void getUserId_returnsEmpty_whenAccessTokenIsInvalid() {
+        when(mockAwsCognitoIdentityProvider.getUser(any())).thenThrow(new NotAuthorizedException(""));
+        assertThat(userManager.getUserId(ACCESS_TOKEN), is(equalTo(Optional.empty())));
+        verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
+    }
+
+    // I don't think this test case can technically happen, but it's good to double check that we won't crash
+    @Test
+    void getUserId_returnsEmpty_whenUserDoesNotHaveASubAttribute() {
+        when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(new GetUserResult().withUserAttributes());
+        assertThat(userManager.getUserId(ACCESS_TOKEN), is(equalTo(Optional.empty())));
+        verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
+    }
+
+    @Test
+    void getUserId_returnsUserId() {
+        when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(new GetUserResult().withUserAttributes(
+                new AttributeType().withName("sub")
+                        .withValue(USER_ID)));
+        assertThat(userManager.getUserId(ACCESS_TOKEN), is(equalTo(Optional.of(USER_ID))));
+        verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
     }
 
     @Test
