@@ -187,7 +187,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                 .username(testId)
                 .build());
         Set<Message> messages = new HashSet<>();
-        await().atMost(Duration.ofSeconds(300))
+        await().atMost(Duration.ofSeconds(480))
                 .pollInterval(Duration.ofSeconds(30))
                 .until(() -> {
                     messages.addAll(testUserManager.getAllMessagesFromSqs(testEmailContext.getQueueUrl()));
