@@ -21,8 +21,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Builder
 @Slf4j
@@ -41,14 +41,12 @@ public class RequestResponseLoggingFilter implements Filter {
         RequestWrapper requestWrapper = new RequestWrapper((HttpServletRequest) servletRequest);
 
         if (!isHealthCheck) {
-            Map<String, String> queryParameters = UriComponentsBuilder.fromHttpRequest(
-                    new ServletServerHttpRequest(requestWrapper))
+            // we can't use a stream here because Collectors.toMap doesn't support null values
+            Map<String, String> queryParameters = new HashMap<>();
+            UriComponentsBuilder.fromHttpRequest(new ServletServerHttpRequest(requestWrapper))
                     .build()
                     .getQueryParams()
-                    .entrySet()
-                    .stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey, queryParameter -> queryParameter.getValue()
-                            .get(0)));
+                    .forEach((key, value) -> queryParameters.put(key, value.get(0)));
 
             boolean isJson = isJson(requestWrapper.getBody());
             LoggableRequest loggableRequest = LoggableRequest.builder()
