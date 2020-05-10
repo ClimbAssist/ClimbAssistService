@@ -38,12 +38,14 @@ import com.climbassist.api.user.authentication.UserNotVerifiedException;
 import com.climbassist.api.user.authentication.UserSessionData;
 import com.climbassist.api.user.authentication.UsernameExistsException;
 import com.climbassist.api.user.authorization.SessionExpiredException;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Optional;
 
 @Builder
 @Slf4j
@@ -196,6 +198,23 @@ public class UserManager {
                 .isEmailVerified(isEmailVerified)
                 .isAdministrator(isAdministrator)
                 .build();
+    }
+
+    public Optional<String> getUserId(@NonNull String accessToken) {
+        try {
+            GetUserResult getUserResult = awsCognitoIdentityProvider.getUser(
+                    new GetUserRequest().withAccessToken(accessToken));
+            return getUserResult.getUserAttributes()
+                    .stream()
+                    .filter(attributeType -> attributeType.getName()
+                            .equals("sub"))
+                    .map(AttributeType::getValue)
+                    .findFirst();
+        } catch (NotAuthorizedException e) {
+            log.warn("Caught exception when trying to get user ID.");
+            log.warn(Throwables.getStackTraceAsString(e));
+            return Optional.empty();
+        }
     }
 
     public void changePassword(@NonNull String accessToken, @NonNull String currentPassword,

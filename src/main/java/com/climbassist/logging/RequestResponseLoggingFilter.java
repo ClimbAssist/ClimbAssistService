@@ -1,5 +1,7 @@
 package com.climbassist.logging;
 
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserManager;
 import com.climbassist.wrapper.request.RequestWrapper;
 import com.climbassist.wrapper.response.ResponseWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,6 +25,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Builder
 @Slf4j
@@ -30,6 +33,9 @@ public class RequestResponseLoggingFilter implements Filter {
 
     @NonNull
     private final ObjectMapper objectMapper;
+
+    @NonNull
+    private final UserManager userManager;
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
@@ -49,6 +55,9 @@ public class RequestResponseLoggingFilter implements Filter {
                     .forEach((key, value) -> queryParameters.put(key, value.get(0)));
 
             boolean isJson = isJson(requestWrapper.getBody());
+            Optional<String> maybeUserId = SessionUtils.hasSessionCookies(requestWrapper) ? userManager.getUserId(
+                    SessionUtils.getUserSessionData(requestWrapper)
+                            .getAccessToken()) : Optional.empty();
             LoggableRequest loggableRequest = LoggableRequest.builder()
                     .protocol(requestWrapper.getProtocol())
                     .sender(requestWrapper.getRemoteAddr())
@@ -57,6 +66,7 @@ public class RequestResponseLoggingFilter implements Filter {
                     .queryString(requestWrapper.getQueryString())
                     .queryParameters(queryParameters)
                     .headers(getHeaders(requestWrapper))
+                    .userId(maybeUserId.orElse(null))
                     .body(isJson ? null : requestWrapper.getBody())
                     .jsonBody(isJson ? requestWrapper.getBody() : null)
                     .build();

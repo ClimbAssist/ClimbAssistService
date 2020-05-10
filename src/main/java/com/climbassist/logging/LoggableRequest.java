@@ -20,6 +20,7 @@ class LoggableRequest {
     String queryString;
     Map<String, String> queryParameters;
     Multimap<String, String> headers;
+    String userId;
     // only one of body or jsonBody should ever be present, depending on if the body is JSON or not
     String body;
     @JsonRawValue
