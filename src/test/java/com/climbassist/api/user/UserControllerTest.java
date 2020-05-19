@@ -19,6 +19,7 @@ class UserControllerTest {
 
     private static final String EMAIL = "dull-boy@overlook.com";
     private static final UserData USER_DATA = UserData.builder()
+            .userId("237")
             .username("jack-torrance")
             .email(EMAIL)
             .isAdministrator(true)
