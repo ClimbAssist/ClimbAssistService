@@ -21,6 +21,10 @@ public class ClimbAssistInitializer extends AbstractAnnotationConfigDispatcherSe
                 new DelegatingFilterProxy("requestIdFilter"));
         dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/*");
 
+        dynamicFilterRegistration = servletContext.addFilter("UserDataDecorationFilter",
+                new DelegatingFilterProxy("userDataDecorationFilter"));
+        dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/*");
+
         dynamicFilterRegistration = servletContext.addFilter("RequestResponseLoggingFilter",
                 new DelegatingFilterProxy("requestResponseLoggingFilter"));
         dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/*");

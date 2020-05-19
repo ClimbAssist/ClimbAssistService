@@ -22,7 +22,7 @@ public class ClimbAssistClientConfiguration {
                 .httpClientFactory(new HttpClientFactory())
                 .objectMapper(objectMapper)
                 // https://docs.aws.amazon.com/cognito/latest/developerguide/limits.html
-                .rateLimiter(RateLimiter.create(5))
+                .rateLimiter(RateLimiter.create(2))
                 .build();
     }
 }

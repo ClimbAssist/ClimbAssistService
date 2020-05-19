@@ -1,7 +1,6 @@
 package com.climbassist.api.user.authorization;
 
 import com.climbassist.api.user.SessionUtils;
-import com.climbassist.api.user.authentication.UserSessionData;
 import lombok.Builder;
 import lombok.NonNull;
 import org.springframework.web.method.HandlerMethod;
@@ -15,9 +14,11 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
 
     @NonNull AuthorizationHandlerFactory authorizationHandlerFactory;
 
+    @SuppressWarnings("NullableProblems")
     @Override
-    public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
-                             Object handler) throws AuthorizationException {
+    public boolean preHandle(@NonNull HttpServletRequest httpServletRequest,
+                             @NonNull HttpServletResponse httpServletResponse, @NonNull Object handler)
+            throws AuthorizationException {
         HandlerMethod handlerMethod = (HandlerMethod) handler;
         Authorization authorization = handlerMethod.getMethodAnnotation(Authorization.class);
         if (authorization == null) {
@@ -27,12 +28,8 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
             throw new AuthorizationException();
         }
 
-        UserSessionData userSessionData = SessionUtils.getUserSessionData(httpServletRequest);
         AuthorizationHandler authorizationHandler = authorizationHandlerFactory.create(authorization.value());
-        UserSessionData newUserSessionData = authorizationHandler.checkAuthorization(userSessionData);
-        SessionUtils.setSessionCookies(httpServletResponse, newUserSessionData);
-        httpServletRequest.getSession()
-                .setAttribute(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME, newUserSessionData.getAccessToken());
+        authorizationHandler.checkAuthorization(SessionUtils.getUserSessionData(httpServletRequest));
         return true;
     }
 }

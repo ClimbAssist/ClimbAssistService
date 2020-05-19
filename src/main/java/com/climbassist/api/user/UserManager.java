@@ -38,14 +38,12 @@ import com.climbassist.api.user.authentication.UserNotVerifiedException;
 import com.climbassist.api.user.authentication.UserSessionData;
 import com.climbassist.api.user.authentication.UsernameExistsException;
 import com.climbassist.api.user.authorization.SessionExpiredException;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.Optional;
 
 @Builder
 @Slf4j
@@ -55,6 +53,7 @@ public class UserManager {
     private static final String PASSWORD_KEY = "PASSWORD";
     private static final String REFRESH_TOKEN_KEY = "REFRESH_TOKEN";
     private static final String EMAIL_ATTRIBUTE_NAME = "email";
+    private static final String USER_ID_ATTRIBUTE_NAME = "sub";
     private static final String EMAIL_VERIFIED_ATTRIBUTE_NAME = "email_verified";
 
     @NonNull
@@ -181,6 +180,7 @@ public class UserManager {
     public UserData getUserData(@NonNull String accessToken) {
         GetUserResult getUserResult = awsCognitoIdentityProvider.getUser(
                 new GetUserRequest().withAccessToken(accessToken));
+        String userId = getUserAttributeValue(getUserResult.getUserAttributes(), USER_ID_ATTRIBUTE_NAME);
         String username = getUserResult.getUsername();
         String email = getUserAttributeValue(getUserResult.getUserAttributes(), EMAIL_ATTRIBUTE_NAME);
         boolean isEmailVerified = Boolean.parseBoolean(
@@ -193,28 +193,12 @@ public class UserManager {
                 .anyMatch(groupType -> groupType.getGroupName()
                         .equals("Administrators"));
         return UserData.builder()
+                .userId(userId)
                 .username(username)
                 .email(email)
                 .isEmailVerified(isEmailVerified)
                 .isAdministrator(isAdministrator)
                 .build();
-    }
-
-    public Optional<String> getUserId(@NonNull String accessToken) {
-        try {
-            GetUserResult getUserResult = awsCognitoIdentityProvider.getUser(
-                    new GetUserRequest().withAccessToken(accessToken));
-            return getUserResult.getUserAttributes()
-                    .stream()
-                    .filter(attributeType -> attributeType.getName()
-                            .equals("sub"))
-                    .map(AttributeType::getValue)
-                    .findFirst();
-        } catch (NotAuthorizedException e) {
-            log.warn("Caught exception when trying to get user ID.");
-            log.warn(Throwables.getStackTraceAsString(e));
-            return Optional.empty();
-        }
     }
 
     public void changePassword(@NonNull String accessToken, @NonNull String currentPassword,

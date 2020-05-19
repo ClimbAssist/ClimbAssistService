@@ -5,5 +5,5 @@ import lombok.NonNull;
 
 public interface AuthorizationHandler {
 
-    UserSessionData checkAuthorization(@NonNull UserSessionData userSessionData) throws AuthorizationException;
+    void checkAuthorization(@NonNull UserSessionData userSessionData) throws AuthorizationException;
 }

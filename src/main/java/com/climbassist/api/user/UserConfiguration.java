@@ -1,7 +1,9 @@
 package com.climbassist.api.user;
 
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
+import com.climbassist.api.resource.common.CommonDaoConfiguration;
 import com.climbassist.api.user.authentication.UserAuthenticationController;
+import com.climbassist.api.user.authorization.UserDataDecorationFilter;
 import com.climbassist.common.CommonConfiguration;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import(CommonConfiguration.class)
+@Import({CommonConfiguration.class, CommonDaoConfiguration.class})
 public class UserConfiguration {
 
     @Bean
@@ -35,6 +37,13 @@ public class UserConfiguration {
     @Bean
     public UserController userController(@NonNull UserManager userManager) {
         return UserController.builder()
+                .userManager(userManager)
+                .build();
+    }
+
+    @Bean
+    public UserDataDecorationFilter userDataDecorationFilter(@NonNull UserManager userManager) {
+        return UserDataDecorationFilter.builder()
                 .userManager(userManager)
                 .build();
     }

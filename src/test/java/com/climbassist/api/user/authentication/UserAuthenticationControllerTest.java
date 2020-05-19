@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import javax.servlet.http.HttpServletResponse;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -26,6 +25,7 @@ class UserAuthenticationControllerTest {
 
     private static final String USERNAME = "spock";
     private static final String EMAIL = "spock@enterprise.com";
+    private static final String USER_ID = "S179-276SP";
     private static final String PASSWORD = "fascinating";
     private static final String NEW_PASSWORD = "illogical";
     private static final UserSessionData USER_SESSION_DATA = UserSessionData.builder()
@@ -54,6 +54,7 @@ class UserAuthenticationControllerTest {
             .build();
     private static final String ACCESS_TOKEN = "access token";
     private static final UserData USER_DATA = UserData.builder()
+            .userId(USER_ID)
             .username(USERNAME)
             .email(EMAIL)
             .isEmailVerified(false)
@@ -80,8 +81,7 @@ class UserAuthenticationControllerTest {
     @Mock
     private UserManager mockUserManager;
 
-    @Mock
-    private HttpServletResponse mockHttpServletResponse;
+    private MockHttpServletResponse mockHttpServletResponse;
 
     private UserAuthenticationController userAuthenticationController;
 
@@ -90,6 +90,7 @@ class UserAuthenticationControllerTest {
         userAuthenticationController = UserAuthenticationController.builder()
                 .userManager(mockUserManager)
                 .build();
+        mockHttpServletResponse = new MockHttpServletResponse();
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -127,8 +128,7 @@ class UserAuthenticationControllerTest {
     }
 
     @Test
-    void signIn_setsCookiesAndReturnsTrue_whenAliasIsUsername()
-            throws AuthenticationException, UserNotFoundException {
+    void signIn_setsCookiesAndReturnsTrue_whenAliasIsUsername() throws AuthenticationException, UserNotFoundException {
         runSignInTest(Alias.AliasType.USERNAME);
     }
 
@@ -266,6 +266,6 @@ class UserAuthenticationControllerTest {
                 equalTo(EXPECTED_SIGN_IN_USER_RESULT));
 
         verify(mockUserManager).signIn(alias, PASSWORD);
-        CookieTestUtils.verifySessionCookiesAreSet(mockHttpServletResponse, USER_SESSION_DATA);
+        CookieTestUtils.verifySessionCookiesAreCorrect(mockHttpServletResponse, USER_SESSION_DATA);
     }
 }

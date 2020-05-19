@@ -9,13 +9,11 @@ import lombok.experimental.SuperBuilder;
 public class AdministratorAuthorizationHandler extends AuthenticatedAuthorizationHandler {
 
     @Override
-    public UserSessionData checkAuthorization(@NonNull UserSessionData userSessionData)
-            throws AuthorizationException {
-        UserSessionData newUserSessionData = super.checkAuthorization(userSessionData);
-        if (!userManager.getUserData(newUserSessionData.getAccessToken())
+    public void checkAuthorization(@NonNull UserSessionData userSessionData) throws AuthorizationException {
+        super.checkAuthorization(userSessionData);
+        if (!userManager.getUserData(userSessionData.getAccessToken())
                 .isAdministrator()) {
             throw new AuthorizationException();
         }
-        return newUserSessionData;
     }
 }

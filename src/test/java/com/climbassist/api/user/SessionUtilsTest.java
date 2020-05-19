@@ -2,10 +2,10 @@ package com.climbassist.api.user;
 
 import com.climbassist.api.user.authentication.UserSessionData;
 import com.google.common.testing.NullPointerTester;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -15,11 +15,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class SessionUtilsTest {
 
     private static final UserSessionData USER_SESSION_DATA = UserSessionData.builder()
@@ -32,10 +28,14 @@ class SessionUtilsTest {
             USER_SESSION_DATA.getRefreshToken());
     private static final Cookie[] COOKIES = new Cookie[]{ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE};
 
-    @Mock
-    private HttpServletResponse mockHttpServletResponse;
-    @Mock
-    private HttpServletRequest mockHttpServletRequest;
+    private MockHttpServletRequest mockHttpServletRequest;
+    private MockHttpServletResponse mockHttpServletResponse;
+
+    @BeforeEach
+    public void setUp() {
+        mockHttpServletRequest = new MockHttpServletRequest();
+        mockHttpServletResponse = new MockHttpServletResponse();
+    }
 
     @SuppressWarnings("UnstableApiUsage")
     @Test
@@ -50,73 +50,67 @@ class SessionUtilsTest {
     @Test
     void setSessionCookies_setsSessionCookies() {
         SessionUtils.setSessionCookies(mockHttpServletResponse, USER_SESSION_DATA);
-        CookieTestUtils.verifySessionCookiesAreSet(mockHttpServletResponse, USER_SESSION_DATA);
+        CookieTestUtils.verifySessionCookiesAreCorrect(mockHttpServletResponse, USER_SESSION_DATA);
     }
 
     @Test
     void hasSessionCookies_returnsFalse_whenCookiesIsNull() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(null);
         assertThat(SessionUtils.hasSessionCookies(mockHttpServletRequest), is(equalTo(false)));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void hasSessionCookies_returnsFalse_whenCookiesIsEmpty() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(new Cookie[0]);
+        mockHttpServletRequest.setCookies();
         assertThat(SessionUtils.hasSessionCookies(mockHttpServletRequest), is(equalTo(false)));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void hasSessionCookies_returnsFalse_whenCookiesHasOnlyAccessToken() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(new Cookie[]{ACCESS_TOKEN_COOKIE});
+        mockHttpServletRequest.setCookies(ACCESS_TOKEN_COOKIE);
         assertThat(SessionUtils.hasSessionCookies(mockHttpServletRequest), is(equalTo(false)));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void hasSessionCookies_returnsFalse_whenCookiesHasOnlyRefreshToken() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(new Cookie[]{REFRESH_TOKEN_COOKIE});
+        mockHttpServletRequest.setCookies(REFRESH_TOKEN_COOKIE);
         assertThat(SessionUtils.hasSessionCookies(mockHttpServletRequest), is(equalTo(false)));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void hasSessionCookies_returnsFalse_whenCookiesHasBothCookies() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(COOKIES);
+        mockHttpServletRequest.setCookies(COOKIES);
         assertThat(SessionUtils.hasSessionCookies(mockHttpServletRequest), is(equalTo(true)));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void getUserSessionData_returnsUserSessionDataFromCookies() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(COOKIES);
+        mockHttpServletRequest.setCookies(COOKIES);
         assertThat(SessionUtils.getUserSessionData(mockHttpServletRequest), is(equalTo(USER_SESSION_DATA)));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void getUserSessionData_throwCookieNotPresentException_whenAccessTokenIsMissing() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(new Cookie[]{REFRESH_TOKEN_COOKIE});
+        mockHttpServletRequest.setCookies(REFRESH_TOKEN_COOKIE);
         assertThrows(CookieNotPresentException.class, () -> SessionUtils.getUserSessionData(mockHttpServletRequest));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void getUserSessionData_throwCookieNotPresentException_whenRefreshTokenIsMissing() {
-        when(mockHttpServletRequest.getCookies()).thenReturn(new Cookie[]{ACCESS_TOKEN_COOKIE});
+        mockHttpServletRequest.setCookies(ACCESS_TOKEN_COOKIE);
         assertThrows(CookieNotPresentException.class, () -> SessionUtils.getUserSessionData(mockHttpServletRequest));
-        verify(mockHttpServletRequest, atLeastOnce()).getCookies();
     }
 
     @Test
     void removeSessionCookies_setsCookiesToEmpty() {
+        mockHttpServletResponse.addCookie(ACCESS_TOKEN_COOKIE);
+        mockHttpServletResponse.addCookie(REFRESH_TOKEN_COOKIE);
         SessionUtils.removeSessionCookies(mockHttpServletResponse);
         CookieTestUtils.verifySessionCookiesAreRemoved(mockHttpServletResponse);
     }
 
     @Test
     void removeJSessionIdCookie_setsJSessionIdCookieToEmpty() {
+        mockHttpServletResponse.addCookie(new Cookie("JSESSIONID", "j-session-id"));
         SessionUtils.removeJSessionIdCookie(mockHttpServletResponse);
         CookieTestUtils.verifyJSessionIdCookieIsRemoved(mockHttpServletResponse);
     }

@@ -50,8 +50,6 @@ import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -74,6 +72,7 @@ class UserManagerTest {
     private static final String ACCESS_TOKEN = "access-token";
     private static final String REFRESH_TOKEN = "refresh-token";
     private static final String VERIFICATION_CODE = "123456";
+    private static final String USER_ID_ATTRIBUTE_NAME = "sub";
     private static final String EMAIL_ATTRIBUTE_NAME = "email";
     private static final String EMAIL_VERIFIED_ATTRIBUTE_NAME = "email_verified";
     private static final Alias USERNAME_ALIAS = new Alias(USERNAME, Alias.AliasType.USERNAME);
@@ -103,11 +102,13 @@ class UserManagerTest {
                     .withAuthParameters(ImmutableMap.of("USERNAME", EMAIL, "PASSWORD", PASSWORD));
     private static final GetUserRequest EXPECTED_GET_USER_REQUEST = new GetUserRequest().withAccessToken(ACCESS_TOKEN);
     private static final GetUserResult GET_USER_RESULT_EMAIL_VERIFIED = new GetUserResult().withUsername(USERNAME)
-            .withUserAttributes(new AttributeType().withName(EMAIL_ATTRIBUTE_NAME)
+            .withUserAttributes(new AttributeType().withName(USER_ID_ATTRIBUTE_NAME)
+                    .withValue(USER_ID), new AttributeType().withName(EMAIL_ATTRIBUTE_NAME)
                     .withValue(EMAIL), new AttributeType().withName("email_verified")
                     .withValue("true"));
     private static final GetUserResult GET_USER_RESULT_EMAIL_NOT_VERIFIED = new GetUserResult().withUsername(USERNAME)
-            .withUserAttributes(new AttributeType().withName(EMAIL_ATTRIBUTE_NAME)
+            .withUserAttributes(new AttributeType().withName(USER_ID_ATTRIBUTE_NAME)
+                    .withValue(USER_ID), new AttributeType().withName(EMAIL_ATTRIBUTE_NAME)
                     .withValue(EMAIL), new AttributeType().withName(EMAIL_VERIFIED_ATTRIBUTE_NAME)
                     .withValue("false"));
     private static final AdminListGroupsForUserRequest EXPECTED_ADMIN_LIST_GROUPS_FOR_USER_REQUEST =
@@ -118,6 +119,7 @@ class UserManagerTest {
                     .withAttributeName(EMAIL_ATTRIBUTE_NAME)
                     .withCode(VERIFICATION_CODE);
     private static final UserData EXPECTED_USER_DATA_EMAIL_VERIFIED = UserData.builder()
+            .userId(USER_ID)
             .username(USERNAME)
             .email(EMAIL)
             .isAdministrator(false)
@@ -409,6 +411,7 @@ class UserManagerTest {
         when(mockAwsCognitoIdentityProvider.adminListGroupsForUser(any())).thenReturn(
                 new AdminListGroupsForUserResult().withGroups(new GroupType().withGroupName("Administrators")));
         assertThat(userManager.getUserData(ACCESS_TOKEN), is(equalTo(UserData.builder()
+                .userId(USER_ID)
                 .username(USERNAME)
                 .email(EMAIL)
                 .isAdministrator(true)
@@ -419,7 +422,7 @@ class UserManagerTest {
     }
 
     @Test
-    void getUserData_throwsInvalidUserDataException_whenUserDoesNotHaveEmail() {
+    void getUserData_throwsInvalidUserDataException_whenUserDoesNotHaveId() {
         when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(new GetUserResult().withUsername(USERNAME)
                 .withUserAttributes());
         assertThrows(InvalidUserDataException.class, () -> userManager.getUserData(ACCESS_TOKEN));
@@ -428,27 +431,13 @@ class UserManagerTest {
     }
 
     @Test
-    void getUserId_returnsEmpty_whenAccessTokenIsInvalid() {
-        when(mockAwsCognitoIdentityProvider.getUser(any())).thenThrow(new NotAuthorizedException(""));
-        assertThat(userManager.getUserId(ACCESS_TOKEN), is(equalTo(Optional.empty())));
-        verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
-    }
-
-    // I don't think this test case can technically happen, but it's good to double check that we won't crash
-    @Test
-    void getUserId_returnsEmpty_whenUserDoesNotHaveASubAttribute() {
-        when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(new GetUserResult().withUserAttributes());
-        assertThat(userManager.getUserId(ACCESS_TOKEN), is(equalTo(Optional.empty())));
-        verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
-    }
-
-    @Test
-    void getUserId_returnsUserId() {
-        when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(new GetUserResult().withUserAttributes(
-                new AttributeType().withName("sub")
+    void getUserData_throwsInvalidUserDataException_whenUserDoesNotHaveEmail() {
+        when(mockAwsCognitoIdentityProvider.getUser(any())).thenReturn(new GetUserResult().withUsername(USERNAME)
+                .withUserAttributes(new AttributeType().withName("sub")
                         .withValue(USER_ID)));
-        assertThat(userManager.getUserId(ACCESS_TOKEN), is(equalTo(Optional.of(USER_ID))));
+        assertThrows(InvalidUserDataException.class, () -> userManager.getUserData(ACCESS_TOKEN));
         verify(mockAwsCognitoIdentityProvider).getUser(EXPECTED_GET_USER_REQUEST);
+        verify(mockAwsCognitoIdentityProvider, never()).adminListGroupsForUser(any());
     }
 
     @Test
