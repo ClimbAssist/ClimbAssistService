@@ -373,6 +373,7 @@
                         <exclude>**/PathPoint.class</exclude>
                         <exclude>**/NewPathPoint.class</exclude>
                         <exclude>**/BatchNewPathPoints.class</exclude>
+                        <exclude>**/UserData.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>
