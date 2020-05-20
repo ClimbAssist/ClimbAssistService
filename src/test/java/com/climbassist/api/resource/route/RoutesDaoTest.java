@@ -2,11 +2,12 @@ package com.climbassist.api.resource.route;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceDaoTest;
+import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
+import com.climbassist.api.resource.wall.Wall;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class RoutesDaoTest extends AbstractResourceDaoTest<Route> {
+class RoutesDaoTest extends AbstractResourceWithParentDaoTest<Route, Wall, RoutesDao> {
 
     private static final Route ROUTE_1 = Route.builder()
             .routeId("route-1")
@@ -75,16 +76,6 @@ class RoutesDaoTest extends AbstractResourceDaoTest<Route> {
     @Override
     protected Route getTestResource2() {
         return ROUTE_2;
-    }
-
-    @Override
-    protected String getIdFromTestResource(Route route) {
-        return route.getRouteId();
-    }
-
-    @Override
-    protected String getParentIdFromTestResource(Route route) {
-        return route.getWallId();
     }
 
     @Override

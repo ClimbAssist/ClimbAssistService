@@ -2,11 +2,12 @@ package com.climbassist.api.resource.pathpoint;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceDaoTest;
+import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
+import com.climbassist.api.resource.path.Path;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class PathPointsDaoTest extends AbstractResourceDaoTest<PathPoint> {
+class PathPointsDaoTest extends AbstractResourceWithParentDaoTest<PathPoint, Path, PathPointsDao> {
 
     private static final PathPoint PATH_POINT_1 = PathPoint.builder()
             .pathPointId("path-point-1")
@@ -57,16 +58,6 @@ class PathPointsDaoTest extends AbstractResourceDaoTest<PathPoint> {
     @Override
     protected PathPoint getTestResource2() {
         return PATH_POINT_2;
-    }
-
-    @Override
-    protected String getIdFromTestResource(PathPoint pathPoint) {
-        return pathPoint.getPathPointId();
-    }
-
-    @Override
-    protected String getParentIdFromTestResource(PathPoint pathPoint) {
-        return pathPoint.getPathId();
     }
 
     @Override

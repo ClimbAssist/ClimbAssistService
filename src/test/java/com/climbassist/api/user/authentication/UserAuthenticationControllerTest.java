@@ -12,6 +12,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.time.ZonedDateTime;
+import java.util.function.Supplier;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -53,12 +56,23 @@ class UserAuthenticationControllerTest {
             .successful(true)
             .build();
     private static final String ACCESS_TOKEN = "access token";
+    private static final ZonedDateTime CURRENT_ZONED_DATE_TIME = ZonedDateTime.now();
+    private static final long USER_DATA_RETENTION_TIME_MINUTES = 42;
     private static final UserData USER_DATA = UserData.builder()
             .userId(USER_ID)
             .username(USERNAME)
             .email(EMAIL)
             .isEmailVerified(false)
             .isAdministrator(false)
+            .build();
+    private static final UserData USER_DATA_WITH_EXPIRATION_TIME = UserData.builder()
+            .userId(USER_DATA.getUserId())
+            .username(USER_DATA.getUsername())
+            .email(USER_DATA.getEmail())
+            .isEmailVerified(USER_DATA.isEmailVerified())
+            .isAdministrator(USER_DATA.isAdministrator())
+            .expirationTime(CURRENT_ZONED_DATE_TIME.plusMinutes(USER_DATA_RETENTION_TIME_MINUTES)
+                    .toEpochSecond())
             .build();
     private static final String VERIFICATION_CODE = "123456";
     private static final VerifyEmailRequest VERIFY_EMAIL_REQUEST = VerifyEmailRequest.builder()
@@ -80,6 +94,10 @@ class UserAuthenticationControllerTest {
 
     @Mock
     private UserManager mockUserManager;
+    @Mock
+    private DeletedUsersDao mockDeletedUsersDao;
+    @Mock
+    private Supplier<ZonedDateTime> mockCurrentZonedDateTimeSupplier;
 
     private MockHttpServletResponse mockHttpServletResponse;
 
@@ -89,6 +107,9 @@ class UserAuthenticationControllerTest {
     void setUp() {
         userAuthenticationController = UserAuthenticationController.builder()
                 .userManager(mockUserManager)
+                .deletedUsersDao(mockDeletedUsersDao)
+                .userDataRetentionTimeMinutes(USER_DATA_RETENTION_TIME_MINUTES)
+                .currentZonedDateTimeSupplier(mockCurrentZonedDateTimeSupplier)
                 .build();
         mockHttpServletResponse = new MockHttpServletResponse();
     }
@@ -167,10 +188,15 @@ class UserAuthenticationControllerTest {
 
     @Test
     void deleteUser_deletesUserAndRemovesCookies() {
+        when(mockUserManager.getUserData(any())).thenReturn(USER_DATA);
+        when(mockCurrentZonedDateTimeSupplier.get()).thenReturn(CURRENT_ZONED_DATE_TIME);
         assertThat(userAuthenticationController.deleteUser(ACCESS_TOKEN, mockHttpServletResponse), is(equalTo(
                 DeleteUserResult.builder()
                         .successful(true)
                         .build())));
+        verify(mockUserManager).getUserData(ACCESS_TOKEN);
+        verify(mockCurrentZonedDateTimeSupplier).get();
+        verify(mockDeletedUsersDao).saveResource(USER_DATA_WITH_EXPIRATION_TIME);
         verify(mockUserManager).deleteUser(ACCESS_TOKEN);
         CookieTestUtils.verifySessionCookiesAreRemoved(mockHttpServletResponse);
     }

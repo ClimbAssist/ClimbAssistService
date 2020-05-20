@@ -2,11 +2,12 @@ package com.climbassist.api.resource.pitch;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceDaoTest;
+import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
+import com.climbassist.api.resource.route.Route;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class PitchesDaoTest extends AbstractResourceDaoTest<Pitch> {
+class PitchesDaoTest extends AbstractResourceWithParentDaoTest<Pitch, Route, PitchesDao> {
 
     private static final DynamoDBMapperConfig DYNAMO_DB_MAPPER_CONFIG = DynamoDBMapperConfig.builder()
             .withTableNameOverride(new DynamoDBMapperConfig.TableNameOverride("Pitches"))
@@ -70,16 +71,6 @@ class PitchesDaoTest extends AbstractResourceDaoTest<Pitch> {
     @Override
     protected Pitch getTestResource2() {
         return PITCH_2;
-    }
-
-    @Override
-    protected String getIdFromTestResource(Pitch pitch) {
-        return pitch.getId();
-    }
-
-    @Override
-    protected String getParentIdFromTestResource(Pitch pitch) {
-        return pitch.getRouteId();
     }
 
     @Override

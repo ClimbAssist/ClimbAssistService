@@ -2,11 +2,12 @@ package com.climbassist.api.resource.wall;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceDaoTest;
+import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
+import com.climbassist.api.resource.crag.Crag;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class WallsDaoTest extends AbstractResourceDaoTest<Wall> {
+class WallsDaoTest extends AbstractResourceWithParentDaoTest<Wall, Crag, WallsDao> {
 
     private static final Wall WALL_1 = Wall.builder()
             .wallId("wall-1")
@@ -53,16 +54,6 @@ class WallsDaoTest extends AbstractResourceDaoTest<Wall> {
     @Override
     protected Wall getTestResource2() {
         return WALL_2;
-    }
-
-    @Override
-    protected String getIdFromTestResource(Wall wall) {
-        return wall.getWallId();
-    }
-
-    @Override
-    protected String getParentIdFromTestResource(Wall wall) {
-        return wall.getCragId();
     }
 
     @Override

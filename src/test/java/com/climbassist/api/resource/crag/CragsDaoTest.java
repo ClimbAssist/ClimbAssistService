@@ -2,11 +2,12 @@ package com.climbassist.api.resource.crag;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceDaoTest;
+import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
+import com.climbassist.api.resource.subarea.SubArea;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class CragsDaoTest extends AbstractResourceDaoTest<Crag> {
+class CragsDaoTest extends AbstractResourceWithParentDaoTest<Crag, SubArea, CragsDao> {
 
     private static final DynamoDBMapperConfig DYNAMO_DB_MAPPER_CONFIG = DynamoDBMapperConfig.builder()
             .withTableNameOverride(new DynamoDBMapperConfig.TableNameOverride("Crags"))
@@ -88,16 +89,6 @@ class CragsDaoTest extends AbstractResourceDaoTest<Crag> {
     @Override
     protected Crag getTestResource2() {
         return CRAG_2;
-    }
-
-    @Override
-    protected String getIdFromTestResource(Crag crag) {
-        return crag.getCragId();
-    }
-
-    @Override
-    protected String getParentIdFromTestResource(Crag crag) {
-        return crag.getSubAreaId();
     }
 
     @Override

@@ -2,11 +2,12 @@ package com.climbassist.api.resource.subarea;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceDaoTest;
+import com.climbassist.api.resource.area.Area;
+import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class SubAreasDaoTest extends AbstractResourceDaoTest<SubArea> {
+class SubAreasDaoTest extends AbstractResourceWithParentDaoTest<SubArea, Area, SubAreasDao> {
 
     private static final SubArea SUB_AREA_1 = SubArea.builder()
             .subAreaId("sub-area-1")
@@ -55,16 +56,6 @@ class SubAreasDaoTest extends AbstractResourceDaoTest<SubArea> {
     @Override
     protected SubArea getTestResource2() {
         return SUB_AREA_2;
-    }
-
-    @Override
-    protected String getIdFromTestResource(SubArea subArea) {
-        return subArea.getSubAreaId();
-    }
-
-    @Override
-    protected String getParentIdFromTestResource(SubArea subArea) {
-        return subArea.getAreaId();
     }
 
     @Override

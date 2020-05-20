@@ -1,11 +1,12 @@
 package com.climbassist.api.resource.point;
 
-import com.climbassist.api.resource.common.ResourceDao;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
+import com.climbassist.api.resource.pitch.Pitch;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
-public class PointsDao extends ResourceDao<Point> {
+public class PointsDao extends ResourceWithParentDao<Point, Pitch> {
 
     @Override
     protected Point buildResourceForDeletion(@NonNull String resourceId) {

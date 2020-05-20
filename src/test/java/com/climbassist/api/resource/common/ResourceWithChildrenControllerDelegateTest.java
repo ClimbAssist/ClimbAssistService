@@ -109,9 +109,9 @@ class ResourceWithChildrenControllerDelegateTest {
             .build();
     private static final int DEPTH = 5;
     @Mock
-    private ResourceDao<ChildResourceImpl1> mockChildResourceDao1;
+    private ResourceWithParentDao<ChildResourceImpl1, ResourceImpl> mockChildResourceDao1;
     @Mock
-    private ResourceDao<ChildResourceImpl2> mockChildResourceDao2;
+    private ResourceWithParentDao<ChildResourceImpl2, ResourceImpl> mockChildResourceDao2;
     @Mock
     private ResourceNotEmptyExceptionFactory<ResourceImpl> mockResourceNotEmptyExceptionFactory;
     @Mock

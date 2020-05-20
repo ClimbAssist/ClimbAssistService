@@ -298,6 +298,13 @@ Resources:
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: stage
         Value: !Ref Stage
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: userDataRetentionTimeMinutes
+        Value:
+          Fn::If:
+          - IsProd
+          - 1051200 # 2 years
+          - 1 # this avoids our dev and beta tables from getting filled up with deleted users from integration tests
   EBInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Condition: CreateComputeResources
@@ -375,6 +382,9 @@ Resources:
             - !Sub
               - ${TableArn}*
               - TableArn: !GetAtt RouteCommentsTable.Arn
+            - !Sub
+              - ${TableArn}*
+              - TableArn: !GetAtt DeletedUsersTable.Arn
           - Action:
             - cognito-idp:SignUp
             - cognito-idp:InitiateAuth
@@ -1725,6 +1735,92 @@ Resources:
         ScaleOutCooldown: 60
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
+
+  DeletedUsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub DeletedUsers${ResourceNameSuffix}
+      AttributeDefinitions:
+      - AttributeName: userId
+        AttributeType: S
+      - AttributeName: username
+        AttributeType: S
+      - AttributeName: email
+        AttributeType: S
+      KeySchema:
+      - AttributeName: userId
+        KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+      - IndexName: UsernameIndex
+        KeySchema:
+        - AttributeName: username
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      - IndexName: EmailIndex
+        KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      TimeToLiveSpecification:
+        Enabled: true
+        AttributeName: expirationTime
+
+  DeletedUsersTableWriteCapacityScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 1
+      ResourceId: !Sub table/${DeletedUsersTable}
+      RoleARN: !GetAtt DynamoDbAutoScalingRole.Arn
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      ServiceNamespace: dynamodb
+  DeletedUsersTableWriteAutoScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub DeletedUsersTableWriteAutoScalingPolicy${ResourceNameSuffix}
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref DeletedUsersTableWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+  DeletedUsersTableReadCapacityScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 1
+      ResourceId: !Sub table/${DeletedUsersTable}
+      RoleARN: !GetAtt DynamoDbAutoScalingRole.Arn
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      ServiceNamespace: dynamodb
+  DeletedUsersTableReadAutoScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub DeletedUsersTableReadAutoScalingPolicy${ResourceNameSuffix}
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref DeletedUsersTableReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+
 
   # S3 buckets
   ModelsS3Bucket:

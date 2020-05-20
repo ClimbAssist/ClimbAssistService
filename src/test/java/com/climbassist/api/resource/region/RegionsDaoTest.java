@@ -2,11 +2,12 @@ package com.climbassist.api.resource.region;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceDaoTest;
+import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
+import com.climbassist.api.resource.country.Country;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class RegionsDaoTest extends AbstractResourceDaoTest<Region> {
+class RegionsDaoTest extends AbstractResourceWithParentDaoTest<Region, Country, RegionsDao> {
 
     private static final Region REGION_1 = Region.builder()
             .regionId("region-1")
@@ -53,16 +54,6 @@ class RegionsDaoTest extends AbstractResourceDaoTest<Region> {
     @Override
     protected Region getTestResource2() {
         return REGION_2;
-    }
-
-    @Override
-    protected String getIdFromTestResource(Region region) {
-        return region.getRegionId();
-    }
-
-    @Override
-    protected String getParentIdFromTestResource(Region region) {
-        return region.getCountryId();
     }
 
     @Override

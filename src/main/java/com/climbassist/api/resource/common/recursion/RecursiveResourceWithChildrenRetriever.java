@@ -1,9 +1,9 @@
 package com.climbassist.api.resource.common.recursion;
 
-import com.climbassist.api.resource.common.ResourceDao;
 import com.climbassist.api.resource.common.ResourceWithChildren;
 import com.climbassist.api.resource.common.ResourceWithParent;
 import com.climbassist.api.resource.common.ResourceWithParentAndChildren;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
@@ -20,7 +20,7 @@ class RecursiveResourceWithChildrenRetriever<
 // @formatter:on
 
     @NonNull
-    private final ResourceDao<Resource> resourceDao;
+    private final ResourceWithParentDao<Resource, ParentResource> resourceDao;
     @NonNull
     private final Set<RecursiveResourceRetriever<? extends ResourceWithParent<Resource>, Resource>>
             recursiveResourceRetrievers;

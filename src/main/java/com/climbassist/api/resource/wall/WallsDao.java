@@ -1,11 +1,13 @@
 package com.climbassist.api.resource.wall;
 
 import com.climbassist.api.resource.common.ResourceDao;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
+import com.climbassist.api.resource.crag.Crag;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
-public class WallsDao extends ResourceDao<Wall> {
+public class WallsDao extends ResourceWithParentDao<Wall, Crag> {
 
     @Override
     protected Wall buildResourceForDeletion(@NonNull String resourceId) {

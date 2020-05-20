@@ -1,11 +1,12 @@
 package com.climbassist.api.resource.region;
 
-import com.climbassist.api.resource.common.ResourceDao;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
+import com.climbassist.api.resource.country.Country;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
-public class RegionsDao extends ResourceDao<Region> {
+public class RegionsDao extends ResourceWithParentDao<Region, Country> {
 
     @Override
     protected Region buildResourceForDeletion(@NonNull String resourceId) {

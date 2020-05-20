@@ -1,7 +1,7 @@
 package com.climbassist.api.resource.common.recursion;
 
-import com.climbassist.api.resource.common.ResourceDao;
 import com.climbassist.api.resource.common.ResourceWithChildren;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableListBuilder;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +18,7 @@ public class RecursiveOrderableResourceWithNoChildrenRetriever<
 // @formatter:on
 
     @NonNull
-    private final ResourceDao<Resource> resourceDao;
+    private final ResourceWithParentDao<Resource, ParentResource> resourceDao;
     @NonNull
     private final OrderableListBuilder<Resource, ParentResource> orderableListBuilder;
     @NonNull

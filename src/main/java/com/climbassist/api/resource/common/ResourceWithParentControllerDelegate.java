@@ -14,7 +14,7 @@ public class ResourceWithParentControllerDelegate<
 // @formatter:on
 
     @NonNull
-    private final ResourceDao<Resource> resourceDao;
+    private final ResourceWithParentDao<Resource, ParentResource> resourceDao;
     @NonNull
     private final ResourceDao<ParentResource> parentResourceDao;
     @NonNull

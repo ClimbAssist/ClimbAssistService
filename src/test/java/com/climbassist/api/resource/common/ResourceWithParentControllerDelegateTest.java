@@ -104,7 +104,7 @@ class ResourceWithParentControllerDelegateTest {
             new ParentResourceNotFoundExceptionImpl(PARENT_RESOURCE_1.getId());
 
     @Mock
-    private ResourceDao<ResourceImpl> mockResourceDao;
+    private ResourceWithParentDao<ResourceImpl, ParentResourceImpl> mockResourceDao;
     @Mock
     private ResourceDao<ParentResourceImpl> mockParentResourceDao;
     @Mock

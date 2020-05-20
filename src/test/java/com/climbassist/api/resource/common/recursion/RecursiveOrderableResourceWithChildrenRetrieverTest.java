@@ -1,9 +1,9 @@
 package com.climbassist.api.resource.common.recursion;
 
 import com.climbassist.api.resource.common.InvalidChildException;
-import com.climbassist.api.resource.common.ResourceDao;
 import com.climbassist.api.resource.common.ResourceWithChildren;
 import com.climbassist.api.resource.common.ResourceWithParent;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableListBuilder;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParentAndChildren;
 import com.google.common.collect.ImmutableList;
@@ -166,7 +166,7 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
     private static final int DEPTH = 5;
 
     @Mock
-    private ResourceDao<ResourceImpl> mockResourceDao;
+    private ResourceWithParentDao<ResourceImpl, ParentResourceImpl> mockResourceDao;
     @Mock
     private RecursiveResourceRetriever<ChildResourceImpl1, ResourceImpl> mockRecursiveResourceRetriever1;
     @Mock

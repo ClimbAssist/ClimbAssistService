@@ -14,6 +14,7 @@ import com.climbassist.api.resource.region.RegionsDao;
 import com.climbassist.api.resource.route.RoutesDao;
 import com.climbassist.api.resource.subarea.SubAreasDao;
 import com.climbassist.api.resource.wall.WallsDao;
+import com.climbassist.api.user.authentication.DeletedUsersDao;
 import com.climbassist.common.CommonConfiguration;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -173,6 +174,20 @@ public class CommonDaoConfiguration {
                         .build()))
                 .dynamoDBMapperConfig(dynamoDbMapperConfigBuilder.withTableNameOverride(
                         new DynamoDBMapperConfig.TableNameOverride(pathPointsTableName))
+                        .build())
+                .build();
+    }
+
+    @Bean
+    public DeletedUsersDao deletedUsersDao(@NonNull String region,
+                                           @Value("${deletedUsersTableName}") @NonNull String deletedUsersTableName,
+                                           @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+        return DeletedUsersDao.builder()
+                .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
+                        .withRegion(region)
+                        .build()))
+                .dynamoDBMapperConfig(dynamoDbMapperConfigBuilder.withTableNameOverride(
+                        new DynamoDBMapperConfig.TableNameOverride(deletedUsersTableName))
                         .build())
                 .build();
     }

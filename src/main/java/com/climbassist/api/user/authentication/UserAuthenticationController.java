@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.SessionAttribute;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @Builder
 @RestController
@@ -31,6 +33,12 @@ public class UserAuthenticationController {
 
     @NonNull
     private final UserManager userManager;
+    @NonNull
+    private final DeletedUsersDao deletedUsersDao;
+    @NonNull
+    private final Supplier<ZonedDateTime> currentZonedDateTimeSupplier;
+    @NonNull
+    private final long userDataRetentionTimeMinutes;
 
     @Metrics(api = "RegisterUser")
     @RequestMapping(path = "/v1/user/register", method = RequestMethod.POST,
@@ -91,6 +99,11 @@ public class UserAuthenticationController {
     public DeleteUserResult deleteUser(
             @SessionAttribute(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME) @NonNull String accessToken,
             @NonNull HttpServletResponse httpServletResponse) {
+        UserData userData = userManager.getUserData(accessToken);
+        userData.setExpirationTime(currentZonedDateTimeSupplier.get()
+                .plusMinutes(userDataRetentionTimeMinutes)
+                .toEpochSecond());
+        deletedUsersDao.saveResource(userData);
         userManager.deleteUser(accessToken);
         SessionUtils.removeSessionCookies(httpServletResponse);
         return DeleteUserResult.builder()

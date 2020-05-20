@@ -1,11 +1,12 @@
 package com.climbassist.api.resource.path;
 
-import com.climbassist.api.resource.common.ResourceDao;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
+import com.climbassist.api.resource.crag.Crag;
 import lombok.NonNull;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
-public class PathsDao extends ResourceDao<Path> {
+public class PathsDao extends ResourceWithParentDao<Path, Crag> {
 
     @Override
     protected Path buildResourceForDeletion(@NonNull String resourceId) {

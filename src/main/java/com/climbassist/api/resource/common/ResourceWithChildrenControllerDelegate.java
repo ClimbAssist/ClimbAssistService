@@ -15,7 +15,7 @@ public class ResourceWithChildrenControllerDelegate<
 // @formatter:on
 
     @NonNull
-    private final Set<ResourceDao<? extends ResourceWithParent<Resource>>> childResourceDaos;
+    private final Set<ResourceWithParentDao<? extends ResourceWithParent<Resource>, Resource>> childResourceDaos;
     @NonNull
     private final ResourceNotEmptyExceptionFactory<Resource> resourceNotEmptyExceptionFactory;
     @NonNull
@@ -43,7 +43,8 @@ public class ResourceWithChildrenControllerDelegate<
 
     public DeleteResourceResult deleteResource(@NonNull String resourceId)
             throws ResourceNotFoundException, ResourceNotEmptyException {
-        for (ResourceDao<?> childResourceDao : childResourceDaos) {
+        for (ResourceWithParentDao<? extends ResourceWithParent<Resource>, Resource> childResourceDao :
+                childResourceDaos) {
             if (!childResourceDao.getResources(resourceId)
                     .isEmpty()) {
                 throw resourceNotEmptyExceptionFactory.create(resourceId);
