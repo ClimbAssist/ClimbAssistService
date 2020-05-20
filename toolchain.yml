@@ -22,6 +22,8 @@ Resources:
             - dynamodb:UpdateTable
             - dynamodb:DescribeContinuousBackups
             - dynamodb:UpdateContinuousBackups
+            - dynamodb:DescribeTimeToLive
+            - dynamodb:UpdateTimeToLive
             - kinesis:CreateStream
             - kinesis:DescribeStream
             - sns:CreateTopic
