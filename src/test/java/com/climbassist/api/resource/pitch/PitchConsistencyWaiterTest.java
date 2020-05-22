@@ -72,7 +72,7 @@ class PitchConsistencyWaiterTest {
             PITCHES_WITHOUT_EXPECTED)
             .add(PITCH_1)
             .build();
-    private static final int MAX_RETRIES = 5;
+    private static final int MAX_RETRIES = 10;
 
     @Mock
     private PitchesDao mockPitchesDao;
@@ -98,7 +98,8 @@ class PitchConsistencyWaiterTest {
     void waitForConsistency_returns_whenPitchShouldExistAndLastCallIsConsistent()
             throws InterruptedException, PitchConsistencyException {
         doReturn(PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED,
-                PITCHES_WITH_EXPECTED).when(mockPitchesDao)
+                PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED,
+                PITCHES_WITHOUT_EXPECTED, PITCHES_WITH_EXPECTED).when(mockPitchesDao)
                 .getResources(any());
         pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, true);
         verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId());
@@ -128,7 +129,8 @@ class PitchConsistencyWaiterTest {
     void waitForConsistency_returns_whenPitchShouldNotExistAndLastCallIsConsistent()
             throws InterruptedException, PitchConsistencyException {
         doReturn(PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED,
-                PITCHES_WITHOUT_EXPECTED).when(mockPitchesDao)
+                PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED,
+                PITCHES_WITH_EXPECTED, PITCHES_WITHOUT_EXPECTED).when(mockPitchesDao)
                 .getResources(any());
         pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, false);
         verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId());

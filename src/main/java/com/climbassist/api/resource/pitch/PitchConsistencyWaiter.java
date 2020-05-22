@@ -45,7 +45,7 @@ class PitchConsistencyWaiter {
         }
     }
 
-    private static final int MAX_RETRIES = 5;
+    private static final int MAX_RETRIES = 10;
 
     @NonNull
     private final PitchesDao pitchesDao;
@@ -59,7 +59,7 @@ class PitchConsistencyWaiter {
         scheduledExecutorService.schedule(
                 new PitchConsistencyRunnable(routeId, expectedPitch, shouldExist, countDownLatch, 0,
                         scheduledExecutorService), 0, TimeUnit.SECONDS);
-        if (!countDownLatch.await(5, TimeUnit.SECONDS)) {
+        if (!countDownLatch.await(10, TimeUnit.SECONDS)) {
             throw new PitchConsistencyException(expectedPitch.getPitchId());
         }
     }
