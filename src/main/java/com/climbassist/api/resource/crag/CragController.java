@@ -21,6 +21,7 @@ import com.climbassist.common.s3.S3Proxy;
 import com.climbassist.metrics.Metrics;
 import lombok.Builder;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,6 +38,7 @@ import java.util.Set;
 @Builder
 @RestController
 @Validated
+@Slf4j
 public class CragController {
 
     private static final String HIGH_RESOLUTION_MODEL_NAME = "high-resolution-model.glb";
@@ -112,13 +114,19 @@ public class CragController {
         }
         cragsDao.deleteResource(cragId);
         if (crag.getImageLocation() != null) {
+            log.info(String.format("Deleting image for crag %s at %s", cragId, crag.getImageLocation()));
             AmazonS3URI amazonS3URI = new AmazonS3URI(crag.getImageLocation());
             s3Proxy.deleteObject(amazonS3URI.getBucket(), amazonS3URI.getKey());
         }
         if (crag.getModel() != null) {
+            log.info(String.format("Deleting model for crag %s at %s", cragId, crag.getModel()
+                    .getModelLocation()));
             AmazonS3URI modelAmazonS3Uri = new AmazonS3URI(crag.getModel()
                     .getModelLocation());
             s3Proxy.deleteObject(modelAmazonS3Uri.getBucket(), modelAmazonS3Uri.getKey());
+
+            log.info(String.format("Deleting model for crag %s at %s", cragId, crag.getModel()
+                    .getLowResModelLocation()));
             AmazonS3URI lowResModelAmazonS3Uri = new AmazonS3URI(crag.getModel()
                     .getLowResModelLocation());
             s3Proxy.deleteObject(lowResModelAmazonS3Uri.getBucket(), lowResModelAmazonS3Uri.getKey());
