@@ -15,7 +15,8 @@ import java.util.regex.Pattern;
 public class RedactingRewritePolicy implements RewritePolicy {
 
     private static final Pattern JSON_KEY_VALUE_PATTERN = Pattern.compile(
-            "(\"(?:username|email|password|newPassword|body|replyToEmail|subject)\"[\\s]*:[\\s]*\")(?:[^\"]*)(\")");
+            "(\"(?:username|email|password|newPassword|emailBody|replyToEmail|subject)\"[\\s]*:[\\s]*\")(?:[^\"]*)" +
+                    "(\")");
     private static final Pattern ALIAS_EXISTS_PATTERN = Pattern.compile(
             "(User with (?:username|email) )(?:[^ ]*)( already exists.)");
     private static final Pattern USER_NOT_FOUND_PATTERN = Pattern.compile(

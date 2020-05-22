@@ -19,9 +19,9 @@ class SendContactEmailRequest {
     @Size(min = 1, max = 100, message = "Subject must be between 1 and 100 characters.")
     private String subject;
 
-    @NotNull(message = "Body must be present.")
-    @Size(min = 1, max = 10000, message = "Body must be between 1 and 10,000 characters.")
-    private String body;
+    @NotNull(message = "Email body must be present.")
+    @Size(min = 1, max = 10000, message = "Email body must be between 1 and 10,000 characters.")
+    private String emailBody;
 
     @NotNull(message = "Reply-to email must be present.")
     @Email(message = "Reply-to email must be a valid email address.")

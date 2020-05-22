@@ -13,6 +13,6 @@
                     "replyToEmail": "%s",
     "subject"
     :
-    "%s", "body":"%s"
+    "%s", "emailBody":"%s"
 
 }

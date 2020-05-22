@@ -48,7 +48,7 @@ public class ContactController {
                 .withDestination(new Destination(ImmutableList.of(climbAssistEmail)))
                 .withReplyToAddresses(sendContactEmailRequest.getReplyToEmail())
                 .withMessage(new Message(new Content(sendContactEmailRequest.getSubject()),
-                        new Body(new Content(sendContactEmailRequest.getBody())))));
+                        new Body(new Content(sendContactEmailRequest.getEmailBody())))));
         return SendContactEmailResult.builder()
                 .successful(true)
                 .build();

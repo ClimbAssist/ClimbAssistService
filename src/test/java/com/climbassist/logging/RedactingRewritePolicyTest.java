@@ -25,7 +25,7 @@ class RedactingRewritePolicyTest {
     private static final String PASSWORD = "han-shot-first";
     private static final String NEW_PASSWORD = "<12parsecs";
     private static final String SUBJECT = "Scruffy-looking nerf herder";
-    private static final String BODY = "Who's scruffy-looking?";
+    private static final String EMAIL_BODY = "Who's scruffy-looking?";
 
     private RedactingRewritePolicy redactingRewritePolicy;
 
@@ -127,7 +127,7 @@ class RedactingRewritePolicyTest {
 
     private String formatJsonTemplateWithSensitiveValues(String jsonTemplateFileName) throws IOException {
         return String.format(FileUtils.readFileToString(new File(jsonTemplateFileName)), USERNAME, EMAIL, PASSWORD,
-                NEW_PASSWORD, EMAIL, SUBJECT, BODY);
+                NEW_PASSWORD, EMAIL, SUBJECT, EMAIL_BODY);
     }
 
     private String formatJsonTemplateWithRedactedValues(String jsonTemplateFileName) throws IOException {

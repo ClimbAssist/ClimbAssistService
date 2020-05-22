@@ -34,7 +34,7 @@ class ContactControllerTest {
     private static final String CLIMB_ASSIST_EMAIL = "info@climbassist.com";
     private static final SendContactEmailRequest SEND_CONTACT_EMAIL_REQUEST = SendContactEmailRequest.builder()
             .subject("subject")
-            .body("body")
+            .emailBody("body")
             .replyToEmail("link@hyrule.com")
             .build();
     private static final RecaptchaKeys RECAPTCHA_KEYS = RecaptchaKeys.builder()
@@ -81,7 +81,7 @@ class ContactControllerTest {
                 .withDestination(new Destination(ImmutableList.of(CLIMB_ASSIST_EMAIL)))
                 .withReplyToAddresses(SEND_CONTACT_EMAIL_REQUEST.getReplyToEmail())
                 .withMessage(new Message(new Content(SEND_CONTACT_EMAIL_REQUEST.getSubject()),
-                        new Body(new Content(SEND_CONTACT_EMAIL_REQUEST.getBody())))));
+                        new Body(new Content(SEND_CONTACT_EMAIL_REQUEST.getEmailBody())))));
     }
 
     @Test
