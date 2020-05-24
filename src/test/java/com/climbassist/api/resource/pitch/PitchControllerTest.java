@@ -505,7 +505,7 @@ class PitchControllerTest {
         verify(mockRoutesDao).getResource(ROUTE_2.getRouteId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_2);
         verify(mockRoutesDao).getResource(PITCH_1.getRouteId());
-        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_1.getRouteId(), UPDATED_PITCH_1_NEW_ROUTE, true);
+        verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_1.getRouteId(), UPDATED_PITCH_1_NEW_ROUTE, false);
         verify(mockPitchesDao).getResources(ROUTE_1.getRouteId());
         verify(mockRoutesDao).saveResource(UPDATED_ROUTE_1_FROM_DELETION);
     }

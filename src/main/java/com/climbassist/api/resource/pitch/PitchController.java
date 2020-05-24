@@ -117,7 +117,7 @@ public class PitchController {
                         pitch.getPitchId(), maybeOldRoute.get()
                                 .getRouteId()));
                 pitchConsistencyWaiter.waitForConsistency(maybeOldRoute.get()
-                        .getRouteId(), pitch, true);
+                        .getRouteId(), pitch, false);
                 updateRouteGrade(maybeOldRoute.get());
             }
         }
