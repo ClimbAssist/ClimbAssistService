@@ -9,6 +9,7 @@ import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegat
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.ValidDepth;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
+import com.climbassist.api.resource.grade.Grade;
 import com.climbassist.api.resource.grade.GradeSorter;
 import com.climbassist.api.resource.point.PointsDao;
 import com.climbassist.api.resource.route.Center;
@@ -157,10 +158,8 @@ public class PitchController {
                         pitches.stream()
                                 .map(Pitch::getId)
                                 .collect(Collectors.toSet())));
-        Integer highestGrade = GradeSorter.getHighestGrade(route, pitches);
+        Grade highestGrade = GradeSorter.getHighestGrade(route, pitches);
         log.info(String.format("Highest grade for route %s is %s.", route.getRouteId(), highestGrade));
-        String highestGradeModifier = GradeSorter.getHighestGradeModifier(route, pitches);
-        log.info(String.format("Highest grade modifier for route %s is %s.", route.getRouteId(), highestGradeModifier));
         String highestDanger = GradeSorter.getHighestDanger(route, pitches);
         log.info(String.format("Highest danger for route %s is %s.", route.getRouteId(), highestDanger));
         Route newRoute = Route.builder()
@@ -168,8 +167,8 @@ public class PitchController {
                 .wallId(route.getWallId())
                 .name(route.getName())
                 .description(route.getDescription())
-                .grade(highestGrade)
-                .gradeModifier(highestGradeModifier)
+                .grade(highestGrade.getValue())
+                .gradeModifier(highestGrade.getModifier())
                 .danger(highestDanger)
                 .center(route.getCenter() == null ? null : Center.builder()
                         .x(route.getCenter()

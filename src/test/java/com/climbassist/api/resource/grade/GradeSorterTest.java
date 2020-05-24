@@ -49,17 +49,34 @@ class GradeSorterTest {
             .gradeModifier("a/b")
             .danger("X")
             .build();
+    private static final Pitch ROPE_PITCH_4 = Pitch.builder()
+            .grade(6)
+            .gradeModifier("a")
+            .danger("PG13")
+            .build();
+    private static final Pitch ROPE_PITCH_5 = Pitch.builder()
+            .grade(6)
+            .gradeModifier("")
+            .danger("PG13")
+            .build();
+    private static final Pitch ROPE_PITCH_6 = Pitch.builder()
+            .grade(6)
+            .danger("PG13")
+            .build();
     private static final Pitch BOULDER_PITCH_1 = Pitch.builder()
             .grade(4)
             .gradeModifier("-")
             .danger("PG13")
             .build();
     private static final Pitch BOULDER_PITCH_2 = Pitch.builder()
-            .grade(6)
+            .grade(4)
             .gradeModifier("+")
             .danger("R")
             .build();
     private static final Pitch NULL_ATTRIBUTES_PITCH = Pitch.builder()
+            .build();
+    private static final Pitch NULL_GRADE_MODIFIER_PITCH = Pitch.builder()
+            .grade(4)
             .build();
     private static final Pitch INVALID_DANGER_PITCH = Pitch.builder()
             .danger("INVALID")
@@ -74,83 +91,90 @@ class GradeSorterTest {
 
     @Test
     void getHighestGrade_returnsRouteGrade_whenPitchesIsEmpty() {
-        assertThat(GradeSorter.getHighestGrade(SPORT_ROUTE, ImmutableSet.of()), is(equalTo(SPORT_ROUTE.getGrade())));
+        assertThat(GradeSorter.getHighestGrade(SPORT_ROUTE, ImmutableSet.of()), is(equalTo(Grade.builder()
+                .value(SPORT_ROUTE.getGrade())
+                .modifier(SPORT_ROUTE.getGradeModifier())
+                .build())));
     }
 
     @Test
     void getHighestGrade_returnsPitchGrade_whenThereIsOnlyOnePitch() {
-        assertThat(GradeSorter.getHighestGrade(SPORT_ROUTE, ImmutableSet.of(ROPE_PITCH_1)),
-                is(equalTo(ROPE_PITCH_1.getGrade())));
+        assertThat(GradeSorter.getHighestGrade(SPORT_ROUTE, ImmutableSet.of(ROPE_PITCH_1)), is(equalTo(Grade.builder()
+                .value(ROPE_PITCH_1.getGrade())
+                .modifier(ROPE_PITCH_1.getGradeModifier())
+                .build())));
     }
 
     @Test
-    void getHighestGrade_returnsHighestPitchGrade() {
+    void getHighestGrade_returnsHighestPitchGrade_whenThereAreNoGradeTies() {
         assertThat(GradeSorter.getHighestGrade(SPORT_ROUTE, ImmutableSet.of(ROPE_PITCH_1, ROPE_PITCH_2, ROPE_PITCH_3)),
-                is(equalTo(ROPE_PITCH_2.getGrade())));
+                is(equalTo(Grade.builder()
+                        .value(ROPE_PITCH_2.getGrade())
+                        .modifier(ROPE_PITCH_2.getGradeModifier())
+                        .build())));
     }
 
     @Test
-    void getHighestGrade_returnsNull_whenAllPitchGradesAreNull() {
+    void getHighestGrade_returnsEmptyGrade_whenAllPitchGradesAreNull() {
         assertThat(GradeSorter.getHighestGrade(SPORT_ROUTE,
-                ImmutableSet.of(NULL_ATTRIBUTES_PITCH, NULL_ATTRIBUTES_PITCH, NULL_ATTRIBUTES_PITCH)),
-                is(equalTo(null)));
+                ImmutableSet.of(NULL_ATTRIBUTES_PITCH, NULL_ATTRIBUTES_PITCH, NULL_ATTRIBUTES_PITCH)), is(equalTo(
+                Grade.builder()
+                        .build())));
     }
 
     @Test
-    void getHighestGradeModifier_returnsRouteGradeModifier_whenPitchesIsEmpty() {
-        assertThat(GradeSorter.getHighestGradeModifier(SPORT_ROUTE, ImmutableSet.of()),
-                is(equalTo(SPORT_ROUTE.getGradeModifier())));
+    void getHighestGrade_returnsHighestGradeModifier_whenGradeIsTiedForSportRoute() {
+        assertThat(GradeSorter.getHighestGrade(SPORT_ROUTE,
+                ImmutableSet.of(ROPE_PITCH_1, ROPE_PITCH_2, ROPE_PITCH_3, ROPE_PITCH_4, ROPE_PITCH_5, ROPE_PITCH_6,
+                        NULL_ATTRIBUTES_PITCH)), is(equalTo(Grade.builder()
+                .value(ROPE_PITCH_2.getGrade())
+                .modifier(ROPE_PITCH_2.getGradeModifier())
+                .build())));
     }
 
     @Test
-    void getHighestGradeModifier_returnsPitchGradeModifier_whenThereIsOnlyOnePitch() {
-        assertThat(GradeSorter.getHighestGradeModifier(SPORT_ROUTE, ImmutableSet.of(ROPE_PITCH_1)),
-                is(equalTo(ROPE_PITCH_1.getGradeModifier())));
+    void getHighestGrade_returnsHighestGradeModifier_whenGradeIsTiedForTradRoute() {
+        assertThat(GradeSorter.getHighestGrade(TRAD_ROUTE,
+                ImmutableSet.of(ROPE_PITCH_1, ROPE_PITCH_2, ROPE_PITCH_3, ROPE_PITCH_4, ROPE_PITCH_5, ROPE_PITCH_6,
+                        NULL_ATTRIBUTES_PITCH)), is(equalTo(Grade.builder()
+                .value(ROPE_PITCH_2.getGrade())
+                .modifier(ROPE_PITCH_2.getGradeModifier())
+                .build())));
     }
 
     @Test
-    void getHighestGradeModifier_returnsHighestGradeModifier_forSportRoute() {
-        assertThat(GradeSorter.getHighestGradeModifier(SPORT_ROUTE,
-                ImmutableSet.of(ROPE_PITCH_1, ROPE_PITCH_2, ROPE_PITCH_3, NULL_ATTRIBUTES_PITCH)),
-                is(equalTo(ROPE_PITCH_2.getGradeModifier())));
+    void getHighestGrade_returnsHighestGradeModifier_whenGradeIsTiedForBoulderRoute() {
+        assertThat(GradeSorter.getHighestGrade(BOULDER_ROUTE,
+                ImmutableSet.of(BOULDER_PITCH_1, BOULDER_PITCH_2, NULL_ATTRIBUTES_PITCH)), is(equalTo(Grade.builder()
+                .value(BOULDER_PITCH_2.getGrade())
+                .modifier(BOULDER_PITCH_2.getGradeModifier())
+                .build())));
     }
 
     @Test
-    void getHighestGradeModifier_returnsHighestGradeModifier_forTradRoute() {
-        assertThat(GradeSorter.getHighestGradeModifier(TRAD_ROUTE,
-                ImmutableSet.of(ROPE_PITCH_1, ROPE_PITCH_2, ROPE_PITCH_3, NULL_ATTRIBUTES_PITCH)),
-                is(equalTo(ROPE_PITCH_2.getGradeModifier())));
+    void getHighestGrade_returnsNullGradeModifier_whenOnlyRouteHasNullGradeModifier() {
+        assertThat(GradeSorter.getHighestGrade(BOULDER_ROUTE, ImmutableSet.of(NULL_GRADE_MODIFIER_PITCH)), is(equalTo(
+                Grade.builder()
+                        .value(NULL_GRADE_MODIFIER_PITCH.getGrade())
+                        .build())));
     }
 
     @Test
-    void getHighestGradeModifier_returnsHighestGradeModifier_forBoulderRoute() {
-        assertThat(GradeSorter.getHighestGradeModifier(BOULDER_ROUTE,
-                ImmutableSet.of(BOULDER_PITCH_1, BOULDER_PITCH_2, NULL_ATTRIBUTES_PITCH)),
-                is(equalTo(BOULDER_PITCH_2.getGradeModifier())));
+    void getHighestGrade_throwsGradeSortingException_whenSportGradeModifierIsInvalid() {
+        assertThrows(GradeSortingException.class,
+                () -> GradeSorter.getHighestGrade(SPORT_ROUTE, ImmutableSet.of(BOULDER_PITCH_1, BOULDER_PITCH_2)));
     }
 
     @Test
-    void getHighestGradeModifier_returnsEmptyString_whenOnlyRouteHasNullGradeModifier() {
-        assertThat(GradeSorter.getHighestGradeModifier(BOULDER_ROUTE, ImmutableSet.of(NULL_ATTRIBUTES_PITCH)),
-                is(equalTo("")));
+    void getHighestGrade_throwsGradeSortingException_whenTradGradeModifierIsInvalid() {
+        assertThrows(GradeSortingException.class,
+                () -> GradeSorter.getHighestGrade(TRAD_ROUTE, ImmutableSet.of(BOULDER_PITCH_1, BOULDER_PITCH_2)));
     }
 
     @Test
-    void getHighestGradeModifier_throwsGradeSortingException_whenSportGradeModifierIsInvalid() {
-        assertThrows(GradeSortingException.class, () -> GradeSorter.getHighestGradeModifier(SPORT_ROUTE,
-                ImmutableSet.of(ROPE_PITCH_1, ROPE_PITCH_2, ROPE_PITCH_3, BOULDER_PITCH_1)));
-    }
-
-    @Test
-    void getHighestGradeModifier_throwsGradeSortingException_whenTradGradeModifierIsInvalid() {
-        assertThrows(GradeSortingException.class, () -> GradeSorter.getHighestGradeModifier(TRAD_ROUTE,
-                ImmutableSet.of(ROPE_PITCH_1, ROPE_PITCH_2, ROPE_PITCH_3, BOULDER_PITCH_1)));
-    }
-
-    @Test
-    void getHighestGradeModifier_throwsGradeSortingException_whenBoulderGradeModifierIsInvalid() {
-        assertThrows(GradeSortingException.class, () -> GradeSorter.getHighestGradeModifier(BOULDER_ROUTE,
-                ImmutableSet.of(BOULDER_PITCH_1, BOULDER_PITCH_2, ROPE_PITCH_1)));
+    void getHighestGrade_throwsGradeSortingException_whenBoulderGradeModifierIsInvalid() {
+        assertThrows(GradeSortingException.class,
+                () -> GradeSorter.getHighestGrade(BOULDER_ROUTE, ImmutableSet.of(ROPE_PITCH_2, ROPE_PITCH_4)));
     }
 
     @Test

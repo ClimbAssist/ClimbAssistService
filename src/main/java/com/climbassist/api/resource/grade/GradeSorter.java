@@ -8,7 +8,6 @@ import lombok.experimental.UtilityClass;
 
 import java.util.Comparator;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 @UtilityClass
@@ -35,39 +34,32 @@ public class GradeSorter {
             .put("X", 3)
             .build();
 
-    public static Integer getHighestGrade(@NonNull Route route, @NonNull Set<Pitch> pitches) {
+    public static Grade getHighestGrade(@NonNull Route route, @NonNull Set<Pitch> pitches) {
         if (pitches.isEmpty()) {
-            return route.getGrade();
+            return Grade.builder()
+                    .value(route.getGrade())
+                    .modifier(route.getGradeModifier())
+                    .build();
         }
         return pitches.stream()
-                .map(Pitch::getGrade)
-                .filter(Objects::nonNull)
-                .max(Integer::compareTo)
-                .orElse(null);
-    }
-
-    public static String getHighestGradeModifier(@NonNull Route route, @NonNull Set<Pitch> pitches) {
-        if (pitches.isEmpty()) {
-            return route.getGradeModifier();
-        }
-        return pitches.stream()
-                .map(Pitch::getGradeModifier)
-                .map(gradeModifier -> gradeModifier == null ? "" :
-                        gradeModifier) // replace all the nulls with empty strings
-                .filter(gradeModifier -> {
-                    boolean isRopedClimb = isRopedClimb(route.getStyle());
-                    Map<String, Integer> gradeModifierRank =
-                            isRopedClimb ? ROPED_GRADE_MODIFIER_RANKS : BOULDER_GRADE_MODIFIER_RANKS;
-                    if (!gradeModifierRank.containsKey(gradeModifier)) {
-                        throw new GradeSortingException(
-                                String.format("Grade modifier %s is not valid for a %s route %s.", gradeModifier,
-                                        isRopedClimb ? "roped" : "boulder", route.getRouteId()));
+                .filter(pitch -> pitch.getGrade() != null)
+                .max((pitch1, pitch2) -> {
+                    if (pitch1.getGrade()
+                            .equals(pitch2.getGrade())) {
+                        boolean isRopedClimb = isRopedClimb(route.getStyle());
+                        return getGradeModifierRank(isRopedClimb, pitch1.getGradeModifier(),
+                                route.getRouteId()).compareTo(
+                                getGradeModifierRank(isRopedClimb, pitch2.getGradeModifier(), route.getRouteId()));
                     }
-                    return true;
+                    return pitch1.getGrade()
+                            .compareTo(pitch2.getGrade());
                 })
-                .max(Comparator.comparing(
-                        gradeModifier -> getGradeModifierRank(isRopedClimb(route.getStyle()), gradeModifier)))
-                .get();
+                .map(pitch -> Grade.builder()
+                        .value(pitch.getGrade())
+                        .modifier(pitch.getGradeModifier())
+                        .build())
+                .orElse(Grade.builder()
+                        .build());
     }
 
     public static String getHighestDanger(@NonNull Route route, @NonNull Set<Pitch> pitches) {
@@ -88,9 +80,15 @@ public class GradeSorter {
                 .get();
     }
 
-    private static Integer getGradeModifierRank(boolean isRopedClimb, String gradeModifier) {
+    private static Integer getGradeModifierRank(boolean isRopedClimb, String gradeModifier, String routeId) {
         Map<String, Integer> gradeModifierRanks =
                 isRopedClimb ? ROPED_GRADE_MODIFIER_RANKS : BOULDER_GRADE_MODIFIER_RANKS;
+        gradeModifier = gradeModifier == null ? "" : gradeModifier;
+        if (!gradeModifierRanks.containsKey(gradeModifier)) {
+            throw new GradeSortingException(
+                    String.format("Grade modifier %s is not valid for a %s route %s.", gradeModifier,
+                            isRopedClimb ? "roped" : "boulder", routeId));
+        }
         return gradeModifierRanks.get(gradeModifier);
     }
 
