@@ -160,16 +160,18 @@ public class PitchController {
                                 .collect(Collectors.toSet())));
         Grade highestGrade = GradeSorter.getHighestGrade(route, pitches);
         log.info(String.format("Highest grade for route %s is %s.", route.getRouteId(), highestGrade));
-        String highestDanger = GradeSorter.getHighestDanger(route, pitches);
+        Optional<String> highestDanger = GradeSorter.getHighestDanger(route, pitches);
         log.info(String.format("Highest danger for route %s is %s.", route.getRouteId(), highestDanger));
         Route newRoute = Route.builder()
                 .routeId(route.getRouteId())
                 .wallId(route.getWallId())
                 .name(route.getName())
                 .description(route.getDescription())
-                .grade(highestGrade.getValue())
-                .gradeModifier(highestGrade.getModifier())
-                .danger(highestDanger)
+                .grade(highestGrade.getValue()
+                        .orElse(null))
+                .gradeModifier(highestGrade.getModifier()
+                        .orElse(null))
+                .danger(highestDanger.orElse(null))
                 .center(route.getCenter() == null ? null : Center.builder()
                         .x(route.getCenter()
                                 .getX())

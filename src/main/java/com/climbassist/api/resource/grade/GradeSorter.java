@@ -8,6 +8,8 @@ import lombok.experimental.UtilityClass;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @UtilityClass
@@ -36,10 +38,7 @@ public class GradeSorter {
 
     public static Grade getHighestGrade(@NonNull Route route, @NonNull Set<Pitch> pitches) {
         if (pitches.isEmpty()) {
-            return Grade.builder()
-                    .value(route.getGrade())
-                    .modifier(route.getGradeModifier())
-                    .build();
+            return buildEmptyGrade();
         }
         return pitches.stream()
                 .filter(pitch -> pitch.getGrade() != null)
@@ -55,20 +54,19 @@ public class GradeSorter {
                             .compareTo(pitch2.getGrade());
                 })
                 .map(pitch -> Grade.builder()
-                        .value(pitch.getGrade())
-                        .modifier(pitch.getGradeModifier())
+                        .value(Optional.of(pitch.getGrade()))
+                        .modifier(Optional.ofNullable(pitch.getGradeModifier()))
                         .build())
-                .orElse(Grade.builder()
-                        .build());
+                .orElse(buildEmptyGrade());
     }
 
-    public static String getHighestDanger(@NonNull Route route, @NonNull Set<Pitch> pitches) {
+    public static Optional<String> getHighestDanger(@NonNull Route route, @NonNull Set<Pitch> pitches) {
         if (pitches.isEmpty()) {
-            return route.getDanger();
+            return Optional.empty();
         }
         return pitches.stream()
                 .map(Pitch::getDanger)
-                .map(danger -> danger == null ? "" : danger)// replace all the nulls with empty strings
+                .filter(Objects::nonNull)
                 .filter(danger -> {
                     if (!DANGER_RANKS.containsKey(danger)) {
                         throw new GradeSortingException(
@@ -76,8 +74,7 @@ public class GradeSorter {
                     }
                     return true;
                 })
-                .max(Comparator.comparing(GradeSorter::getDangerRank))
-                .get();
+                .max(Comparator.comparing(GradeSorter::getDangerRank));
     }
 
     private static Integer getGradeModifierRank(boolean isRopedClimb, String gradeModifier, String routeId) {
@@ -98,6 +95,13 @@ public class GradeSorter {
 
     private static boolean isRopedClimb(String style) {
         return style.equals("sport") || style.equals("trad");
+    }
+
+    private static Grade buildEmptyGrade() {
+        return Grade.builder()
+                .value(Optional.empty())
+                .modifier(Optional.empty())
+                .build();
     }
 
 }

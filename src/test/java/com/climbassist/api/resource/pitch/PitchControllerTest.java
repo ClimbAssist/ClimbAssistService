@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -270,6 +271,25 @@ class PitchControllerTest {
             .grade(PITCH_2.getGrade())
             .gradeModifier(PITCH_2.getGradeModifier())
             .danger(PITCH_2.getDanger())
+            .mainImageLocation(ROUTE_1.getMainImageLocation())
+            .protection(ROUTE_1.getProtection())
+            .style(ROUTE_1.getStyle())
+            .first(ROUTE_1.isFirst())
+            .next(ROUTE_1.getNext())
+            .build();
+    private static final Route UPDATED_ROUTE_1_NO_GRADES = Route.builder()
+            .routeId(ROUTE_1.getRouteId())
+            .wallId(ROUTE_1.getWallId())
+            .name(ROUTE_1.getName())
+            .description(ROUTE_1.getDescription())
+            .center(Center.builder()
+                    .x(ROUTE_1.getCenter()
+                            .getX())
+                    .y(ROUTE_1.getCenter()
+                            .getY())
+                    .z(ROUTE_1.getCenter()
+                            .getZ())
+                    .build())
             .mainImageLocation(ROUTE_1.getMainImageLocation())
             .protection(ROUTE_1.getProtection())
             .style(ROUTE_1.getStyle())
@@ -554,13 +574,26 @@ class PitchControllerTest {
     }
 
     @Test
-    void deletePitch_deletesPitchAndUpdatesRoute_whenPitchIsEmptyAndRouteExists()
+    void deletePitch_deletesPitchAndUpdatesRoute_whenPitchIsEmptyAndRouteHasOtherPitches()
             throws ResourceNotFoundException, ResourceNotEmptyException, PitchConsistencyException,
             InterruptedException {
+        runDeletePitchTest(ImmutableSet.of(PITCH_2, PITCH_3), UPDATED_ROUTE_1_FROM_DELETION);
+    }
+
+    @Test
+    void deletePitch_deletesPitchAndUpdatesRoute_whenPitchIsEmptyAndRouteHasNoOtherPitches()
+            throws ResourceNotFoundException, ResourceNotEmptyException, PitchConsistencyException,
+            InterruptedException {
+        runDeletePitchTest(ImmutableSet.of(), UPDATED_ROUTE_1_NO_GRADES);
+    }
+
+    private void runDeletePitchTest(Set<Pitch> siblingPitches, Route expectedUpdatedRoute)
+            throws InterruptedException, PitchConsistencyException, ResourceNotFoundException,
+            ResourceNotEmptyException {
         when(mockPitchesDao.getResource(any())).thenReturn(Optional.of(PITCH_1));
         when(mockPointsDao.getResources(any())).thenReturn(ImmutableSet.of());
         when(mockRoutesDao.getResource(any())).thenReturn(Optional.of(ROUTE_1));
-        when(mockPitchesDao.getResources(any())).thenReturn(ImmutableSet.of(PITCH_2, PITCH_3));
+        when(mockPitchesDao.getResources(any())).thenReturn(siblingPitches);
 
         assertThat(pitchController.deleteResource(PITCH_1.getPitchId()), is(equalTo(DeleteResourceResult.builder()
                 .successful(true)
@@ -572,6 +605,6 @@ class PitchControllerTest {
         verify(mockPitchConsistencyWaiter).waitForConsistency(ROUTE_1.getRouteId(), PITCH_1, false);
         verify(mockPitchesDao).getResources(ROUTE_1.getRouteId());
         verify(mockPitchesDao).deleteResource(PITCH_1.getPitchId());
-        verify(mockRoutesDao).saveResource(UPDATED_ROUTE_1_FROM_DELETION);
+        verify(mockRoutesDao).saveResource(expectedUpdatedRoute);
     }
 }
