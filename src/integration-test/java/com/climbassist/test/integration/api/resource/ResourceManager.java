@@ -67,7 +67,7 @@ public class ResourceManager {
     private final Map<Class<? extends com.climbassist.api.resource.common.Resource>, Set<String>> resourceIds =
             new HashMap<>();
     @NonNull
-    private ClimbAssistClient climbAssistClient;
+    private final ClimbAssistClient climbAssistClient;
 
     public void cleanUp(@NonNull Set<Cookie> cookies) {
         resourceIds.getOrDefault(PathPoint.class, ImmutableSet.of())
@@ -378,6 +378,22 @@ public class ResourceManager {
         return ImmutableList.of(route1, route2, route3);
     }
 
+    public Pitch createPitch(@NonNull String routeId, @NonNull Set<Cookie> cookies, boolean first, int depth) {
+        return createPitch(routeId, cookies, first, Optional.empty(), depth);
+    }
+
+    public Pitch createPitch(@NonNull String routeId, @NonNull Set<Cookie> cookies, boolean first, @NonNull String next,
+                             int depth) {
+        return createPitch(routeId, cookies, first, Optional.of(next), depth);
+    }
+
+    public List<Pitch> createPitches(String routeId, Set<Cookie> cookies) {
+        Pitch pitch3 = createPitch(routeId, cookies, false, 0);
+        Pitch pitch2 = createPitch(routeId, cookies, false, pitch3.getPitchId(), 0);
+        Pitch pitch1 = createPitch(routeId, cookies, true, pitch2.getPitchId(), 0);
+        return ImmutableList.of(pitch1, pitch2, pitch3);
+    }
+
     public Path createPath(String cragId, Set<Cookie> cookies, int depth) {
         NewPath newPath = NewPath.builder()
                 .cragId(cragId)
@@ -437,6 +453,21 @@ public class ResourceManager {
         return getWall(country).getRoutes()
                 .iterator()
                 .next();
+    }
+
+    public Pitch getPitch(@NonNull Country country) {
+        return getRoute(country).getPitches()
+                .iterator()
+                .next();
+    }
+
+    public void addResourceToResourceIds(Class<? extends com.climbassist.api.resource.common.Resource> resourceClass,
+                                         String resourceId) {
+        if (!resourceIds.containsKey(resourceClass)) {
+            resourceIds.put(resourceClass, new HashSet<>());
+        }
+        resourceIds.get(resourceClass)
+                .add(resourceId);
     }
 
     private Wall createWall(String cragId, Set<Cookie> cookies, boolean first,
@@ -518,7 +549,7 @@ public class ResourceManager {
 
         if (depth > 0) {
             route.setChildResources(
-                    ImmutableSet.of(createPitch(route.getRouteId(), cookies, true, Optional.empty(), depth - 12)),
+                    ImmutableSet.of(createPitch(route.getRouteId(), cookies, true, Optional.empty(), depth - 1)),
                     Pitch.class);
             route.setGrade(route.getPitches()
                     .get(0)
@@ -548,7 +579,7 @@ public class ResourceManager {
                         .build())
                 .danger("R")
                 .grade(1)
-                .gradeModifier("a")
+                .gradeModifier("b")
                 .distance(1.0)
                 .first(first ? true : null)
                 .next(maybeNext.orElse(null))
@@ -645,14 +676,5 @@ public class ResourceManager {
                 .first(first ? true : null)
                 .next(maybeNext.orElse(null))
                 .build();
-    }
-
-    private void addResourceToResourceIds(Class<? extends com.climbassist.api.resource.common.Resource> resourceClass,
-                                          String resourceId) {
-        if (!resourceIds.containsKey(resourceClass)) {
-            resourceIds.put(resourceClass, new HashSet<>());
-        }
-        resourceIds.get(resourceClass)
-                .add(resourceId);
     }
 }

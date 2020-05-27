@@ -20,6 +20,7 @@ import com.climbassist.api.resource.pathpoint.CreatePathPointResult;
 import com.climbassist.api.resource.pathpoint.NewPathPoint;
 import com.climbassist.api.resource.pitch.CreatePitchResult;
 import com.climbassist.api.resource.pitch.NewPitch;
+import com.climbassist.api.resource.pitch.Pitch;
 import com.climbassist.api.resource.point.CreatePointResult;
 import com.climbassist.api.resource.point.NewPoint;
 import com.climbassist.api.resource.region.CreateRegionResult;
@@ -360,6 +361,27 @@ public class ClimbAssistClient {
 
     public ApiResponse<CreatePitchResult> createPitch(@NonNull NewPitch newPitch, @NonNull Set<Cookie> cookies) {
         return put("/v1/pitches", newPitch, cookies, new TypeReference<ApiResponse<CreatePitchResult>>() {});
+    }
+
+    public ApiResponse<Pitch> getPitch(@NonNull String pitchId) {
+        return get("/v1/pitches/" + pitchId, new TypeReference<ApiResponse<Pitch>>() {});
+    }
+
+    public ApiResponse<Pitch> getPitch(@NonNull String pitchId, int depth) {
+        return get("/v1/pitches/" + pitchId + "?depth=" + depth, new TypeReference<ApiResponse<Pitch>>() {});
+    }
+
+    public ApiResponse<List<Pitch>> listPitches(@NonNull String routeId) {
+        return get("/v1/routes/" + routeId + "/pitches", new TypeReference<ApiResponse<List<Pitch>>>() {});
+    }
+
+    public ApiResponse<List<Pitch>> listPitches(@NonNull String routeId, boolean ordered) {
+        return get("/v1/routes/" + routeId + "/pitches?ordered=" + ordered,
+                new TypeReference<ApiResponse<List<Pitch>>>() {});
+    }
+
+    public ApiResponse<UpdateResourceResult> updatePitch(@NonNull Pitch pitch, @NonNull Set<Cookie> cookies) {
+        return post("/v1/pitches", pitch, cookies, new TypeReference<ApiResponse<UpdateResourceResult>>() {});
     }
 
     public ApiResponse<DeleteResourceResult> deletePitch(@NonNull String pitchId, @NonNull Set<Cookie> cookies) {
