@@ -225,6 +225,9 @@ Resources:
       - Namespace: aws:ec2:vpc
         OptionName: AssociatePublicIpAddress
         Value: 'true'
+      - Namespace: aws:autoscaling:asg
+        OptionName: MinSize
+        Value: 2
       - Namespace: aws:elasticbeanstalk:environment
         OptionName: LoadBalancerType
         Value: application
