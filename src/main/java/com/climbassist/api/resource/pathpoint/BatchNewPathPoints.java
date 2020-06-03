@@ -2,6 +2,7 @@ package com.climbassist.api.resource.pathpoint;
 
 import com.climbassist.api.resource.common.batch.BatchNewResources;
 import com.climbassist.api.resource.path.Path;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +23,7 @@ class BatchNewPathPoints implements BatchNewResources<PathPoint, Path, BatchNewP
     @Size(min = 1, max = 100, message = "Request must contain between 1 and 100 new path points.")
     private List<@Valid BatchNewPathPoint> newPathPoints;
 
+    @JsonIgnore
     @Override
     public List<BatchNewPathPoint> getBatchNewResources() {
         return newPathPoints;

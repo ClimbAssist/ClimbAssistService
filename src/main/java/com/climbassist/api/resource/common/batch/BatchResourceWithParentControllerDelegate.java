@@ -20,19 +20,19 @@ public class BatchResourceWithParentControllerDelegate<Resource extends Orderabl
         BatchNewResource extends com.climbassist.api.resource.common.batch.BatchNewResource<Resource, ParentResource>> {
 
     @NonNull
-    private ResourceControllerDelegate<Resource, NewResource> resourceControllerDelegate;
+    private final ResourceControllerDelegate<Resource, NewResource> resourceControllerDelegate;
     @NonNull
-    private ResourceDao<Resource> resourceDao;
+    private final ResourceDao<Resource> resourceDao;
     @NonNull
-    private ResourceDao<ParentResource> parentResourceDao;
+    private final ResourceDao<ParentResource> parentResourceDao;
     @NonNull
-    private ResourceNotFoundExceptionFactory<Resource> resourceNotFoundExceptionFactory;
+    private final ResourceNotFoundExceptionFactory<Resource> resourceNotFoundExceptionFactory;
     @NonNull
-    private ResourceNotFoundExceptionFactory<ParentResource> parentResourceNotFoundExceptionFactory;
+    private final ResourceNotFoundExceptionFactory<ParentResource> parentResourceNotFoundExceptionFactory;
     @NonNull
-    private BatchResourceFactory<Resource, NewResource, ParentResource, BatchNewResource> batchResourceFactory;
+    private final BatchResourceFactory<Resource, NewResource, ParentResource, BatchNewResource> batchResourceFactory;
     @NonNull
-    private BatchCreateResourceResultFactory<Resource, ParentResource> batchCreateResourceResultFactory;
+    private final BatchCreateResourceResultFactory<Resource, ParentResource> batchCreateResourceResultFactory;
 
     public BatchCreateResourcesResult<Resource, ParentResource> batchCreateResources(@NonNull String parentResourceId,
                                                                                      @NonNull BatchNewResources<Resource, ParentResource, BatchNewResource> batchNewResources)
