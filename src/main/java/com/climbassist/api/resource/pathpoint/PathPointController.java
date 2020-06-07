@@ -103,4 +103,12 @@ public class PathPointController {
             throws ResourceNotFoundException {
         return batchResourceWithParentControllerDelegate.batchDeleteResources(batchDeletePathPointsRequest);
     }
+
+    @Metrics(api = "BatchDeletePathPoints")
+    @Authorization(AdministratorAuthorizationHandler.class)
+    @RequestMapping(path = "/v1/paths/{pathId}/path-points", method = RequestMethod.DELETE)
+    public DeleteResourceResult batchDeleteResources(@NonNull @ValidPathId @PathVariable String pathId)
+            throws ResourceNotFoundException {
+        return batchResourceWithParentControllerDelegate.batchDeleteResources(pathId);
+    }
 }

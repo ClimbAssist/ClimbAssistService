@@ -6,6 +6,7 @@ import com.climbassist.api.resource.common.ResourceDao;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceNotFoundExceptionFactory;
 import com.climbassist.api.resource.common.ResourceWithChildren;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParent;
 import lombok.Builder;
 import lombok.NonNull;
@@ -22,7 +23,7 @@ public class BatchResourceWithParentControllerDelegate<Resource extends Orderabl
     @NonNull
     private final ResourceControllerDelegate<Resource, NewResource> resourceControllerDelegate;
     @NonNull
-    private final ResourceDao<Resource> resourceDao;
+    private final ResourceWithParentDao<Resource, ParentResource> resourceDao;
     @NonNull
     private final ResourceDao<ParentResource> parentResourceDao;
     @NonNull
@@ -70,6 +71,16 @@ public class BatchResourceWithParentControllerDelegate<Resource extends Orderabl
         }
         batchDeleteResourcesRequest.getResourceIds()
                 .forEach(resourceDao::deleteResource);
+        return DeleteResourceResult.builder()
+                .successful(true)
+                .build();
+    }
+
+    public DeleteResourceResult batchDeleteResources(@NonNull String parentId) throws ResourceNotFoundException {
+        parentResourceDao.getResource(parentId)
+                .orElseThrow(() -> parentResourceNotFoundExceptionFactory.create(parentId));
+        resourceDao.getResources(parentId)
+                .forEach(resource -> resourceDao.deleteResource(resource.getId()));
         return DeleteResourceResult.builder()
                 .successful(true)
                 .build();

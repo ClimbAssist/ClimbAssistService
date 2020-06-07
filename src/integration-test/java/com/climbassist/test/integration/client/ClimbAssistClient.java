@@ -21,8 +21,12 @@ import com.climbassist.api.resource.pathpoint.NewPathPoint;
 import com.climbassist.api.resource.pitch.CreatePitchResult;
 import com.climbassist.api.resource.pitch.NewPitch;
 import com.climbassist.api.resource.pitch.Pitch;
+import com.climbassist.api.resource.point.BatchCreatePointsResult;
+import com.climbassist.api.resource.point.BatchNewPoint;
+import com.climbassist.api.resource.point.BatchNewPoints;
 import com.climbassist.api.resource.point.CreatePointResult;
 import com.climbassist.api.resource.point.NewPoint;
+import com.climbassist.api.resource.point.Point;
 import com.climbassist.api.resource.region.CreateRegionResult;
 import com.climbassist.api.resource.region.NewRegion;
 import com.climbassist.api.resource.region.Region;
@@ -78,6 +82,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -392,8 +397,37 @@ public class ClimbAssistClient {
         return put("/v1/points", newPoint, cookies, new TypeReference<ApiResponse<CreatePointResult>>() {});
     }
 
+    public ApiResponse<BatchCreatePointsResult> batchCreatePoints(@NonNull String pitchId, @NonNull Set<Cookie> cookies,
+                                                                  @NonNull BatchNewPoint... batchNewPoints) {
+        return put("/v1/pitches/" + pitchId + "/points", BatchNewPoints.builder()
+                .newPoints(Arrays.asList(batchNewPoints))
+                .build(), cookies, new TypeReference<ApiResponse<BatchCreatePointsResult>>() {});
+    }
+
+    public ApiResponse<Point> getPoint(@NonNull String pointId) {
+        return get("/v1/points/" + pointId, new TypeReference<ApiResponse<Point>>() {});
+    }
+
+    public ApiResponse<List<Point>> listPoints(@NonNull String pitchId) {
+        return get("/v1/pitches/" + pitchId + "/points", new TypeReference<ApiResponse<List<Point>>>() {});
+    }
+
+    public ApiResponse<List<Point>> listPoints(@NonNull String pitchId, boolean ordered) {
+        return get("/v1/pitches/" + pitchId + "/points?ordered=" + ordered,
+                new TypeReference<ApiResponse<List<Point>>>() {});
+    }
+
+    public ApiResponse<UpdateResourceResult> updatePoint(@NonNull Point point, @NonNull Set<Cookie> cookies) {
+        return post("/v1/points", point, cookies, new TypeReference<ApiResponse<UpdateResourceResult>>() {});
+    }
+
     public ApiResponse<DeleteResourceResult> deletePoint(@NonNull String pointId, @NonNull Set<Cookie> cookies) {
         return delete("/v1/points/" + pointId, cookies, new TypeReference<ApiResponse<DeleteResourceResult>>() {});
+    }
+
+    public ApiResponse<DeleteResourceResult> batchDeletePoints(@NonNull String pitchId, @NonNull Set<Cookie> cookies) {
+        return delete("/v1/pitches/" + pitchId + "/points", cookies,
+                new TypeReference<ApiResponse<DeleteResourceResult>>() {});
     }
 
     public ApiResponse<CreatePathResult> createPath(@NonNull NewPath newPath, @NonNull Set<Cookie> cookies) {

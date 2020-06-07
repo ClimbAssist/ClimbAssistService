@@ -394,6 +394,22 @@ public class ResourceManager {
         return ImmutableList.of(pitch1, pitch2, pitch3);
     }
 
+    public Point createPoint(@NonNull String pitchId, @NonNull Set<Cookie> cookies, boolean first) {
+        return createPoint(pitchId, cookies, first, Optional.empty());
+    }
+
+    public Point createPoint(@NonNull String pitchId, @NonNull Set<Cookie> cookies, boolean first,
+                             @NonNull String next) {
+        return createPoint(pitchId, cookies, first, Optional.of(next));
+    }
+
+    public List<Point> createPoints(String pitchId, Set<Cookie> cookies) {
+        Point point3 = createPoint(pitchId, cookies, false);
+        Point point2 = createPoint(pitchId, cookies, false, point3.getPointId());
+        Point point1 = createPoint(pitchId, cookies, true, point2.getPointId());
+        return ImmutableList.of(point1, point2, point3);
+    }
+
     public Path createPath(String cragId, Set<Cookie> cookies, int depth) {
         NewPath newPath = NewPath.builder()
                 .cragId(cragId)
@@ -457,6 +473,12 @@ public class ResourceManager {
 
     public Pitch getPitch(@NonNull Country country) {
         return getRoute(country).getPitches()
+                .iterator()
+                .next();
+    }
+
+    public Point getPoint(@NonNull Country country) {
+        return getPitch(country).getPoints()
                 .iterator()
                 .next();
     }

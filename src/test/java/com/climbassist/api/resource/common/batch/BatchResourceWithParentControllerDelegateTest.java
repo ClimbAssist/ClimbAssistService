@@ -9,6 +9,7 @@ import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceNotFoundExceptionFactory;
 import com.climbassist.api.resource.common.ResourceWithChildren;
 import com.climbassist.api.resource.common.ResourceWithParent;
+import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -190,7 +191,7 @@ class BatchResourceWithParentControllerDelegateTest {
     @Mock
     private ResourceControllerDelegate<ResourceImpl, NewResourceImpl> mockResourceControllerDelegate;
     @Mock
-    private ResourceDao<ResourceImpl> mockResourceDao;
+    private ResourceWithParentDao<ResourceImpl, ParentResourceImpl> mockResourceDao;
     @Mock
     private ResourceDao<ParentResourceImpl> mockParentResourceDao;
     @Mock
@@ -347,7 +348,7 @@ class BatchResourceWithParentControllerDelegateTest {
     }
 
     @Test
-    void batchDeleteResources_throwsPointNotFoundException_whenPointDoesNotExist() {
+    void batchDeleteResources_throwsResourceNotFoundException_whenPointDoesNotExist() {
         doReturn(Optional.of(RESOURCE_1)).when(mockResourceDao)
                 .getResource(RESOURCE_1.getId());
         doReturn(Optional.empty()).when(mockResourceDao)
@@ -362,4 +363,45 @@ class BatchResourceWithParentControllerDelegateTest {
         verify(mockResourceNotFoundExceptionFactory).create(RESOURCE_2.getId());
         verify(mockResourceDao, never()).deleteResource(any());
     }
+
+    @Test
+    void batchDeleteResources_throwsResourceNotFoundException_whenParentIdDoesNotExist() {
+        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockParentResourceNotFoundExceptionFactory.create(any())).thenReturn(
+                new ResourceNotFoundExceptionImpl(PARENT_RESOURCE_1.getId()));
+        assertThrows(ResourceNotFoundExceptionImpl.class,
+                () -> batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId()));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
+        //noinspection ThrowableNotThrown
+        verify(mockParentResourceNotFoundExceptionFactory).create(PARENT_RESOURCE_1.getId());
+    }
+
+    @Test
+    void batchDeleteResources_doesNothing_whenParentResourceHasNoChildren() throws ResourceNotFoundException {
+        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockResourceDao.getResources(any())).thenReturn(ImmutableSet.of());
+        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId()),
+                is(equalTo(DeleteResourceResult.builder()
+                        .successful(true)
+                        .build())));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
+        verify(mockResourceDao).getResources(PARENT_RESOURCE_1.getId());
+        verify(mockResourceDao, never()).deleteResource(any());
+    }
+
+    @Test
+    void batchDeleteResources_deletesAllResourcesUnderParent() throws ResourceNotFoundException {
+        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockResourceDao.getResources(any())).thenReturn(ImmutableSet.of(RESOURCE_1, RESOURCE_2, RESOURCE_3));
+        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId()),
+                is(equalTo(DeleteResourceResult.builder()
+                        .successful(true)
+                        .build())));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
+        verify(mockResourceDao).getResources(PARENT_RESOURCE_1.getId());
+        verify(mockResourceDao).deleteResource(RESOURCE_1.getId());
+        verify(mockResourceDao).deleteResource(RESOURCE_2.getId());
+        verify(mockResourceDao).deleteResource(RESOURCE_3.getId());
+    }
+
 }

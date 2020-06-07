@@ -37,7 +37,6 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
 
 @ContextConfiguration(classes = {ClimbAssistClientConfiguration.class, ResourceManagerConfiguration.class,
         TestUserManagerConfiguration.class})
@@ -348,31 +347,31 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteRoute_deletesRoute() {
         testUserManager.makeUserAdministrator(username);
-        Route Route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
-        ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRoute(Route.getRouteId(), cookies);
+        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRoute(route.getRouteId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Route> getRouteResult = climbAssistClient.getRoute(Route.getRouteId());
+        ApiResponse<Route> getRouteResult = climbAssistClient.getRoute(route.getRouteId());
         ExceptionUtils.assertResourceNotFoundException(getRouteResult);
     }
 
     @Test
     public void deleteRoute_returnsResourceNotEmptyException_whenRouteHasChildren() {
         testUserManager.makeUserAdministrator(username);
-        Route Route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
-        ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRoute(Route.getRouteId(), cookies);
+        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
+        ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRoute(route.getRouteId(), cookies);
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
 
     private void runGetRouteTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
             Optional<Integer> maybeRequestDepth) {
         testUserManager.makeUserAdministrator(username);
-        Route Route = resourceManager.getRoute(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
-        resourceManager.removeChildren(Route, Route.class, maybeRequestDepth.orElse(0));
-        ApiResponse<Route> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getRoute(Route.getRouteId(),
-                maybeRequestDepth.get()) : climbAssistClient.getRoute(Route.getRouteId());
+        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
+        resourceManager.removeChildren(route, Route.class, maybeRequestDepth.orElse(0));
+        ApiResponse<Route> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getRoute(route.getRouteId(),
+                maybeRequestDepth.get()) : climbAssistClient.getRoute(route.getRouteId());
         ExceptionUtils.assertNoException(apiResponse);
-        assertThat(apiResponse.getData(), is(equalTo(Route)));
+        assertThat(apiResponse.getData(), is(equalTo(route)));
     }
 }

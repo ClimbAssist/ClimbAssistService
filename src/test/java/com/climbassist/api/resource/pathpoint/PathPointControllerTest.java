@@ -6,6 +6,7 @@ import com.climbassist.api.resource.common.ResourceControllerDelegate;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
+import com.climbassist.api.resource.common.batch.BatchDeleteResourcesRequest;
 import com.climbassist.api.resource.common.batch.BatchResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.path.Path;
@@ -188,11 +189,21 @@ class PathPointControllerTest {
     }
 
     @Test
-    void batchDeleteResources_callsBatchResourceWithParentControllerDelegate() throws ResourceNotFoundException {
-        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(any())).thenReturn(
-                DELETE_RESOURCE_RESULT);
+    void batchDeleteResources_callsBatchResourceWithParentControllerDelegate_whenPathPointsListIsSupplied()
+            throws ResourceNotFoundException {
+        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(
+                any(BatchDeleteResourcesRequest.class))).thenReturn(DELETE_RESOURCE_RESULT);
         assertThat(pathPointController.batchDeleteResources(BATCH_DELETE_PATH_POINTS_REQUEST),
                 is(equalTo(DELETE_RESOURCE_RESULT)));
         verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(BATCH_DELETE_PATH_POINTS_REQUEST);
+    }
+
+    @Test
+    void batchDeleteResources_callsBatchResourceWithParentControllerDelegate_whenPathIdIsSupplied()
+            throws ResourceNotFoundException {
+        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(any(String.class))).thenReturn(
+                DELETE_RESOURCE_RESULT);
+        assertThat(pathPointController.batchDeleteResources(PATH_1.getId()), is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(PATH_1.getId());
     }
 }

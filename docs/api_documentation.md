@@ -1240,21 +1240,18 @@ This method will attempt to automatically update the grade, grade modifier, and 
 }
 ```
 
+##### Output
+```json
+{
+    "successful": true
+}
+```
+
 #### BatchDeletePoints
 
 |Method|Path|Description|Authorization|
 |---|---|---|---|
-|`DELETE`|`/v1/points`|Deletes all of the specified points.|Administrator|
-
-##### Input
-```json
-{
-    "pointIds": [
-        string,
-        ...
-    ]
-}
-```
+|`DELETE`|`/v1/pitches/{pitchId}/points`|Deletes all of the points within the specified pitch.|Administrator|
 
 ##### Output
 ```json
@@ -1446,17 +1443,7 @@ This method will attempt to automatically update the grade, grade modifier, and 
 
 |Method|Path|Description|Authorization|
 |---|---|---|---|
-|`DELETE`|`/v1/path-points`|Deletes all of the specified path points.|Administrator|
-
-##### Input
-```json
-{
-    "pathPointIds": [
-        string,
-        ...
-    ]
-}
-```
+|`DELETE`|`/v1/paths/{pathId}/path-points`|Deletes all of the path points within the specified path.|Administrator|
 
 ##### Output
 ```json

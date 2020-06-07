@@ -86,7 +86,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getPitch_returnsPitchWithNoChildren_whenDepthIsZeroAndPitchHasChildren() {
-        runGetPitchTest(2, Optional.of(0));
+        runGetPitchTest(1, Optional.of(0));
     }
 
     @Test
@@ -96,17 +96,12 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getPitch_returnsPitchWithChildren_whenDepthIsEqualToChildDepth() {
-        runGetPitchTest(2, Optional.of(2));
+        runGetPitchTest(1, Optional.of(1));
     }
 
     @Test
     public void getPitch_returnsPitchWithChildren_whenDepthIsGreaterThanChildDepth() {
-        runGetPitchTest(2, Optional.of(5));
-    }
-
-    @Test
-    public void getPitch_returnsPitchWithAllChildren_whenPitchHasFullDepthOfChildren() {
-        runGetPitchTest(3, Optional.of(3));
+        runGetPitchTest(1, Optional.of(5));
     }
 
     @Test
