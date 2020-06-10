@@ -1,4 +1,4 @@
-package com.climbassist.api.contact;
+package com.climbassist.api.contact.recaptcha;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

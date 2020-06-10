@@ -9,6 +9,7 @@ import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
+import com.climbassist.api.contact.recaptcha.RecaptchaKeys;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -61,9 +62,9 @@ class ContactControllerTest {
         contactController = ContactController.builder()
                 .climbAssistEmail(CLIMB_ASSIST_EMAIL)
                 .amazonSimpleEmailService(mockAmazonSimpleEmailService)
-                .awsSecretsManager(mockAwsSecretsManager)
-                .recaptchaKeysSecretId(RECAPTCHA_KEYS_SECRET_ID)
-                .objectMapper(mockObjectMapper)
+//                .awsSecretsManager(mockAwsSecretsManager)
+//                .recaptchaKeysSecretId(RECAPTCHA_KEYS_SECRET_ID)
+//                .objectMapper(mockObjectMapper)
                 .build();
     }
 
@@ -76,7 +77,7 @@ class ContactControllerTest {
 
     @Test
     void sendContactEmail_sendsEmail() {
-        contactController.sendContactEmail(SEND_CONTACT_EMAIL_REQUEST);
+//        contactController.sendContactEmail(SEND_CONTACT_EMAIL_REQUEST);
         verify(mockAmazonSimpleEmailService).sendEmail(new SendEmailRequest().withSource(CLIMB_ASSIST_EMAIL)
                 .withDestination(new Destination(ImmutableList.of(CLIMB_ASSIST_EMAIL)))
                 .withReplyToAddresses(SEND_CONTACT_EMAIL_REQUEST.getReplyToEmail())

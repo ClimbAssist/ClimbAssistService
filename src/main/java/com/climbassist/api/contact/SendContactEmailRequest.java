@@ -1,5 +1,6 @@
 package com.climbassist.api.contact;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,4 +28,9 @@ class SendContactEmailRequest {
     @Email(message = "Reply-to email must be a valid email address.")
     @Size(min = 3, max = 100, message = "Reply-to email must be between 3 and 100 characters.")
     private String replyToEmail;
+
+    @NotNull(message = "ReCAPTCHA response must be present.")
+    @Size(min = 1, max = 500, message = "ReCAPTCHA response must be between 1 and 500 characters.")
+    @JsonProperty("recaptchaRes")
+    private String recaptchaResponse;
 }
