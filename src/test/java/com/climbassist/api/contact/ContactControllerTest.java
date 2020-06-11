@@ -1,8 +1,5 @@
 package com.climbassist.api.contact;
 
-import com.amazonaws.services.secretsmanager.AWSSecretsManager;
-import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
-import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.Body;
 import com.amazonaws.services.simpleemail.model.Content;
@@ -10,8 +7,10 @@ import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
 import com.climbassist.api.contact.recaptcha.RecaptchaKeys;
+import com.climbassist.api.contact.recaptcha.RecaptchaKeysRetriever;
+import com.climbassist.api.contact.recaptcha.RecaptchaVerificationException;
+import com.climbassist.api.contact.recaptcha.RecaptchaVerifier;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,13 +18,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,23 +41,23 @@ class ContactControllerTest {
             .subject("subject")
             .emailBody("body")
             .replyToEmail("link@hyrule.com")
+            .recaptchaResponse("recaptcha-response")
             .build();
     private static final RecaptchaKeys RECAPTCHA_KEYS = RecaptchaKeys.builder()
             .siteKey("site-key")
             .secretKey("secret-key")
             .build();
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final GetRecaptchaSiteKeyResult GET_RECAPTCHA_SITE_KEY_RESULT = GetRecaptchaSiteKeyResult.builder()
             .siteKey(RECAPTCHA_KEYS.getSiteKey())
             .build();
-    private static final String RECAPTCHA_KEYS_SECRET_ID = "ClimbAssistRecaptchaKeys";
+    private static final HttpServletRequest HTTP_SERVLET_REQUEST = buildHttpServletRequest();
 
     @Mock
     private AmazonSimpleEmailService mockAmazonSimpleEmailService;
     @Mock
-    private AWSSecretsManager mockAwsSecretsManager;
+    private RecaptchaVerifier mockRecaptchaVerifier;
     @Mock
-    private ObjectMapper mockObjectMapper;
+    private RecaptchaKeysRetriever mockRecaptchaKeysRetriever;
 
     private ContactController contactController;
 
@@ -62,9 +66,8 @@ class ContactControllerTest {
         contactController = ContactController.builder()
                 .climbAssistEmail(CLIMB_ASSIST_EMAIL)
                 .amazonSimpleEmailService(mockAmazonSimpleEmailService)
-//                .awsSecretsManager(mockAwsSecretsManager)
-//                .recaptchaKeysSecretId(RECAPTCHA_KEYS_SECRET_ID)
-//                .objectMapper(mockObjectMapper)
+                .recaptchaVerifier(mockRecaptchaVerifier)
+                .recaptchaKeysRetriever(mockRecaptchaKeysRetriever)
                 .build();
     }
 
@@ -72,12 +75,16 @@ class ContactControllerTest {
     @Test
     void parametersMarkedWithNonNull_throwNullPointerException_forNullValues() {
         NullPointerTester nullPointerTester = new NullPointerTester();
+        nullPointerTester.setDefault(SendContactEmailRequest.class, SEND_CONTACT_EMAIL_REQUEST);
         nullPointerTester.testInstanceMethods(contactController, NullPointerTester.Visibility.PACKAGE);
     }
 
     @Test
-    void sendContactEmail_sendsEmail() {
-//        contactController.sendContactEmail(SEND_CONTACT_EMAIL_REQUEST);
+    void sendContactEmail_sendsEmail_whenRecaptchaVerificationSucceeds()
+            throws IOException, RecaptchaVerificationException {
+        contactController.sendContactEmail(SEND_CONTACT_EMAIL_REQUEST, HTTP_SERVLET_REQUEST);
+        verify(mockRecaptchaVerifier).verifyRecaptchaResult(SEND_CONTACT_EMAIL_REQUEST.getRecaptchaResponse(),
+                HTTP_SERVLET_REQUEST.getRemoteAddr());
         verify(mockAmazonSimpleEmailService).sendEmail(new SendEmailRequest().withSource(CLIMB_ASSIST_EMAIL)
                 .withDestination(new Destination(ImmutableList.of(CLIMB_ASSIST_EMAIL)))
                 .withReplyToAddresses(SEND_CONTACT_EMAIL_REQUEST.getReplyToEmail())
@@ -86,14 +93,27 @@ class ContactControllerTest {
     }
 
     @Test
+    void sendContactEmail_throwsRecaptchaVerificationException_whenRecaptchaVerificationFails()
+            throws IOException, RecaptchaVerificationException {
+        doThrow(RecaptchaVerificationException.class).when(mockRecaptchaVerifier)
+                .verifyRecaptchaResult(any(), any());
+        assertThrows(RecaptchaVerificationException.class,
+                () -> contactController.sendContactEmail(SEND_CONTACT_EMAIL_REQUEST, HTTP_SERVLET_REQUEST));
+        verify(mockRecaptchaVerifier).verifyRecaptchaResult(SEND_CONTACT_EMAIL_REQUEST.getRecaptchaResponse(),
+                HTTP_SERVLET_REQUEST.getRemoteAddr());
+        verify(mockAmazonSimpleEmailService, never()).sendEmail(any());
+    }
+
+    @Test
     void getRecaptchaSiteKey_returnsRecaptchaSiteKey() throws JsonProcessingException {
-        String recaptchaKeysAsString = OBJECT_MAPPER.writeValueAsString(RECAPTCHA_KEYS);
-        when(mockAwsSecretsManager.getSecretValue(any())).thenReturn(
-                new GetSecretValueResult().withSecretString(recaptchaKeysAsString));
-        when(mockObjectMapper.readValue(anyString(), eq(RecaptchaKeys.class))).thenReturn(RECAPTCHA_KEYS);
+        when(mockRecaptchaKeysRetriever.retrieveRecaptchaKeys()).thenReturn(RECAPTCHA_KEYS);
         assertThat(contactController.getRecaptchaSiteKey(), is(equalTo(GET_RECAPTCHA_SITE_KEY_RESULT)));
-        verify(mockAwsSecretsManager).getSecretValue(
-                new GetSecretValueRequest().withSecretId(RECAPTCHA_KEYS_SECRET_ID));
-        verify(mockObjectMapper).readValue(recaptchaKeysAsString, RecaptchaKeys.class);
+        verify(mockRecaptchaKeysRetriever).retrieveRecaptchaKeys();
+    }
+
+    private static HttpServletRequest buildHttpServletRequest() {
+        MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+        mockHttpServletRequest.setRemoteAddr("0.0.0.0");
+        return mockHttpServletRequest;
     }
 }
