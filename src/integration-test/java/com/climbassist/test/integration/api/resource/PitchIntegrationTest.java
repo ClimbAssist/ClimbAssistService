@@ -113,7 +113,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPitches_returnsEmptyList_whenThereAreNoPitches() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
@@ -122,7 +122,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPitches_returnsSinglePitch_whenThereIsOnlyOnePitch() {
         testUserManager.makeUserAdministrator(username);
-        Pitch Pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Pitch Pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(Pitch.getRouteId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableList.of(Pitch))));
@@ -131,7 +131,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPitches_listsAllPitchesInAnyOrder_whenOrderedIsNotSpecified() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Pitch> Pitches = resourceManager.createPitches(route.getRouteId(), cookies);
         ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId());
         ExceptionUtils.assertNoException(apiResponse);
@@ -141,7 +141,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPitches_listsAllPitchesInOrder_whenOrderedIsTrue() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Pitch> Pitches = resourceManager.createPitches(route.getRouteId(), cookies);
         ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId(), true);
         ExceptionUtils.assertNoException(apiResponse);
@@ -151,7 +151,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPitches_listsAllPitchesInAnyOrder_whenOrderedIsFalse() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Pitch> Pitches = resourceManager.createPitches(route.getRouteId(), cookies);
         ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId(), false);
         ExceptionUtils.assertNoException(apiResponse);
@@ -161,7 +161,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPitches_returnsInvalidOrderingException_whenOrderedIsTrueAndOrderingIsInvalid() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
         resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
         ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId(), true);
@@ -171,7 +171,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPitches_returnsPitchesInAnyOrder_whenOrderedIsFalseAndOrderingIsInvalid() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Pitch Pitch1 = resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
         Pitch Pitch2 = resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
         ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId(), false);
@@ -203,7 +203,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createPitch_createsPitchAndUpdatesParentRoute_whenParentRouteDoesNotHaveGradeFields() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Pitch expectedPitch = resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
         Pitch actualPitch = climbAssistClient.getPitch(expectedPitch.getPitchId())
                 .getData();
@@ -218,7 +218,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createPitch_createsPitchAndUpdatesParentRoute_whenParentRouteHasGradeFields() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         resourceManager.addResourceToResourceIds(Pitch.class, climbAssistClient.createPitch(NewPitch.builder()
                 .routeId(route.getRouteId())
                 .description(DESCRIPTION)
@@ -250,7 +250,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createPitch_createsPitchAndDoesNotUpdateParentRoute_whenGradeFieldsAreLowerThanParentRoute() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         NewPitch higherPitch = NewPitch.builder()
                 .routeId(route.getRouteId())
                 .description(DESCRIPTION)
@@ -283,7 +283,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createPitch_createsPitch_whenPitchWithTheSameNameAlreadyExists() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Pitch expectedPitch2 = resourceManager.createPitch(route.getRouteId(), cookies, false, 0);
         Pitch expectedPitch1 = resourceManager.createPitch(route.getRouteId(), cookies, true,
                 expectedPitch2.getPitchId(), 0);
@@ -339,7 +339,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updatePitch_returnsRouteNotFoundException_whenRouteDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updatePitch(Pitch.builder()
                 .pitchId(pitch.getPitchId())
                 .routeId("does-not-exist")
@@ -362,7 +362,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updatePitch_returnsPitchNotFoundException_whenPitchDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Route route = resourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updatePitch(Pitch.builder()
                 .pitchId("does-not-exist")
                 .routeId(route.getRouteId())
@@ -396,7 +396,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updatePitch_updatesPitchAndDoesNotUpdateParentRoute_whenPitchDoesNotHaveHighestGrades() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Pitch originalPitch = resourceManager.getPitch(country);
+        Pitch originalPitch = ResourceManager.getPitch(country);
         NewPitch newPitch = NewPitch.builder()
                 .routeId(originalPitch.getRouteId())
                 .description(DESCRIPTION)
@@ -444,7 +444,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updatePitch_updatesPitchParentRoute_whenPitchBecomesHighestGrades() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Pitch originalPitch = resourceManager.getPitch(country);
+        Pitch originalPitch = ResourceManager.getPitch(country);
         resourceManager.addResourceToResourceIds(Pitch.class, climbAssistClient.createPitch(NewPitch.builder()
                 .routeId(originalPitch.getRouteId())
                 .description(DESCRIPTION)
@@ -491,9 +491,9 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updatePitch_updatesPitchAndBothOldAndNewParentRoutes_whenParentRouteIsChanged() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Route newRoute = resourceManager.createRoute(resourceManager.getWall(country)
+        Route newRoute = resourceManager.createRoute(ResourceManager.getWall(country)
                 .getWallId(), cookies, true, 1);
-        Pitch originalPitch = resourceManager.getPitch(country);
+        Pitch originalPitch = ResourceManager.getPitch(country);
         NewPitch newPitch = NewPitch.builder()
                 .routeId(originalPitch.getRouteId())
                 .description(DESCRIPTION)
@@ -565,7 +565,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deletePitch_deletesPitchAndRemovesGradesFromParentRoute_whenParentRouteHasNoOtherPitches() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deletePitch(pitch.getPitchId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
@@ -582,7 +582,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deletePitch_deletesPitchAndUpdatesParentRoute_whenParentRouteHasAnotherPitch() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         NewPitch newPitch = NewPitch.builder()
                 .routeId(pitch.getRouteId())
                 .description(DESCRIPTION)
@@ -612,7 +612,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deletePitch_returnsResourceNotEmptyException_whenPitchHasChildren() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deletePitch(pitch.getPitchId(), cookies);
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
@@ -620,7 +620,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     private void runGetPitchTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
             Optional<Integer> maybeRequestDepth) {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(pitch, Pitch.class, maybeRequestDepth.orElse(0));
         ApiResponse<Pitch> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getPitch(pitch.getPitchId(),
                 maybeRequestDepth.get()) : climbAssistClient.getPitch(pitch.getPitchId());
@@ -631,7 +631,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     private void runUpdateSinglePitchTest(int newGrade, String newGradeModifier, String newDanger) {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Pitch originalPitch = resourceManager.getPitch(country);
+        Pitch originalPitch = ResourceManager.getPitch(country);
         Pitch updatedPitch = Pitch.builder()
                 .pitchId(originalPitch.getPitchId())
                 .routeId(originalPitch.getRouteId())

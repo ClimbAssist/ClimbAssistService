@@ -69,6 +69,60 @@ public class ResourceManager {
     @NonNull
     private final ClimbAssistClient climbAssistClient;
 
+    public static Region getRegion(@NonNull Country country) {
+        return country.getRegions()
+                .iterator()
+                .next();
+    }
+
+    public static Area getArea(@NonNull Country country) {
+        return getRegion(country).getAreas()
+                .iterator()
+                .next();
+    }
+
+    public static SubArea getSubArea(@NonNull Country country) {
+        return getArea(country).getSubAreas()
+                .iterator()
+                .next();
+    }
+
+    public static Crag getCrag(@NonNull Country country) {
+        return getSubArea(country).getCrags()
+                .iterator()
+                .next();
+    }
+
+    public static Wall getWall(@NonNull Country country) {
+        return getCrag(country).getWalls()
+                .iterator()
+                .next();
+    }
+
+    public static Route getRoute(@NonNull Country country) {
+        return getWall(country).getRoutes()
+                .iterator()
+                .next();
+    }
+
+    public static Pitch getPitch(@NonNull Country country) {
+        return getRoute(country).getPitches()
+                .iterator()
+                .next();
+    }
+
+    public static Point getPoint(@NonNull Country country) {
+        return getPitch(country).getPoints()
+                .iterator()
+                .next();
+    }
+
+    public static Path getPath(@NonNull Country country) {
+        return getCrag(country).getPaths()
+                .iterator()
+                .next();
+    }
+
     public void cleanUp(@NonNull Set<Cookie> cookies) {
         resourceIds.getOrDefault(PathPoint.class, ImmutableSet.of())
                 .forEach(pathId -> climbAssistClient.deletePathPoint(pathId, cookies));
@@ -433,54 +487,6 @@ public class ResourceManager {
         }
 
         return path;
-    }
-
-    public Region getRegion(@NonNull Country country) {
-        return country.getRegions()
-                .iterator()
-                .next();
-    }
-
-    public Area getArea(@NonNull Country country) {
-        return getRegion(country).getAreas()
-                .iterator()
-                .next();
-    }
-
-    public SubArea getSubArea(@NonNull Country country) {
-        return getArea(country).getSubAreas()
-                .iterator()
-                .next();
-    }
-
-    public Crag getCrag(@NonNull Country country) {
-        return getSubArea(country).getCrags()
-                .iterator()
-                .next();
-    }
-
-    public Wall getWall(@NonNull Country country) {
-        return getCrag(country).getWalls()
-                .iterator()
-                .next();
-    }
-
-    public Route getRoute(@NonNull Country country) {
-        return getWall(country).getRoutes()
-                .iterator()
-                .next();
-    }
-
-    public Pitch getPitch(@NonNull Country country) {
-        return getRoute(country).getPitches()
-                .iterator()
-                .next();
-    }
-
-    public Point getPoint(@NonNull Country country) {
-        return getPitch(country).getPoints()
-                .iterator()
-                .next();
     }
 
     public void addResourceToResourceIds(Class<? extends com.climbassist.api.resource.common.Resource> resourceClass,

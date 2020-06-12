@@ -115,7 +115,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listSubAreas_returnsEmptyList_whenThereAreNoSubAreas() {
         testUserManager.makeUserAdministrator(username);
-        Area area = resourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Area area = ResourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<Set<SubArea>> apiResponse = climbAssistClient.listSubAreas(area.getAreaId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
@@ -124,7 +124,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listSubAreas_returnsSingleSubArea_whenThereIsOnlyOneSubArea() {
         testUserManager.makeUserAdministrator(username);
-        SubArea subArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<Set<SubArea>> apiResponse = climbAssistClient.listSubAreas(subArea.getAreaId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(subArea))));
@@ -133,7 +133,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listSubAreas_listAllSubAreas() {
         testUserManager.makeUserAdministrator(username);
-        Area area = resourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Area area = ResourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         SubArea subArea1 = resourceManager.createSubArea(area.getAreaId(), cookies, 0);
         SubArea subArea2 = resourceManager.createSubArea(area.getAreaId(), cookies, 0);
         ApiResponse<Set<SubArea>> apiResponse = climbAssistClient.listSubAreas(area.getAreaId());
@@ -155,7 +155,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createSubArea_createsSubArea() {
         testUserManager.makeUserAdministrator(username);
-        Area area = resourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Area area = ResourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         SubArea expectedSubArea = resourceManager.createSubArea(area.getAreaId(), cookies, 0);
         SubArea actualSubArea = climbAssistClient.getSubArea(expectedSubArea.getSubAreaId())
                 .getData();
@@ -165,7 +165,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createSubArea_createsSubArea_whenSubAreaWithTheSameNameAlreadyExists() {
         testUserManager.makeUserAdministrator(username);
-        Area area = resourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Area area = ResourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         SubArea expectedSubArea1 = resourceManager.createSubArea(area.getAreaId(), cookies, 0);
         SubArea expectedSubArea2 = resourceManager.createSubArea(area.getAreaId(), cookies, 0);
         SubArea actualSubArea1 = climbAssistClient.getSubArea(expectedSubArea1.getSubAreaId())
@@ -200,7 +200,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updateSubArea_returnsAreaNotFoundException_whenAreaDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        SubArea subArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateSubArea(SubArea.builder()
                 .subAreaId(subArea.getSubAreaId())
                 .areaId("does-not-exist")
@@ -213,7 +213,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updateSubArea_returnsSubAreaNotFoundException_whenSubAreaDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Area area = resourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Area area = ResourceManager.getArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateSubArea(SubArea.builder()
                 .subAreaId("does-not-exist")
                 .areaId(area.getAreaId())
@@ -227,10 +227,10 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updateSubArea_updatesSubArea() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        SubArea originalSubArea = resourceManager.getSubArea(country);
+        SubArea originalSubArea = ResourceManager.getSubArea(country);
         SubArea updatedSubArea = SubArea.builder()
                 .subAreaId(originalSubArea.getSubAreaId())
-                .areaId(resourceManager.createArea(resourceManager.getRegion(country)
+                .areaId(resourceManager.createArea(ResourceManager.getRegion(country)
                         .getRegionId(), cookies, 0)
                         .getAreaId())
                 .name(NAME + "-updated")
@@ -268,7 +268,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteSubArea_deletesSubArea() {
         testUserManager.makeUserAdministrator(username);
-        SubArea SubArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        SubArea SubArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteSubArea(SubArea.getSubAreaId(),
                 cookies);
         ExceptionUtils.assertNoException(apiResponse);
@@ -281,7 +281,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteSubArea_returnsResourceNotEmptyException_whenSubAreaHasChildren() {
         testUserManager.makeUserAdministrator(username);
-        SubArea SubArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
+        SubArea SubArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteSubArea(SubArea.getSubAreaId(),
                 cookies);
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
@@ -290,7 +290,7 @@ public class SubAreaIntegrationTest extends AbstractTestNGSpringContextTests {
     private void runGetSubAreaTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
             Optional<Integer> maybeRequestDepth) {
         testUserManager.makeUserAdministrator(username);
-        SubArea SubArea = resourceManager.getSubArea(
+        SubArea SubArea = ResourceManager.getSubArea(
                 resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(SubArea, SubArea.class, maybeRequestDepth.orElse(0));
         ApiResponse<SubArea> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getSubArea(

@@ -84,7 +84,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void getPoint_returnsPoint() {
         testUserManager.makeUserAdministrator(username);
-        Point point = resourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Point point = ResourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<Point> apiResponse = climbAssistClient.getPoint(point.getPointId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(point)));
@@ -99,7 +99,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPoints_returnsEmptyList_whenThereAreNoPoints() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<List<Point>> apiResponse = climbAssistClient.listPoints(pitch.getPitchId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
@@ -108,7 +108,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPoints_returnsSinglePoint_whenThereIsOnlyOnePoint() {
         testUserManager.makeUserAdministrator(username);
-        Point point = resourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Point point = ResourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<List<Point>> apiResponse = climbAssistClient.listPoints(point.getPitchId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableList.of(point))));
@@ -117,7 +117,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPoints_listsAllPointsInAnyOrder_whenOrderedIsNotSpecified() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Point> points = resourceManager.createPoints(pitch.getPitchId(), cookies);
         ApiResponse<List<Point>> apiResponse = climbAssistClient.listPoints(pitch.getPitchId());
         ExceptionUtils.assertNoException(apiResponse);
@@ -127,7 +127,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPoints_listsAllPointsInOrder_whenOrderedIsTrue() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Point> points = resourceManager.createPoints(pitch.getPitchId(), cookies);
         ApiResponse<List<Point>> apiResponse = climbAssistClient.listPoints(pitch.getPitchId(), true);
         ExceptionUtils.assertNoException(apiResponse);
@@ -137,7 +137,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPoints_listsAllPointsInAnyOrder_whenOrderedIsFalse() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Point> points = resourceManager.createPoints(pitch.getPitchId(), cookies);
         ApiResponse<List<Point>> apiResponse = climbAssistClient.listPoints(pitch.getPitchId(), false);
         ExceptionUtils.assertNoException(apiResponse);
@@ -147,7 +147,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPoints_returnsInvalidOrderingException_whenOrderedIsTrueAndOrderingIsInvalid() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         resourceManager.createPoint(pitch.getPitchId(), cookies, true);
         resourceManager.createPoint(pitch.getPitchId(), cookies, true);
         ApiResponse<List<Point>> apiResponse = climbAssistClient.listPoints(pitch.getPitchId(), true);
@@ -157,7 +157,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listPoints_returnsPointsInAnyOrder_whenOrderedIsFalseAndOrderingIsInvalid() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Point point1 = resourceManager.createPoint(pitch.getPitchId(), cookies, true);
         Point point2 = resourceManager.createPoint(pitch.getPitchId(), cookies, true);
         ApiResponse<List<Point>> apiResponse = climbAssistClient.listPoints(pitch.getPitchId(), false);
@@ -181,7 +181,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createPoint_createsPoint() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Point expectedPoint = resourceManager.createPoint(pitch.getPitchId(), cookies, true);
         Point actualPoint = climbAssistClient.getPoint(expectedPoint.getPointId())
                 .getData();
@@ -191,7 +191,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createPoint_createsPoint_whenPointWithTheSameNameAlreadyExists() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Point expectedPoint2 = resourceManager.createPoint(pitch.getPitchId(), cookies, false);
         Point expectedPoint1 = resourceManager.createPoint(pitch.getPitchId(), cookies, true,
                 expectedPoint2.getPointId());
@@ -265,7 +265,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     public void batchCreatePoints_doesNotOverwriteExistingPoints_whenPitchAlreadyHasSomePoints() {
         int numberOfPoints = 5;
         testUserManager.makeUserAdministrator(username);
-        Point originalPoint = resourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Point originalPoint = ResourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         String pitchId = originalPoint.getPitchId();
 
         ApiResponse<BatchCreatePointsResult> apiResponse = climbAssistClient.batchCreatePoints(pitchId, cookies,
@@ -286,7 +286,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updatePoint_returnsPitchNotFoundException_whenPitchDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Point point = resourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Point point = ResourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updatePoint(Point.builder()
                 .pointId(point.getPointId())
                 .pitchId("does-not-exist")
@@ -301,7 +301,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updatePoint_returnsPointNotFoundException_whenPointDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Pitch pitch = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updatePoint(Point.builder()
                 .pointId("does-not-exist")
                 .pitchId(pitch.getPitchId())
@@ -317,11 +317,11 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updatePoint_updatesPoint() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Point originalPoint = resourceManager.getPoint(country);
+        Point originalPoint = ResourceManager.getPoint(country);
         Point nextPoint = resourceManager.createPoint(originalPoint.getPitchId(), cookies, true);
         Point updatedPoint = Point.builder()
                 .pointId(originalPoint.getPointId())
-                .pitchId(resourceManager.createPitch(resourceManager.getRoute(country)
+                .pitchId(resourceManager.createPitch(ResourceManager.getRoute(country)
                         .getRouteId(), cookies, true, 0)
                         .getPitchId())
                 .x(2.0)
@@ -363,7 +363,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deletePoint_deletesPoint() {
         testUserManager.makeUserAdministrator(username);
-        Point point = resourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Point point = ResourceManager.getPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deletePoint(point.getPointId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
@@ -388,7 +388,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void batchDeletePoints_doesNothing_whenPitchHasNoPoints() {
         testUserManager.makeUserAdministrator(username);
-        String pitchId = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1))
+        String pitchId = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1))
                 .getPitchId();
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.batchDeletePoints(pitchId, cookies);
         ExceptionUtils.assertNoException(apiResponse);
@@ -401,7 +401,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void batchDeletePoints_deletesSinglePoint_whenPitchHasOnePoint() {
         testUserManager.makeUserAdministrator(username);
-        String pitchId = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH))
+        String pitchId = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH))
                 .getPitchId();
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.batchDeletePoints(pitchId, cookies);
         ExceptionUtils.assertNoException(apiResponse);
@@ -414,7 +414,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void batchDeletePoints_deletesAllPointsInPitch() {
         testUserManager.makeUserAdministrator(username);
-        String pitchId = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1))
+        String pitchId = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1))
                 .getPitchId();
         resourceManager.createPoints(pitchId, cookies);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.batchDeletePoints(pitchId, cookies);
@@ -427,7 +427,7 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
 
     private void runBatchCreatePointsTest(int numberOfPoints) {
         testUserManager.makeUserAdministrator(username);
-        String pitchId = resourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1))
+        String pitchId = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1))
                 .getPitchId();
 
         ApiResponse<BatchCreatePointsResult> apiResponse = climbAssistClient.batchCreatePoints(pitchId, cookies,

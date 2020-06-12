@@ -16,6 +16,7 @@ import com.climbassist.api.resource.crag.NewCrag;
 import com.climbassist.api.resource.crag.UploadModelsResult;
 import com.climbassist.api.resource.path.CreatePathResult;
 import com.climbassist.api.resource.path.NewPath;
+import com.climbassist.api.resource.path.Path;
 import com.climbassist.api.resource.pathpoint.CreatePathPointResult;
 import com.climbassist.api.resource.pathpoint.NewPathPoint;
 import com.climbassist.api.resource.pitch.CreatePitchResult;
@@ -432,6 +433,22 @@ public class ClimbAssistClient {
 
     public ApiResponse<CreatePathResult> createPath(@NonNull NewPath newPath, @NonNull Set<Cookie> cookies) {
         return put("/v1/paths", newPath, cookies, new TypeReference<ApiResponse<CreatePathResult>>() {});
+    }
+
+    public ApiResponse<Path> getPath(@NonNull String pathId) {
+        return get("/v1/paths/" + pathId, new TypeReference<ApiResponse<Path>>() {});
+    }
+
+    public ApiResponse<Path> getPath(@NonNull String pathId, int depth) {
+        return get("/v1/paths/" + pathId + "?depth=" + depth, new TypeReference<ApiResponse<Path>>() {});
+    }
+
+    public ApiResponse<Set<Path>> listPaths(@NonNull String cragId) {
+        return get("/v1/crags/" + cragId + "/paths", new TypeReference<ApiResponse<Set<Path>>>() {});
+    }
+
+    public ApiResponse<UpdateResourceResult> updatePath(@NonNull Path path, @NonNull Set<Cookie> cookies) {
+        return post("/v1/paths", path, cookies, new TypeReference<ApiResponse<UpdateResourceResult>>() {});
     }
 
     public ApiResponse<DeleteResourceResult> deletePath(@NonNull String pathId, @NonNull Set<Cookie> cookies) {

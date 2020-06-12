@@ -125,7 +125,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void getCrag_returnsCragWithChildrenInOrder_whenCragHasOrderedChildren() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         crag.setWalls(walls);
         ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), 1);
@@ -152,7 +152,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listCrags_returnsEmptyList_whenThereAreNoCrags() {
         testUserManager.makeUserAdministrator(username);
-        SubArea subArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
@@ -161,7 +161,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listCrags_returnsSingleCrag_whenThereIsOnlyOneCrag() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(crag.getSubAreaId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(crag))));
@@ -170,7 +170,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listCrags_listAllCrags() {
         testUserManager.makeUserAdministrator(username);
-        SubArea subArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Crag crag1 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
         Crag crag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
         ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId());
@@ -204,7 +204,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createCrag_createsCrag() {
         testUserManager.makeUserAdministrator(username);
-        SubArea subArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Crag expectedCrag = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
         Crag actualCrag = climbAssistClient.getCrag(expectedCrag.getCragId())
                 .getData();
@@ -214,7 +214,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createCrag_createsCrag_whenCragWithTheSameNameAlreadyExists() {
         testUserManager.makeUserAdministrator(username);
-        SubArea subArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Crag expectedCrag1 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
         Crag expectedCrag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
         Crag actualCrag1 = climbAssistClient.getCrag(expectedCrag1.getCragId())
@@ -261,7 +261,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updateCrag_returnsSubAreaNotFoundException_whenSubAreaDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateCrag(Crag.builder()
                 .cragId(crag.getCragId())
                 .subAreaId("does-not-exist")
@@ -276,7 +276,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updateCrag_returnsCragNotFoundException_whenCragDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        SubArea subArea = resourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateCrag(Crag.builder()
                 .cragId("does-not-exist")
                 .subAreaId(subArea.getSubAreaId())
@@ -302,10 +302,10 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updateCrag_updatesCrag() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Crag originalCrag = resourceManager.getCrag(country);
+        Crag originalCrag = ResourceManager.getCrag(country);
         Crag updatedCrag = Crag.builder()
                 .cragId(originalCrag.getCragId())
-                .subAreaId(resourceManager.createSubArea(resourceManager.getArea(country)
+                .subAreaId(resourceManager.createSubArea(ResourceManager.getArea(country)
                         .getAreaId(), cookies, 0)
                         .getSubAreaId())
                 .name(NAME + "-updated")
@@ -336,10 +336,10 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updateCrag_addsOptionalParameters_whenOptionalParametersWereNotOriginallyPresent() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Crag originalCrag = resourceManager.getCrag(country);
+        Crag originalCrag = ResourceManager.getCrag(country);
         Crag updatedCrag = Crag.builder()
                 .cragId(originalCrag.getCragId())
-                .subAreaId(resourceManager.createSubArea(resourceManager.getArea(country)
+                .subAreaId(resourceManager.createSubArea(ResourceManager.getArea(country)
                         .getAreaId(), cookies, 0)
                         .getSubAreaId())
                 .name(NAME + "-updated")
@@ -382,10 +382,10 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updateCrag_removesOptionalParameters_whenOptionalParametersWereOriginallyPresent() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Crag originalCrag = resourceManager.getCrag(country);
+        Crag originalCrag = ResourceManager.getCrag(country);
         Crag updatedCragWithOptionalParameters = Crag.builder()
                 .cragId(originalCrag.getCragId())
-                .subAreaId(resourceManager.createSubArea(resourceManager.getArea(country)
+                .subAreaId(resourceManager.createSubArea(ResourceManager.getArea(country)
                         .getAreaId(), cookies, 0)
                         .getSubAreaId())
                 .name(NAME + "-updated")
@@ -419,7 +419,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
 
         Crag updatedCragWithoutOptionalParameters = Crag.builder()
                 .cragId(originalCrag.getCragId())
-                .subAreaId(resourceManager.createSubArea(resourceManager.getArea(country)
+                .subAreaId(resourceManager.createSubArea(ResourceManager.getArea(country)
                         .getAreaId(), cookies, 0)
                         .getSubAreaId())
                 .name(NAME + "-updated")
@@ -472,14 +472,14 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void uploadModels_uploadsModels() throws IOException {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         uploadModels(crag.getCragId(), HIGH_RESOLUTION_MODEL_1, LOW_RESOLUTION_MODEL_1);
     }
 
     @Test
     public void uploadModels_replacesOldModels_whenCragAlreadyHasModels() throws IOException {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         uploadModels(crag.getCragId(), HIGH_RESOLUTION_MODEL_1, LOW_RESOLUTION_MODEL_1);
         uploadModels(crag.getCragId(), HIGH_RESOLUTION_MODEL_2, LOW_RESOLUTION_MODEL_2);
     }
@@ -509,14 +509,14 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void uploadImage_uploadsImage() throws IOException {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         uploadImage(crag.getCragId(), IMAGE_1);
     }
 
     @Test
     public void uploadImage_replacesOldImage_whenCragAlreadyHasAnImage() throws IOException {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         uploadImage(crag.getCragId(), IMAGE_1);
         uploadImage(crag.getCragId(), IMAGE_2);
     }
@@ -544,7 +544,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteCrag_deletesCrag() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
@@ -556,7 +556,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteCrag_returnsResourceNotEmptyException_whenCragHasWallAndPathChildren() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
@@ -564,7 +564,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteCrag_returnsResourceNotEmptyException_whenCragHasWallChildren() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
@@ -573,7 +573,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteCrag_returnsResourceNotEmptyException_whenCragHasPathChildren() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         resourceManager.createPath(crag.getCragId(), cookies, 0);
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
@@ -582,7 +582,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteCrag_deletesModelsAndImage_whenCragHasModelsAndImage() throws IOException {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         uploadModels(crag.getCragId(), HIGH_RESOLUTION_MODEL_1, LOW_RESOLUTION_MODEL_1);
         uploadImage(crag.getCragId(), IMAGE_1);
         crag = climbAssistClient.getCrag(crag.getCragId())
@@ -604,7 +604,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     private void runGetCragTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
             Optional<Integer> maybeRequestDepth) {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(crag, Crag.class, maybeRequestDepth.orElse(0));
         ApiResponse<Crag> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getCrag(crag.getCragId(),
                 maybeRequestDepth.get()) : climbAssistClient.getCrag(crag.getCragId());

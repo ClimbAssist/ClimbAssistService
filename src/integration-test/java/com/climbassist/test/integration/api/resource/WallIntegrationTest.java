@@ -117,7 +117,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_returnsEmptyList_whenThereAreNoWalls() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
@@ -126,7 +126,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_returnsSingleWall_whenThereIsOnlyOneWall() {
         testUserManager.makeUserAdministrator(username);
-        Wall wall = resourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(wall.getCragId());
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableList.of(wall))));
@@ -135,7 +135,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_listsAllWallsInAnyOrder_whenOrderedIsNotSpecified() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId());
         ExceptionUtils.assertNoException(apiResponse);
@@ -145,7 +145,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_listsAllWallsInOrder_whenOrderedIsTrue() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId(), true);
         ExceptionUtils.assertNoException(apiResponse);
@@ -155,7 +155,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_listsAllWallsInAnyOrder_whenOrderedIsFalse() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId(), false);
         ExceptionUtils.assertNoException(apiResponse);
@@ -165,7 +165,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_returnsInvalidOrderingException_whenOrderedIsTrueAndOrderingIsInvalid() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId(), true);
@@ -175,7 +175,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void listWalls_returnsWallsInAnyOrder_whenOrderedIsFalseAndOrderingIsInvalid() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Wall wall1 = resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         Wall wall2 = resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         ApiResponse<List<Wall>> apiResponse = climbAssistClient.listWalls(crag.getCragId(), false);
@@ -197,7 +197,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createWall_createsWall() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Wall expectedWall = resourceManager.createWall(crag.getCragId(), cookies, true, 0);
         Wall actualWall = climbAssistClient.getWall(expectedWall.getWallId())
                 .getData();
@@ -207,7 +207,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void createWall_createsWall_whenWallWithTheSameNameAlreadyExists() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Wall expectedWall2 = resourceManager.createWall(crag.getCragId(), cookies, false, 0);
         Wall expectedWall1 = resourceManager.createWall(crag.getCragId(), cookies, true, expectedWall2.getWallId(), 0);
         Wall actualWall1 = climbAssistClient.getWall(expectedWall1.getWallId())
@@ -242,7 +242,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updateWall_returnsCragNotFoundException_whenCragDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Wall wall = resourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateWall(Wall.builder()
                 .wallId(wall.getWallId())
                 .cragId("does-not-exist")
@@ -255,7 +255,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void updateWall_returnsWallNotFoundException_whenWallDoesNotExist() {
         testUserManager.makeUserAdministrator(username);
-        Crag crag = resourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateWall(Wall.builder()
                 .wallId("does-not-exist")
                 .cragId(crag.getCragId())
@@ -269,11 +269,11 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     public void updateWall_updatesWall() {
         testUserManager.makeUserAdministrator(username);
         Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH);
-        Wall originalWall = resourceManager.getWall(country);
+        Wall originalWall = ResourceManager.getWall(country);
         Wall nextWall = resourceManager.createWall(originalWall.getCragId(), cookies, true, 0);
         Wall updatedWall = Wall.builder()
                 .wallId(originalWall.getWallId())
-                .cragId(resourceManager.createCrag(resourceManager.getSubArea(country)
+                .cragId(resourceManager.createCrag(ResourceManager.getSubArea(country)
                         .getSubAreaId(), cookies, 0)
                         .getCragId())
                 .name(NAME + "-updated")
@@ -311,7 +311,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteWall_deletesWall() {
         testUserManager.makeUserAdministrator(username);
-        Wall Wall = resourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        Wall Wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteWall(Wall.getWallId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
@@ -323,7 +323,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     @Test
     public void deleteWall_returnsResourceNotEmptyException_whenWallHasChildren() {
         testUserManager.makeUserAdministrator(username);
-        Wall Wall = resourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
+        Wall Wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH + 1));
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteWall(Wall.getWallId(), cookies);
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
@@ -331,7 +331,7 @@ public class WallIntegrationTest extends AbstractTestNGSpringContextTests {
     private void runGetWallTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
             Optional<Integer> maybeRequestDepth) {
         testUserManager.makeUserAdministrator(username);
-        Wall Wall = resourceManager.getWall(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
+        Wall Wall = ResourceManager.getWall(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(Wall, Wall.class, maybeRequestDepth.orElse(0));
         ApiResponse<Wall> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getWall(Wall.getWallId(),
                 maybeRequestDepth.get()) : climbAssistClient.getWall(Wall.getWallId());
