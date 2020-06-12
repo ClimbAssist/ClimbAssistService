@@ -17,8 +17,12 @@ import com.climbassist.api.resource.crag.UploadModelsResult;
 import com.climbassist.api.resource.path.CreatePathResult;
 import com.climbassist.api.resource.path.NewPath;
 import com.climbassist.api.resource.path.Path;
+import com.climbassist.api.resource.pathpoint.BatchCreatePathPointsResult;
+import com.climbassist.api.resource.pathpoint.BatchNewPathPoint;
+import com.climbassist.api.resource.pathpoint.BatchNewPathPoints;
 import com.climbassist.api.resource.pathpoint.CreatePathPointResult;
 import com.climbassist.api.resource.pathpoint.NewPathPoint;
+import com.climbassist.api.resource.pathpoint.PathPoint;
 import com.climbassist.api.resource.pitch.CreatePitchResult;
 import com.climbassist.api.resource.pitch.NewPitch;
 import com.climbassist.api.resource.pitch.Pitch;
@@ -461,9 +465,41 @@ public class ClimbAssistClient {
                 new TypeReference<ApiResponse<CreatePathPointResult>>() {});
     }
 
+    public ApiResponse<BatchCreatePathPointsResult> batchCreatePathPoints(@NonNull String pathId,
+                                                                          @NonNull Set<Cookie> cookies,
+                                                                          @NonNull BatchNewPathPoint... batchNewPathPoints) {
+        return put("/v1/paths/" + pathId + "/path-points", BatchNewPathPoints.builder()
+                .newPathPoints((Arrays.asList(batchNewPathPoints)))
+                .build(), cookies, new TypeReference<ApiResponse<BatchCreatePathPointsResult>>() {});
+    }
+
+    public ApiResponse<PathPoint> getPathPoint(@NonNull String pathPointId) {
+        return get("/v1/path-points/" + pathPointId, new TypeReference<ApiResponse<PathPoint>>() {});
+    }
+
+    public ApiResponse<List<PathPoint>> listPathPoints(@NonNull String pathId) {
+        return get("/v1/paths/" + pathId + "/path-points", new TypeReference<ApiResponse<List<PathPoint>>>() {});
+    }
+
+    public ApiResponse<List<PathPoint>> listPathPoints(@NonNull String pathId, boolean ordered) {
+        return get("/v1/paths/" + pathId + "/path-points?ordered=" + ordered,
+                new TypeReference<ApiResponse<List<PathPoint>>>() {});
+    }
+
+    public ApiResponse<UpdateResourceResult> updatePathPoint(@NonNull PathPoint pathPoint,
+                                                             @NonNull Set<Cookie> cookies) {
+        return post("/v1/path-points", pathPoint, cookies, new TypeReference<ApiResponse<UpdateResourceResult>>() {});
+    }
+
     public ApiResponse<DeleteResourceResult> deletePathPoint(@NonNull String pathPointId,
                                                              @NonNull Set<Cookie> cookies) {
         return delete("/v1/path-points/" + pathPointId, cookies,
+                new TypeReference<ApiResponse<DeleteResourceResult>>() {});
+    }
+
+    public ApiResponse<DeleteResourceResult> batchDeletePathPoints(@NonNull String pathId,
+                                                                   @NonNull Set<Cookie> cookies) {
+        return delete("/v1/paths/" + pathId + "/path-points", cookies,
                 new TypeReference<ApiResponse<DeleteResourceResult>>() {});
     }
 

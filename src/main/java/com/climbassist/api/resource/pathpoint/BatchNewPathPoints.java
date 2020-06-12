@@ -17,7 +17,7 @@ import java.util.List;
 @Builder
 @Data
 @NoArgsConstructor
-class BatchNewPathPoints implements BatchNewResources<PathPoint, Path, BatchNewPathPoint> {
+public class BatchNewPathPoints implements BatchNewResources<PathPoint, Path, BatchNewPathPoint> {
 
     @NotNull(message = "New path points must be present.")
     @Size(min = 1, max = 100, message = "Request must contain between 1 and 100 new path points.")

@@ -123,6 +123,12 @@ public class ResourceManager {
                 .next();
     }
 
+    public static PathPoint getPathPoint(@NonNull Country country) {
+        return getPath(country).getPathPoints()
+                .iterator()
+                .next();
+    }
+
     public void cleanUp(@NonNull Set<Cookie> cookies) {
         resourceIds.getOrDefault(PathPoint.class, ImmutableSet.of())
                 .forEach(pathId -> climbAssistClient.deletePathPoint(pathId, cookies));
@@ -286,7 +292,7 @@ public class ResourceManager {
         return region;
     }
 
-    public Area createArea(String regionId, Set<Cookie> cookies, int depth) {
+    public Area createArea(@NonNull String regionId, @NonNull Set<Cookie> cookies, int depth) {
         NewArea newArea = NewArea.builder()
                 .regionId(regionId)
                 .name(RESOURCE_NAME)
@@ -314,7 +320,7 @@ public class ResourceManager {
         return area;
     }
 
-    public SubArea createSubArea(String areaId, Set<Cookie> cookies, int depth) {
+    public SubArea createSubArea(@NonNull String areaId, @NonNull Set<Cookie> cookies, int depth) {
         NewSubArea newSubArea = NewSubArea.builder()
                 .areaId(areaId)
                 .name(RESOURCE_NAME)
@@ -342,7 +348,7 @@ public class ResourceManager {
         return subArea;
     }
 
-    public Crag createCrag(String subAreaId, Set<Cookie> cookies, int depth) {
+    public Crag createCrag(@NonNull String subAreaId, @NonNull Set<Cookie> cookies, int depth) {
         NewCrag newCrag = NewCrag.builder()
                 .subAreaId(subAreaId)
                 .name(RESOURCE_NAME)
@@ -409,7 +415,7 @@ public class ResourceManager {
         return createWall(cragId, cookies, first, Optional.of(next), depth);
     }
 
-    public List<Wall> createWalls(String cragId, Set<Cookie> cookies) {
+    public List<Wall> createWalls(@NonNull String cragId, @NonNull Set<Cookie> cookies) {
         Wall wall3 = createWall(cragId, cookies, false, 0);
         Wall wall2 = createWall(cragId, cookies, false, wall3.getWallId(), 0);
         Wall wall1 = createWall(cragId, cookies, true, wall2.getWallId(), 0);
@@ -425,7 +431,7 @@ public class ResourceManager {
         return createRoute(wallId, cookies, first, Optional.of(next), depth);
     }
 
-    public List<Route> createRoutes(String wallId, Set<Cookie> cookies) {
+    public List<Route> createRoutes(@NonNull String wallId, @NonNull Set<Cookie> cookies) {
         Route route3 = createRoute(wallId, cookies, false, 0);
         Route route2 = createRoute(wallId, cookies, false, route3.getRouteId(), 0);
         Route route1 = createRoute(wallId, cookies, true, route2.getRouteId(), 0);
@@ -441,7 +447,7 @@ public class ResourceManager {
         return createPitch(routeId, cookies, first, Optional.of(next), depth);
     }
 
-    public List<Pitch> createPitches(String routeId, Set<Cookie> cookies) {
+    public List<Pitch> createPitches(@NonNull String routeId, @NonNull Set<Cookie> cookies) {
         Pitch pitch3 = createPitch(routeId, cookies, false, 0);
         Pitch pitch2 = createPitch(routeId, cookies, false, pitch3.getPitchId(), 0);
         Pitch pitch1 = createPitch(routeId, cookies, true, pitch2.getPitchId(), 0);
@@ -457,14 +463,14 @@ public class ResourceManager {
         return createPoint(pitchId, cookies, first, Optional.of(next));
     }
 
-    public List<Point> createPoints(String pitchId, Set<Cookie> cookies) {
+    public List<Point> createPoints(@NonNull String pitchId, @NonNull Set<Cookie> cookies) {
         Point point3 = createPoint(pitchId, cookies, false);
         Point point2 = createPoint(pitchId, cookies, false, point3.getPointId());
         Point point1 = createPoint(pitchId, cookies, true, point2.getPointId());
         return ImmutableList.of(point1, point2, point3);
     }
 
-    public Path createPath(String cragId, Set<Cookie> cookies, int depth) {
+    public Path createPath(@NonNull String cragId, @NonNull Set<Cookie> cookies, int depth) {
         NewPath newPath = NewPath.builder()
                 .cragId(cragId)
                 .build();
@@ -489,8 +495,25 @@ public class ResourceManager {
         return path;
     }
 
-    public void addResourceToResourceIds(Class<? extends com.climbassist.api.resource.common.Resource> resourceClass,
-                                         String resourceId) {
+    public PathPoint createPathPoint(@NonNull String pathId, @NonNull Set<Cookie> cookies, boolean first) {
+        return createPathPoint(pathId, cookies, first, Optional.empty());
+    }
+
+    public PathPoint createPathPoint(@NonNull String pathId, @NonNull Set<Cookie> cookies, boolean first,
+                                     @NonNull String next) {
+        return createPathPoint(pathId, cookies, first, Optional.of(next));
+    }
+
+    public List<PathPoint> createPathPoints(@NonNull String pathId, @NonNull Set<Cookie> cookies) {
+        PathPoint pathPoint3 = createPathPoint(pathId, cookies, false);
+        PathPoint pathPoint2 = createPathPoint(pathId, cookies, false, pathPoint3.getPathPointId());
+        PathPoint pathPoint1 = createPathPoint(pathId, cookies, true, pathPoint2.getPathPointId());
+        return ImmutableList.of(pathPoint1, pathPoint2, pathPoint3);
+    }
+
+    public void addResourceToResourceIds(
+            @NonNull Class<? extends com.climbassist.api.resource.common.Resource> resourceClass,
+            @NonNull String resourceId) {
         if (!resourceIds.containsKey(resourceClass)) {
             resourceIds.put(resourceClass, new HashSet<>());
         }

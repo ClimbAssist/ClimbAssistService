@@ -461,10 +461,10 @@ public class PointIntegrationTest extends AbstractTestNGSpringContextTests {
     private BatchNewPoint[] buildBatchNewPoints(int numberOfPoints) {
         return IntStream.range(0, numberOfPoints)
                 .boxed()
-                .map(integer -> BatchNewPoint.builder()
-                        .x((double) integer)
-                        .y((double) integer)
-                        .z((double) integer)
+                .map(i -> BatchNewPoint.builder()
+                        .x((double) i)
+                        .y((double) i)
+                        .z((double) i)
                         .build())
                 .toArray(BatchNewPoint[]::new);
     }
