@@ -61,10 +61,6 @@ Note: You don't need to install Docker, even though it says you do.
    
 1. Build ClimbAssistUI. See that repository's README for details.
 
-1. Build the application.
-
-        $ mvn -f pom.xml compile package
-
 1. Create a development stack.
 
         $ ./dev-stack --name <name> [--skip-compute-resources]
