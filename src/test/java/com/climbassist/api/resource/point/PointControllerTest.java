@@ -6,13 +6,11 @@ import com.climbassist.api.resource.common.ResourceControllerDelegate;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
-import com.climbassist.api.resource.common.batch.BatchDeleteResourcesRequest;
 import com.climbassist.api.resource.common.batch.BatchResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.pitch.Anchors;
 import com.climbassist.api.resource.pitch.Pitch;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -125,9 +123,7 @@ class PointControllerTest {
     private static final DeleteResourceResult DELETE_RESOURCE_RESULT = DeleteResourceResult.builder()
             .successful(true)
             .build();
-    private static final BatchDeletePointsRequest BATCH_DELETE_POINTS_REQUEST = BatchDeletePointsRequest.builder()
-            .pointIds(ImmutableSet.of(POINT_1.getId(), POINT_2.getId(), POINT_3.getId()))
-            .build();
+
     @Mock
     private ResourceControllerDelegate<Point, NewPoint> mockResourceControllerDelegate;
     @Mock
@@ -156,7 +152,6 @@ class PointControllerTest {
     void parametersMarkedWithNonNull_throwNullPointerException_forNullValues() {
         NullPointerTester nullPointerTester = new NullPointerTester();
         nullPointerTester.setDefault(BatchNewPoints.class, BATCH_NEW_POINTS);
-        nullPointerTester.setDefault(BatchDeletePointsRequest.class, BATCH_DELETE_POINTS_REQUEST);
         nullPointerTester.testInstanceMethods(pointController, NullPointerTester.Visibility.PACKAGE);
     }
 
@@ -225,16 +220,6 @@ class PointControllerTest {
         when(mockResourceControllerDelegate.deleteResource(any())).thenReturn(DELETE_RESOURCE_RESULT);
         assertThat(pointController.deleteResource(POINT_1.getPointId()), is(equalTo(DELETE_RESOURCE_RESULT)));
         verify(mockResourceControllerDelegate).deleteResource(POINT_1.getPointId());
-    }
-
-    @Test
-    void batchDeleteResources_callsBatchResourceWithParentControllerDelegate_whenPointsListIsSupplied()
-            throws ResourceNotFoundException {
-        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(
-                any(BatchDeleteResourcesRequest.class))).thenReturn(DELETE_RESOURCE_RESULT);
-        assertThat(pointController.batchDeleteResources(BATCH_DELETE_POINTS_REQUEST),
-                is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(BATCH_DELETE_POINTS_REQUEST);
     }
 
     @Test

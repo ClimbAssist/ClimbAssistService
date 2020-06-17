@@ -25,7 +25,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -113,13 +112,6 @@ class BatchResourceWithParentControllerDelegateTest {
         }
     }
 
-    @Builder
-    @Value
-    private static class BatchDeleteResourcesRequestImpl implements BatchDeleteResourcesRequest {
-
-        Set<String> resourceIds;
-    }
-
     private static class ResourceNotFoundExceptionImpl extends ResourceNotFoundException {
 
         public ResourceNotFoundExceptionImpl(String resourceId) {
@@ -180,13 +172,6 @@ class BatchResourceWithParentControllerDelegateTest {
     private static final BatchNewResourcesImpl BATCH_NEW_RESOURCES = BatchNewResourcesImpl.builder()
             .batchNewResources(ImmutableList.of(BATCH_NEW_RESOURCE_1, BATCH_NEW_RESOURCE_2, BATCH_NEW_RESOURCE_3))
             .build();
-    private static final BatchDeleteResourcesRequestImpl BATCH_DELETE_RESOURCES_REQUEST =
-            BatchDeleteResourcesRequestImpl.builder()
-                    .resourceIds(ImmutableSet.of(RESOURCE_1.getId(), RESOURCE_2.getId(), RESOURCE_3.getId()))
-                    .build();
-    private static final DeleteResourceResult DELETE_RESOURCE_RESULT = DeleteResourceResult.builder()
-            .successful(true)
-            .build();
 
     @Mock
     private ResourceControllerDelegate<ResourceImpl, NewResourceImpl> mockResourceControllerDelegate;
@@ -227,7 +212,6 @@ class BatchResourceWithParentControllerDelegateTest {
     void parametersMarkedWithNonNull_throwNullPointerException_forNullValues() {
         NullPointerTester nullPointerTester = new NullPointerTester();
         nullPointerTester.setDefault(BatchNewResources.class, BATCH_NEW_RESOURCES);
-        nullPointerTester.setDefault(BatchDeleteResourcesRequest.class, BATCH_DELETE_RESOURCES_REQUEST);
         nullPointerTester.testInstanceMethods(batchResourceWithParentControllerDelegate,
                 NullPointerTester.Visibility.PACKAGE);
     }
@@ -315,53 +299,6 @@ class BatchResourceWithParentControllerDelegateTest {
         //noinspection ThrowableNotThrown
         verify(mockParentResourceNotFoundExceptionFactory).create(PARENT_RESOURCE_1.getId());
         verify(mockResourceControllerDelegate, never()).createResource(any());
-    }
-
-    @Test
-    void batchDeleteResources_deletesResources() throws ResourceNotFoundException {
-        doReturn(Optional.of(RESOURCE_1)).when(mockResourceDao)
-                .getResource(RESOURCE_1.getId());
-        doReturn(Optional.of(RESOURCE_2)).when(mockResourceDao)
-                .getResource(RESOURCE_2.getId());
-        doReturn(Optional.of(RESOURCE_3)).when(mockResourceDao)
-                .getResource(RESOURCE_3.getId());
-        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(BATCH_DELETE_RESOURCES_REQUEST),
-                is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockResourceDao).getResource(RESOURCE_1.getId());
-        verify(mockResourceDao).getResource(RESOURCE_2.getId());
-        verify(mockResourceDao).getResource(RESOURCE_3.getId());
-        verify(mockResourceDao).deleteResource(RESOURCE_1.getId());
-        verify(mockResourceDao).deleteResource(RESOURCE_2.getId());
-        verify(mockResourceDao).deleteResource(RESOURCE_3.getId());
-    }
-
-    @Test
-    void batchDeleteResources_deletesResource_whenThereIsOnlyOneResource() throws ResourceNotFoundException {
-        doReturn(Optional.of(RESOURCE_1)).when(mockResourceDao)
-                .getResource(RESOURCE_1.getId());
-        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(
-                BatchDeleteResourcesRequestImpl.builder()
-                        .resourceIds(ImmutableSet.of(RESOURCE_1.getId()))
-                        .build()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockResourceDao).getResource(RESOURCE_1.getId());
-        verify(mockResourceDao).deleteResource(RESOURCE_1.getId());
-    }
-
-    @Test
-    void batchDeleteResources_throwsResourceNotFoundException_whenPointDoesNotExist() {
-        doReturn(Optional.of(RESOURCE_1)).when(mockResourceDao)
-                .getResource(RESOURCE_1.getId());
-        doReturn(Optional.empty()).when(mockResourceDao)
-                .getResource(RESOURCE_2.getId());
-        when(mockResourceNotFoundExceptionFactory.create(any())).thenReturn(
-                new ResourceNotFoundExceptionImpl(RESOURCE_2.getId()));
-        assertThrows(ResourceNotFoundExceptionImpl.class,
-                () -> batchResourceWithParentControllerDelegate.batchDeleteResources(BATCH_DELETE_RESOURCES_REQUEST));
-        verify(mockResourceDao).getResource(RESOURCE_1.getId());
-        verify(mockResourceDao).getResource(RESOURCE_2.getId());
-        //noinspection ThrowableNotThrown
-        verify(mockResourceNotFoundExceptionFactory).create(RESOURCE_2.getId());
-        verify(mockResourceDao, never()).deleteResource(any());
     }
 
     @Test

@@ -63,19 +63,6 @@ public class BatchResourceWithParentControllerDelegate<Resource extends Orderabl
         return batchCreateResourceResultFactory.create(resourceIds);
     }
 
-    public DeleteResourceResult batchDeleteResources(@NonNull BatchDeleteResourcesRequest batchDeleteResourcesRequest)
-            throws ResourceNotFoundException {
-        for (String resourceId : batchDeleteResourcesRequest.getResourceIds()) {
-            resourceDao.getResource(resourceId)
-                    .orElseThrow(() -> resourceNotFoundExceptionFactory.create(resourceId));
-        }
-        batchDeleteResourcesRequest.getResourceIds()
-                .forEach(resourceDao::deleteResource);
-        return DeleteResourceResult.builder()
-                .successful(true)
-                .build();
-    }
-
     public DeleteResourceResult batchDeleteResources(@NonNull String parentId) throws ResourceNotFoundException {
         parentResourceDao.getResource(parentId)
                 .orElseThrow(() -> parentResourceNotFoundExceptionFactory.create(parentId));

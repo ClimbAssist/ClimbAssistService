@@ -6,12 +6,10 @@ import com.climbassist.api.resource.common.ResourceControllerDelegate;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
-import com.climbassist.api.resource.common.batch.BatchDeleteResourcesRequest;
 import com.climbassist.api.resource.common.batch.BatchResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.path.Path;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,11 +78,6 @@ class PathPointControllerTest {
     private static final DeleteResourceResult DELETE_RESOURCE_RESULT = DeleteResourceResult.builder()
             .successful(true)
             .build();
-    private static final BatchDeletePathPointsRequest BATCH_DELETE_PATH_POINTS_REQUEST =
-            BatchDeletePathPointsRequest.builder()
-                    .pathPointIds(ImmutableSet.of(PATH_POINT_1.getPathPointId(), PATH_POINT_2.getPathPointId(),
-                            PATH_POINT_3.getPathPointId()))
-                    .build();
 
     @Mock
     private ResourceControllerDelegate<PathPoint, NewPathPoint> mockResourceControllerDelegate;
@@ -115,7 +108,6 @@ class PathPointControllerTest {
     void parametersMarkedWithNonNull_throwNullPointerException_forNullValues() {
         NullPointerTester nullPointerTester = new NullPointerTester();
         nullPointerTester.setDefault(BatchNewPathPoints.class, BATCH_NEW_PATH_POINTS);
-        nullPointerTester.setDefault(BatchDeletePathPointsRequest.class, BATCH_DELETE_PATH_POINTS_REQUEST);
         nullPointerTester.testInstanceMethods(pathPointController, NullPointerTester.Visibility.PACKAGE);
     }
 
@@ -186,16 +178,6 @@ class PathPointControllerTest {
         assertThat(pathPointController.deleteResource(PATH_POINT_1.getPathPointId()),
                 is(equalTo(DELETE_RESOURCE_RESULT)));
         verify(mockResourceControllerDelegate).deleteResource(PATH_POINT_1.getPathPointId());
-    }
-
-    @Test
-    void batchDeleteResources_callsBatchResourceWithParentControllerDelegate_whenPathPointsListIsSupplied()
-            throws ResourceNotFoundException {
-        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(
-                any(BatchDeleteResourcesRequest.class))).thenReturn(DELETE_RESOURCE_RESULT);
-        assertThat(pathPointController.batchDeleteResources(BATCH_DELETE_PATH_POINTS_REQUEST),
-                is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(BATCH_DELETE_PATH_POINTS_REQUEST);
     }
 
     @Test
