@@ -160,20 +160,3 @@ The integration tests in the package are located under `src/integration-test`.
 
         $ mvn verify -Dregion=us-west-2 -DuserPoolId=<user pool ID from your development stack> 
         -DapplicationEndpoint=<Elastic Beanstalk application endpoint from your development stack>`
-
-
-Deploying the Toolchain Stack
------------------------------
-
-The toolchain stack contains all of our development resources like our CodePipeline pipeline, CodeBuild stages, related
-roles, etc. The name of this stack is "awscodestar-climbassist" and the template used to create it is located in
-toolchain.yml. Unlike our infrastructure stack, this stack is not updated when we make a code change. Instead, you
-have to manually deploy this stack when you need to make changes.
-
-1. Install the SAM CLI following [these
-instructions](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html).
-Note: You don't need to install Docker, even though it says you do.
-
-2. Deploy the toolchain stack
-
-        $ ./deploy-toolchain

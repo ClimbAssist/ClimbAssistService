@@ -8,22 +8,28 @@ better.
 I Have a Bug/Feature Request
 ----------------------------
 
-Great! Submit it [here](TODO). If it's a bug, be sure to include the date and time when you experienced, as
-well as reproduction steps. If it's a feature request, try to be crisp and break it into manageable tasks. We only have
-one maintainer right now, so we can't guarantee that we will be able to look at it right away, but we'll do our best! 
+Great! We have a few places to submit issues:
+* For front-end bugs/feature requests, submit it [here](https://github.com/ClimbAssist/ClimbAssistUI/issues/new).
+* For back-end bugs/feature requests, submit it [here](https://github.com/ClimbAssist/ClimbAssistService/issues/new).
+* For deployment-related bugs/feature requests (seems a little unlikely but hey), submit it 
+[here](https://github.com/ClimbAssist/ClimbAssistInfrastructure/issues/new).
+
+If it's a bug, be sure to include the date and time when you experienced, as well as reproduction steps. If it's a
+feature request, try to be crisp and break it into manageable tasks. We only have a couple maintainers right now, so
+we can't guarantee that we will be able to look at it right away, but we'll do our best!
 
 I Want to Help
 --------------
 
 Lovely! If you're looking to help with back-end development, you're in the right place. If you're more
-interested in front-end development, check out [ClimbAssistUI](TODO). 
+interested in front-end development, check out [ClimbAssistUI](https://github.com/ClimbAssist/ClimbAssistUI). 
  
 Check out the [README](README.md) for details on cloning, running, and testing. In general, features should be
 implemented in a new branch, and if they correspond with a bug/feature request, it's useful to include the tracking
 number in the branch name. Additionally, please ensure than any new or modified APIs are reflected in 
 [docs/api_documentation.md](docs/api_documentation.md). Once you've made code changes and you're confident that they
-work, submit a pull request and one of our moderators will take a look at it as soon as they can. We only have one
-maintainer right now, so it might take some time before your request can be looked at, but we promise we will review
+work, submit a pull request and one of our moderators will take a look at it as soon as they can. We only have a couple
+maintainers right now, so it might take some time before your request can be looked at, but we promise we will review
 it as soon as we can!
 
 I Want to Help but I Don't Know Anything About Climbing!
