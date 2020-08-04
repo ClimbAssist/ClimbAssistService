@@ -6,6 +6,7 @@ import com.climbassist.api.resource.common.ResourceNotEmptyException;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -43,6 +45,14 @@ class CountryControllerTest {
             .name("new name")
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceControllerDelegate<Country, NewCountry> mockResourceControllerDelegate;
@@ -71,9 +81,11 @@ class CountryControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(COUNTRY_1);
-        assertThat(countryController.getResource(COUNTRY_1.getCountryId(), DEPTH), is(equalTo(COUNTRY_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(COUNTRY_1.getCountryId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(COUNTRY_1);
+        assertThat(countryController.getResource(COUNTRY_1.getCountryId(), DEPTH, MAYBE_USER_DATA),
+                is(equalTo(COUNTRY_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(COUNTRY_1.getCountryId(), DEPTH,
+                MAYBE_USER_DATA);
     }
 
     @Test
@@ -99,9 +111,10 @@ class CountryControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(countryController.updateResource(UPDATED_COUNTRY_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceControllerDelegate).updateResource(UPDATED_COUNTRY_1);
+        when(mockResourceControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(countryController.updateResource(UPDATED_COUNTRY_1, MAYBE_USER_DATA),
+                is(equalTo(updateResourceResult)));
+        verify(mockResourceControllerDelegate).updateResource(UPDATED_COUNTRY_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -110,8 +123,9 @@ class CountryControllerTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithChildrenControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(countryController.deleteResource(COUNTRY_1.getCountryId()), is(equalTo(deleteResourceResult)));
-        verify(mockResourceWithChildrenControllerDelegate).deleteResource(COUNTRY_1.getCountryId());
+        when(mockResourceWithChildrenControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(countryController.deleteResource(COUNTRY_1.getCountryId(), MAYBE_USER_DATA),
+                is(equalTo(deleteResourceResult)));
+        verify(mockResourceWithChildrenControllerDelegate).deleteResource(COUNTRY_1.getCountryId(), MAYBE_USER_DATA);
     }
 }

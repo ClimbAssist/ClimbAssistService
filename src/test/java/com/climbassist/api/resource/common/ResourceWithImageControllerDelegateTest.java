@@ -1,6 +1,11 @@
 package com.climbassist.api.resource.common;
 
 import com.climbassist.api.resource.MultipartFileTestUtils;
+import com.climbassist.api.resource.common.image.ResourceWithImage;
+import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
+import com.climbassist.api.resource.common.image.ResourceWithImageFactory;
+import com.climbassist.api.resource.common.image.UploadImageResult;
+import com.climbassist.api.user.UserData;
 import com.climbassist.common.s3.S3Proxy;
 import com.google.common.testing.NullPointerTester;
 import lombok.Builder;
@@ -33,11 +38,11 @@ class ResourceWithImageControllerDelegateTest {
 
     @Builder
     @Value
-    private static final class ResourceImpl implements ResourceWithImage {
+    private static class ResourceImpl implements ResourceWithImage {
 
-        private String id;
-        private String name;
-        private String imageLocation;
+        String id;
+        String name;
+        String imageLocation;
     }
 
     private static final class ResourceNotFoundExceptionImpl extends ResourceNotFoundException {
@@ -61,6 +66,14 @@ class ResourceWithImageControllerDelegateTest {
     private static final ResourceNotFoundExceptionImpl RESOURCE_NOT_FOUND_EXCEPTION = new ResourceNotFoundExceptionImpl(
             RESOURCE.getId());
     private static final MultipartFile IMAGE = MultipartFileTestUtils.buildMultipartFile("image.webp", "image");
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceDao<ResourceImpl> mockResourceDao;
@@ -94,14 +107,14 @@ class ResourceWithImageControllerDelegateTest {
 
     @Test
     void uploadImage_uploadsImageAndUpdatesResource_whenResourceExists() throws ResourceNotFoundException, IOException {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.of(RESOURCE));
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.of(RESOURCE));
         when(mockS3Proxy.putPublicObject(any(), any(), any(), anyLong())).thenReturn(IMAGE_LOCATION);
         when(mockResourceFactory.create(any(), any())).thenReturn(RESOURCE_WITH_IMAGE_LOCATION);
-        assertThat(resourceWithImageControllerDelegate.uploadImage(RESOURCE.getId(), IMAGE), is(equalTo(
+        assertThat(resourceWithImageControllerDelegate.uploadImage(RESOURCE.getId(), IMAGE, MAYBE_USER_DATA), is(equalTo(
                 UploadImageResult.builder()
                         .successful(true)
                         .build())));
-        verify(mockResourceDao).getResource(RESOURCE.getId());
+        verify(mockResourceDao).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
         ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor.forClass(InputStream.class);
         verify(mockS3Proxy).putPublicObject(eq(IMAGES_BUCKET_NAME), eq("id/id.webp"),
                 inputStreamArgumentCaptor.capture(), eq(IMAGE.getSize()));
@@ -113,11 +126,11 @@ class ResourceWithImageControllerDelegateTest {
 
     @Test
     void uploadImage_throwsResourceNotFoundException_whenResourceDoesNotExist() {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockResourceNotFoundExceptionFactory.create(any())).thenReturn(RESOURCE_NOT_FOUND_EXCEPTION);
         assertThrows(ResourceNotFoundExceptionImpl.class,
-                () -> resourceWithImageControllerDelegate.uploadImage(RESOURCE.getId(), IMAGE));
-        verify(mockResourceDao).getResource(RESOURCE.getId());
+                () -> resourceWithImageControllerDelegate.uploadImage(RESOURCE.getId(), IMAGE, MAYBE_USER_DATA));
+        verify(mockResourceDao).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockResourceNotFoundExceptionFactory).create(RESOURCE.getId());
     }

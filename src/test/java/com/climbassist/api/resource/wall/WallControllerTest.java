@@ -9,6 +9,7 @@ import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.crag.Crag;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -58,6 +60,14 @@ class WallControllerTest {
             .next("wall-3")
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentControllerDelegate<Wall, NewWall, Crag> mockResourceWithParentControllerDelegate;
@@ -87,29 +97,32 @@ class WallControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(WALL_1);
-        assertThat(wallController.getResource(WALL_1.getWallId(), DEPTH), is(equalTo(WALL_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(WALL_1.getWallId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(WALL_1);
+        assertThat(wallController.getResource(WALL_1.getWallId(), DEPTH, MAYBE_USER_DATA), is(equalTo(WALL_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(WALL_1.getWallId(), DEPTH, MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsFalse()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<Wall> walls = ImmutableList.of(WALL_1, WALL_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                walls);
-        assertThat(wallController.getResourcesForParent(WALL_1.getCragId(), false), is(equalTo(walls)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(WALL_1.getCragId(), false);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(walls);
+        assertThat(wallController.getResourcesForParent(WALL_1.getCragId(), false, MAYBE_USER_DATA),
+                is(equalTo(walls)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(WALL_1.getCragId(), false,
+                MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsTrue()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<Wall> walls = ImmutableList.of(WALL_1, WALL_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                walls);
-        assertThat(wallController.getResourcesForParent(WALL_1.getCragId(), true), is(equalTo(walls)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(WALL_1.getCragId(), true);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(walls);
+        assertThat(wallController.getResourcesForParent(WALL_1.getCragId(), true, MAYBE_USER_DATA), is(equalTo(walls)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(WALL_1.getCragId(), true,
+                MAYBE_USER_DATA);
     }
 
     @Test
@@ -117,9 +130,9 @@ class WallControllerTest {
         CreateWallResult createWallResult = CreateWallResult.builder()
                 .wallId(WALL_1.getWallId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createWallResult);
-        assertThat(wallController.createResource(NEW_WALL_1), is(equalTo(createWallResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_WALL_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createWallResult);
+        assertThat(wallController.createResource(NEW_WALL_1, MAYBE_USER_DATA), is(equalTo(createWallResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_WALL_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -127,9 +140,9 @@ class WallControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(wallController.updateResource(UPDATED_WALL_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_WALL_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(wallController.updateResource(UPDATED_WALL_1, MAYBE_USER_DATA), is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_WALL_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -138,8 +151,9 @@ class WallControllerTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithChildrenControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(wallController.deleteResource(WALL_1.getWallId()), is(equalTo(deleteResourceResult)));
-        verify(mockResourceWithChildrenControllerDelegate).deleteResource(WALL_1.getWallId());
+        when(mockResourceWithChildrenControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(wallController.deleteResource(WALL_1.getWallId(), MAYBE_USER_DATA),
+                is(equalTo(deleteResourceResult)));
+        verify(mockResourceWithChildrenControllerDelegate).deleteResource(WALL_1.getWallId(), MAYBE_USER_DATA);
     }
 }

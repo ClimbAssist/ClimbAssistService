@@ -6,6 +6,7 @@ import com.climbassist.api.resource.common.ResourceWithParent;
 import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableListBuilder;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParentAndChildren;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
@@ -20,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,18 +89,18 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
 
     @Builder
     @Value
-    private static final class ChildResourceImpl1 implements ResourceWithParent<ResourceImpl> {
+    private static class ChildResourceImpl1 implements ResourceWithParent<ResourceImpl> {
 
-        private String id;
-        private String parentId;
+        String id;
+        String parentId;
     }
 
     @Builder
     @Value
-    private static final class ChildResourceImpl2 implements ResourceWithParent<ResourceImpl> {
+    private static class ChildResourceImpl2 implements ResourceWithParent<ResourceImpl> {
 
-        private String id;
-        private String parentId;
+        String id;
+        String parentId;
     }
 
     private static final ParentResourceImpl PARENT_RESOURCE = ParentResourceImpl.builder()
@@ -164,6 +166,14 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
     private static final Set<ResourceImpl> RESOURCE_SET = ImmutableSet.<ResourceImpl>builder().addAll(RESOURCE_LIST)
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentDao<ResourceImpl, ParentResourceImpl> mockResourceDao;
@@ -200,23 +210,23 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
     void getChildrenRecursively_throwsIllegalArgumentException_whenDepthIsLessThanZero() {
         assertThrows(IllegalArgumentException.class,
                 () -> recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(RESOURCE_1.getParentId(),
-                        -5));
+                        -5, MAYBE_USER_DATA));
     }
 
     @Test
     void getChildrenRecursively_throwsIllegalArgumentException_whenDepthIsZero() {
         assertThrows(IllegalArgumentException.class,
                 () -> recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(RESOURCE_1.getParentId(),
-                        0));
+                        0, MAYBE_USER_DATA));
     }
 
     @Test
     void getChildrenRecursively_returnsResourcesInOrderWithoutChildren_whenDepthIsOne() {
-        when(mockResourceDao.getResources(any())).thenReturn(RESOURCE_SET);
+        when(mockResourceDao.getResources(any(), any())).thenReturn(RESOURCE_SET);
         when(mockOrderableListBuilder.buildList(any())).thenReturn(RESOURCE_LIST);
-        assertThat(recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), 1),
-                is(equalTo(RESOURCE_LIST)));
-        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId());
+        assertThat(recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), 1,
+                MAYBE_USER_DATA), is(equalTo(RESOURCE_LIST)));
+        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockOrderableListBuilder).buildList(RESOURCE_SET);
     }
 
@@ -229,34 +239,34 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
                         .orderableListBuilder(mockOrderableListBuilder)
                         .childClass(ResourceImpl.class)
                         .build();
-        when(mockResourceDao.getResources(any())).thenReturn(RESOURCE_SET);
+        when(mockResourceDao.getResources(any(), any())).thenReturn(RESOURCE_SET);
         when(mockOrderableListBuilder.buildList(any())).thenReturn(RESOURCE_LIST);
-        assertThat(recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), 1),
-                is(equalTo(RESOURCE_LIST)));
-        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId());
+        assertThat(recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), 1,
+                MAYBE_USER_DATA), is(equalTo(RESOURCE_LIST)));
+        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockOrderableListBuilder).buildList(RESOURCE_SET);
     }
 
     @Test
     void getChildrenRecursively_returnsResourcesInOrderWithoutChildren_whenResourceHasNoChildren() {
-        when(mockResourceDao.getResources(any())).thenReturn(RESOURCE_SET);
+        when(mockResourceDao.getResources(any(), any())).thenReturn(RESOURCE_SET);
         doReturn(ImmutableSet.of()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt(), any());
         doReturn(ImmutableSet.of()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt(), any());
         doReturn(ImmutableSet.of()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt(), any());
         when(mockOrderableListBuilder.buildList(any())).thenReturn(RESOURCE_LIST);
 
         assertThat(
-                recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), DEPTH),
-                is(equalTo(RESOURCE_LIST)));
+                recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), DEPTH,
+                        MAYBE_USER_DATA), is(equalTo(RESOURCE_LIST)));
 
-        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId());
+        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockOrderableListBuilder).buildList(RESOURCE_SET);
-        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE_1.getId(), DEPTH - 1);
-        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE_2.getId(), DEPTH - 1);
-        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE_3.getId(), DEPTH - 1);
+        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE_1.getId(), DEPTH - 1, MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE_2.getId(), DEPTH - 1, MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE_3.getId(), DEPTH - 1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -265,21 +275,22 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
                 .build(), RESOURCE_2.toBuilder()
                 .build(), RESOURCE_3.toBuilder()
                 .build());
-        when(mockResourceDao.getResources(any())).thenReturn(RESOURCE_SET);
+        when(mockResourceDao.getResources(any(), any())).thenReturn(RESOURCE_SET);
         when(mockOrderableListBuilder.buildList(any())).thenReturn(resourceListCopy);
         when(mockRecursiveResourceRetriever1.getChildClass()).thenReturn(ChildResourceImpl1.class);
         doReturn(RESOURCE_1_WITH_CHILDREN_1.getChildResources1()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt(), any());
         doReturn(RESOURCE_2_WITH_CHILDREN_1.getChildResources1()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt(), any());
         doReturn(ImmutableSet.of()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt(), any());
 
         assertThat(
-                recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), DEPTH),
+                recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), DEPTH,
+                        MAYBE_USER_DATA),
                 is(equalTo(ImmutableList.of(RESOURCE_1_WITH_CHILDREN_1, RESOURCE_2_WITH_CHILDREN_1, RESOURCE_3))));
 
-        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId());
+        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockOrderableListBuilder).buildList(RESOURCE_SET);
         verifyRecursiveResourceRetrieverMocks(mockRecursiveResourceRetriever1);
     }
@@ -299,30 +310,31 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
                 .build(), RESOURCE_2.toBuilder()
                 .build(), RESOURCE_3.toBuilder()
                 .build());
-        when(mockResourceDao.getResources(any())).thenReturn(RESOURCE_SET);
+        when(mockResourceDao.getResources(any(), any())).thenReturn(RESOURCE_SET);
         when(mockOrderableListBuilder.buildList(any())).thenReturn(resourceListCopy);
 
         when(mockRecursiveResourceRetriever1.getChildClass()).thenReturn(ChildResourceImpl1.class);
         doReturn(RESOURCE_1_WITH_CHILDREN_2.getChildResources1()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt(), any());
         doReturn(RESOURCE_2_WITH_CHILDREN_2.getChildResources1()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt(), any());
         doReturn(ImmutableSet.of()).when(mockRecursiveResourceRetriever1)
-                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt(), any());
 
         when(mockRecursiveResourceRetriever2.getChildClass()).thenReturn(ChildResourceImpl2.class);
         doReturn(RESOURCE_1_WITH_CHILDREN_2.getChildResources2()).when(mockRecursiveResourceRetriever2)
-                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_1.getId()), anyInt(), any());
         doReturn(RESOURCE_2_WITH_CHILDREN_2.getChildResources2()).when(mockRecursiveResourceRetriever2)
-                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_2.getId()), anyInt(), any());
         doReturn(ImmutableSet.of()).when(mockRecursiveResourceRetriever2)
-                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt());
+                .getChildrenRecursively(eq(RESOURCE_3.getId()), anyInt(), any());
 
         assertThat(
-                recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), DEPTH),
+                recursiveOrderableResourceWithChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), DEPTH,
+                        MAYBE_USER_DATA),
                 is(equalTo(ImmutableList.of(RESOURCE_1_WITH_CHILDREN_2, RESOURCE_2_WITH_CHILDREN_2, RESOURCE_3))));
 
-        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId());
+        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockOrderableListBuilder).buildList(RESOURCE_SET);
         verifyRecursiveResourceRetrieverMocks(mockRecursiveResourceRetriever1);
         verifyRecursiveResourceRetrieverMocks(mockRecursiveResourceRetriever2);
@@ -331,8 +343,8 @@ class RecursiveOrderableResourceWithChildrenRetrieverTest {
     private void verifyRecursiveResourceRetrieverMocks(
             RecursiveResourceRetriever<?, ?> mockRecursiveResourceRetriever) {
         verify(mockRecursiveResourceRetriever, times(2)).getChildClass();
-        verify(mockRecursiveResourceRetriever).getChildrenRecursively(RESOURCE_1.getId(), DEPTH - 1);
-        verify(mockRecursiveResourceRetriever).getChildrenRecursively(RESOURCE_2.getId(), DEPTH - 1);
-        verify(mockRecursiveResourceRetriever).getChildrenRecursively(RESOURCE_3.getId(), DEPTH - 1);
+        verify(mockRecursiveResourceRetriever).getChildrenRecursively(RESOURCE_1.getId(), DEPTH - 1, MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever).getChildrenRecursively(RESOURCE_2.getId(), DEPTH - 1, MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever).getChildrenRecursively(RESOURCE_3.getId(), DEPTH - 1, MAYBE_USER_DATA);
     }
 }

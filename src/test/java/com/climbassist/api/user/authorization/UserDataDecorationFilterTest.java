@@ -19,6 +19,7 @@ import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.emptyArray;
@@ -69,10 +70,11 @@ class UserDataDecorationFilterTest {
         userDataDecorationFilter.doFilter(mockHttpServletRequest, mockHttpServletResponse, mockFilterChain);
         verify(mockFilterChain).doFilter(mockHttpServletRequest, mockHttpServletResponse);
         assertThat(mockHttpServletResponse.getCookies(), is(emptyArray()));
-        assertThat(Collections.list(mockHttpServletRequest.getAttributeNames()), not(hasItem("userId")));
         //noinspection ConstantConditions
         assertThat(Collections.list(mockHttpServletRequest.getSession()
                 .getAttributeNames()), not(hasItem(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME)));
+        assertThat(mockHttpServletRequest.getSession()
+                .getAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME), is(equalTo(Optional.empty())));
     }
 
     @Test
@@ -88,10 +90,11 @@ class UserDataDecorationFilterTest {
         verify(mockUserManager).getUserData(ACCESS_TOKEN);
         verify(mockFilterChain).doFilter(mockHttpServletRequest, mockHttpServletResponse);
         CookieTestUtils.verifySessionCookiesAreCorrect(mockHttpServletResponse, USER_SESSION_DATA);
-        assertThat(mockHttpServletRequest.getAttribute("userId"), is(equalTo(USER_DATA.getUserId())));
         //noinspection ConstantConditions
         assertThat(mockHttpServletRequest.getSession()
                 .getAttribute(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME), is(equalTo(ACCESS_TOKEN)));
+        assertThat(mockHttpServletRequest.getSession()
+                .getAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME), is(equalTo(Optional.of(USER_DATA))));
     }
 
     @Test
@@ -114,10 +117,11 @@ class UserDataDecorationFilterTest {
                 .accessToken(newAccessToken)
                 .refreshToken(REFRESH_TOKEN)
                 .build());
-        assertThat(mockHttpServletRequest.getAttribute("userId"), is(equalTo(USER_DATA.getUserId())));
         //noinspection ConstantConditions
         assertThat(mockHttpServletRequest.getSession()
                 .getAttribute(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME), is(equalTo(newAccessToken)));
+        assertThat(mockHttpServletRequest.getSession()
+                .getAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME), is(equalTo(Optional.of(USER_DATA))));
     }
 
     @Test
@@ -138,6 +142,8 @@ class UserDataDecorationFilterTest {
         //noinspection ConstantConditions
         assertThat(Collections.list(mockHttpServletRequest.getSession()
                 .getAttributeNames()), not(hasItem(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME)));
+        assertThat(mockHttpServletRequest.getSession()
+                .getAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME), is(equalTo(Optional.empty())));
     }
 
     private static MockHttpServletRequest buildMockHttpServletRequest() {

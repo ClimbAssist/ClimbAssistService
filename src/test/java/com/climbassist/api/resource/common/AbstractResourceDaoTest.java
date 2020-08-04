@@ -2,6 +2,7 @@ package com.climbassist.api.resource.common;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
+import com.climbassist.api.user.UserData;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,15 @@ import static org.mockito.Mockito.when;
 public abstract class AbstractResourceDaoTest<Resource extends com.climbassist.api.resource.common.Resource,
         ResourceDao extends com.climbassist.api.resource.common.ResourceDao<Resource>> {
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    protected static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
+
     protected ResourceDao resourceDao;
 
     @BeforeEach
@@ -36,7 +46,7 @@ public abstract class AbstractResourceDaoTest<Resource extends com.climbassist.a
         // have to call these methods out explicitly because they are in a superclass in a different package than the
         // subclass
         nullPointerTester.testMethod(resourceDao, resourceDao.getClass()
-                .getMethod("getResource", String.class));
+                .getMethod("getResource", String.class, Optional.class));
         nullPointerTester.testMethod(resourceDao, resourceDao.getClass()
                 .getMethod("saveResource", com.climbassist.api.resource.common.Resource.class));
         nullPointerTester.testMethod(resourceDao, resourceDao.getClass()
@@ -46,7 +56,8 @@ public abstract class AbstractResourceDaoTest<Resource extends com.climbassist.a
     @Test
     void getResource_returnsResourceFromTable() {
         when(getMockDynamoDbMapper().load(any(), any(), any())).thenReturn(getTestResource1());
-        assertThat(resourceDao.getResource(getTestResource1().getId()), is(equalTo(Optional.of(getTestResource1()))));
+        assertThat(resourceDao.getResource(getTestResource1().getId(), MAYBE_USER_DATA),
+                is(equalTo(Optional.of(getTestResource1()))));
         verify(getMockDynamoDbMapper()).load(getTestResourceClass(), getTestResource1().getId(),
                 getDynamoDbMapperConfig());
     }
@@ -54,7 +65,7 @@ public abstract class AbstractResourceDaoTest<Resource extends com.climbassist.a
     @Test
     void getResource_returnsEmpty_whenResourceDoesNotExist() {
         when(getMockDynamoDbMapper().load(any(), any(), any())).thenReturn(null);
-        assertThat(resourceDao.getResource(getTestResource1().getId()), is(equalTo(Optional.empty())));
+        assertThat(resourceDao.getResource(getTestResource1().getId(), MAYBE_USER_DATA), is(equalTo(Optional.empty())));
         verify(getMockDynamoDbMapper()).load(getTestResourceClass(), getTestResource1().getId(),
                 getDynamoDbMapperConfig());
     }

@@ -1,4 +1,4 @@
-package com.climbassist.api.resource.common;
+package com.climbassist.api.resource.common.image;
 
 public interface ResourceWithImageFactory<Resource extends ResourceWithImage> {
 

@@ -1,5 +1,6 @@
 package com.climbassist.api.resource.common;
 
+import com.climbassist.api.user.UserData;
 import com.google.common.testing.NullPointerTester;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,16 +27,16 @@ class ResourceControllerDelegateTest {
 
     @Builder
     @Value
-    private static final class ResourceImpl implements Resource {
+    private static class ResourceImpl implements Resource {
 
-        private String id;
-        private String name;
+        String id;
+        String name;
     }
 
     @Builder
     private static final class NewResourceImpl implements NewResource<ResourceImpl> {
 
-        private String name;
+        private final String name;
     }
 
     private static final class ResourceNotFoundExceptionImpl extends ResourceNotFoundException {
@@ -49,7 +50,7 @@ class ResourceControllerDelegateTest {
     @Getter
     private static final class CreateResourceResultImpl implements CreateResourceResult<ResourceImpl> {
 
-        private String resourceId;
+        private final String resourceId;
     }
 
     private static final ResourceImpl RESOURCE = ResourceImpl.builder()
@@ -62,6 +63,14 @@ class ResourceControllerDelegateTest {
             .build();
     private static final ResourceNotFoundExceptionImpl RESOURCE_NOT_FOUND_EXCEPTION = new ResourceNotFoundExceptionImpl(
             RESOURCE.getId());
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceDao<ResourceImpl> mockResourceDao;
@@ -93,18 +102,18 @@ class ResourceControllerDelegateTest {
 
     @Test
     void getResource_returnsResource_whenResourceExists() throws ResourceNotFoundException {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.of(RESOURCE));
-        assertThat(resourceControllerDelegate.getResource(RESOURCE.getId()), is(equalTo(RESOURCE)));
-        verify(mockResourceDao).getResource(RESOURCE.getId());
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.of(RESOURCE));
+        assertThat(resourceControllerDelegate.getResource(RESOURCE.getId(), MAYBE_USER_DATA), is(equalTo(RESOURCE)));
+        verify(mockResourceDao).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
     }
 
     @Test
     void getResource_throwsResourceNotFoundException_whenResourceDoesNotExist() throws ResourceNotFoundException {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockResourceNotFoundExceptionFactory.create(any())).thenReturn(RESOURCE_NOT_FOUND_EXCEPTION);
         assertThrows(ResourceNotFoundExceptionImpl.class,
-                () -> resourceControllerDelegate.getResource(RESOURCE.getId()));
-        verify(mockResourceDao).getResource(RESOURCE.getId());
+                () -> resourceControllerDelegate.getResource(RESOURCE.getId(), MAYBE_USER_DATA));
+        verify(mockResourceDao).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockResourceNotFoundExceptionFactory).create(RESOURCE.getId());
     }
@@ -126,22 +135,22 @@ class ResourceControllerDelegateTest {
 
     @Test
     void updateResource_updatesResource_whenResourceExists() throws ResourceNotFoundException {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.of(RESOURCE));
-        assertThat(resourceControllerDelegate.updateResource(UPDATED_RESOURCE), is(equalTo(
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.of(RESOURCE));
+        assertThat(resourceControllerDelegate.updateResource(UPDATED_RESOURCE, MAYBE_USER_DATA), is(equalTo(
                 UpdateResourceResult.builder()
                         .successful(true)
                         .build())));
-        verify(mockResourceDao).getResource(UPDATED_RESOURCE.getId());
+        verify(mockResourceDao).getResource(UPDATED_RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockResourceDao).saveResource(UPDATED_RESOURCE);
     }
 
     @Test
     void updateResource_throwsResourceNotFoundException_whenResourceDoesNotExist() {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockResourceNotFoundExceptionFactory.create(any())).thenReturn(RESOURCE_NOT_FOUND_EXCEPTION);
         assertThrows(ResourceNotFoundExceptionImpl.class,
-                () -> resourceControllerDelegate.updateResource(UPDATED_RESOURCE));
-        verify(mockResourceDao).getResource(RESOURCE.getId());
+                () -> resourceControllerDelegate.updateResource(UPDATED_RESOURCE, MAYBE_USER_DATA));
+        verify(mockResourceDao).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockResourceNotFoundExceptionFactory).create(RESOURCE.getId());
         verify(mockResourceDao, never()).saveResource(any());
@@ -149,22 +158,22 @@ class ResourceControllerDelegateTest {
 
     @Test
     void deleteResource_deletesResource_whenResourceExists() throws ResourceNotFoundException {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.of(RESOURCE));
-        assertThat(resourceControllerDelegate.deleteResource(RESOURCE.getId()), is(equalTo(
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.of(RESOURCE));
+        assertThat(resourceControllerDelegate.deleteResource(RESOURCE.getId(), MAYBE_USER_DATA), is(equalTo(
                 DeleteResourceResult.builder()
                         .successful(true)
                         .build())));
-        verify(mockResourceDao).getResource(RESOURCE.getId());
+        verify(mockResourceDao).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockResourceDao).deleteResource(RESOURCE.getId());
     }
 
     @Test
     void deleteResource_throwsResourceNotFoundException_whenResourceDoesNotExist() {
-        when(mockResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockResourceNotFoundExceptionFactory.create(any())).thenReturn(RESOURCE_NOT_FOUND_EXCEPTION);
         assertThrows(ResourceNotFoundExceptionImpl.class,
-                () -> resourceControllerDelegate.deleteResource(RESOURCE.getId()));
-        verify(mockResourceDao).getResource(RESOURCE.getId());
+                () -> resourceControllerDelegate.deleteResource(RESOURCE.getId(), MAYBE_USER_DATA));
+        verify(mockResourceDao).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockResourceNotFoundExceptionFactory).create(RESOURCE.getId());
         verify(mockResourceDao, never()).deleteResource(any());

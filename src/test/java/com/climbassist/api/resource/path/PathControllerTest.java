@@ -8,6 +8,7 @@ import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegat
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.crag.Crag;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,6 +47,14 @@ class PathControllerTest {
             .cragId("crag-2")
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceControllerDelegate<Path, NewPath> mockResourceControllerDelegate;
@@ -73,17 +83,17 @@ class PathControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(PATH_1);
-        assertThat(pathController.getResource(PATH_1.getPathId(), DEPTH), is(equalTo(PATH_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(PATH_1.getPathId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(PATH_1);
+        assertThat(pathController.getResource(PATH_1.getPathId(), DEPTH, MAYBE_USER_DATA), is(equalTo(PATH_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(PATH_1.getPathId(), DEPTH, MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsResourceWithParentControllerDelegate() throws ResourceNotFoundException {
         Set<Path> paths = ImmutableSet.of(PATH_1, PATH_2);
-        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any())).thenReturn(paths);
-        assertThat(pathController.getResourcesForParent(PATH_1.getCragId()), is(equalTo(paths)));
-        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(PATH_1.getCragId());
+        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any(), any())).thenReturn(paths);
+        assertThat(pathController.getResourcesForParent(PATH_1.getCragId(), MAYBE_USER_DATA), is(equalTo(paths)));
+        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(PATH_1.getCragId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -91,9 +101,9 @@ class PathControllerTest {
         CreatePathResult createPathResult = CreatePathResult.builder()
                 .pathId(PATH_1.getPathId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createPathResult);
-        assertThat(pathController.createResource(NEW_PATH_1), is(equalTo(createPathResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_PATH_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createPathResult);
+        assertThat(pathController.createResource(NEW_PATH_1, MAYBE_USER_DATA), is(equalTo(createPathResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_PATH_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -101,9 +111,9 @@ class PathControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(pathController.updateResource(UPDATED_PATH_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_PATH_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(pathController.updateResource(UPDATED_PATH_1, MAYBE_USER_DATA), is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_PATH_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -112,8 +122,8 @@ class PathControllerTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithChildrenControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(pathController.deleteResource(PATH_1.getPathId()), is(equalTo(deleteResourceResult)));
-        verify(mockResourceWithChildrenControllerDelegate).deleteResource(PATH_1.getPathId());
+        when(mockResourceWithChildrenControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(pathController.deleteResource(PATH_1.getPathId(), MAYBE_USER_DATA), is(equalTo(deleteResourceResult)));
+        verify(mockResourceWithChildrenControllerDelegate).deleteResource(PATH_1.getPathId(), MAYBE_USER_DATA);
     }
 }

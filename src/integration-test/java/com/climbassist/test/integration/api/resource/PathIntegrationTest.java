@@ -69,7 +69,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getPath_returnsPathNotFoundException_whenPathDoesNotExist() {
-        ApiResponse<Path> apiResponse = climbAssistClient.getPath("does-not-exist");
+        ApiResponse<Path> apiResponse = climbAssistClient.getPath("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -105,7 +105,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void listPaths_returnsCragNotFoundException_whenCragDoesNotExist() {
-        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths("does-not-exist");
+        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -113,7 +113,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listPaths_returnsEmptyList_whenThereAreNoPaths() {
         testUserManager.makeUserAdministrator(username);
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
-        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths(crag.getCragId());
+        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths(crag.getCragId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
     }
@@ -122,7 +122,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listPaths_returnsSinglePath_whenThereIsOnlyOnePath() {
         testUserManager.makeUserAdministrator(username);
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
-        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths(path.getCragId());
+        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths(path.getCragId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(path))));
     }
@@ -133,7 +133,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Path path1 = resourceManager.createPath(crag.getCragId(), cookies, 0);
         Path path2 = resourceManager.createPath(crag.getCragId(), cookies, 0);
-        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths(crag.getCragId());
+        ApiResponse<Set<Path>> apiResponse = climbAssistClient.listPaths(crag.getCragId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(path1, path2))));
     }
@@ -152,7 +152,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Path expectedPath = resourceManager.createPath(crag.getCragId(), cookies, 0);
-        Path actualPath = climbAssistClient.getPath(expectedPath.getPathId())
+        Path actualPath = climbAssistClient.getPath(expectedPath.getPathId(), cookies)
                 .getData();
         assertThat(actualPath, is(equalTo(expectedPath)));
     }
@@ -163,9 +163,9 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Path expectedPath1 = resourceManager.createPath(crag.getCragId(), cookies, 0);
         Path expectedPath2 = resourceManager.createPath(crag.getCragId(), cookies, 0);
-        Path actualPath1 = climbAssistClient.getPath(expectedPath1.getPathId())
+        Path actualPath1 = climbAssistClient.getPath(expectedPath1.getPathId(), cookies)
                 .getData();
-        Path actualPath2 = climbAssistClient.getPath(expectedPath2.getPathId())
+        Path actualPath2 = climbAssistClient.getPath(expectedPath2.getPathId(), cookies)
                 .getData();
         assertThat(actualPath1, is(equalTo(expectedPath1)));
         assertThat(actualPath2, is(equalTo(expectedPath2)));
@@ -225,7 +225,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Path actualPath = climbAssistClient.getPath(originalPath.getPathId())
+        Path actualPath = climbAssistClient.getPath(originalPath.getPathId(), cookies)
                 .getData();
         assertThat(actualPath, is(equalTo(updatedPath)));
     }
@@ -258,7 +258,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Path> getPathResult = climbAssistClient.getPath(path.getPathId());
+        ApiResponse<Path> getPathResult = climbAssistClient.getPath(path.getPathId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getPathResult);
     }
 
@@ -276,7 +276,7 @@ public class PathIntegrationTest extends AbstractTestNGSpringContextTests {
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(path, Path.class, maybeRequestDepth.orElse(0));
         ApiResponse<Path> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getPath(path.getPathId(),
-                maybeRequestDepth.get()) : climbAssistClient.getPath(path.getPathId());
+                maybeRequestDepth.get(), cookies) : climbAssistClient.getPath(path.getPathId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(path)));
     }

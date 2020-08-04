@@ -3,6 +3,7 @@ package com.climbassist.api.resource.common;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.common.ordering.OrderableListBuilder;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParent;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,6 +27,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,21 +37,21 @@ class OrderableResourceWithParentControllerDelegateTest {
 
     @Builder
     @Value
-    private static final class ResourceImpl implements OrderableResourceWithParent<ResourceImpl, ParentResourceImpl> {
+    private static class ResourceImpl implements OrderableResourceWithParent<ResourceImpl, ParentResourceImpl> {
 
-        private String id;
-        private String parentId;
-        private String name;
-        private boolean first;
-        private String next;
+        String id;
+        String parentId;
+        String name;
+        boolean first;
+        String next;
     }
 
     @Builder
     @Value
-    private static final class NewResourceImpl implements NewResourceWithParent<ResourceImpl, ParentResourceImpl> {
+    private static class NewResourceImpl implements NewResourceWithParent<ResourceImpl, ParentResourceImpl> {
 
-        private String name;
-        private String parentId;
+        String name;
+        String parentId;
     }
 
     @Builder
@@ -81,6 +84,14 @@ class OrderableResourceWithParentControllerDelegateTest {
             .first(true)
             .next(RESOURCE_2.getId())
             .build();
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentControllerDelegate<ResourceImpl, NewResourceImpl, ParentResourceImpl>
@@ -112,11 +123,12 @@ class OrderableResourceWithParentControllerDelegateTest {
     void getResourcesForParent_returnsResourcesInAnyOrder_whenOrderedIsFalse()
             throws ResourceNotFoundException, InvalidOrderingException {
         Set<ResourceImpl> resources = ImmutableSet.of(RESOURCE_2, RESOURCE_1);
-        when(mockResourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId())).thenReturn(
-                resources);
-        assertThat(orderableResourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId(), false),
-                containsInAnyOrder(resources.toArray()));
-        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(RESOURCE_1.getParentId());
+        when(mockResourceWithParentControllerDelegate.getResourcesForParent(eq(RESOURCE_1.getParentId()),
+                any())).thenReturn(resources);
+        assertThat(orderableResourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId(), false,
+                MAYBE_USER_DATA), containsInAnyOrder(resources.toArray()));
+        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(RESOURCE_1.getParentId(),
+                MAYBE_USER_DATA);
         verify(mockOrderableListBuilder, never()).buildList(any());
     }
 
@@ -125,12 +137,13 @@ class OrderableResourceWithParentControllerDelegateTest {
             throws ResourceNotFoundException, InvalidOrderingException {
         Set<ResourceImpl> resourceSet = ImmutableSet.of(RESOURCE_2, RESOURCE_1);
         List<ResourceImpl> resourceList = ImmutableList.of(RESOURCE_1, RESOURCE_2);
-        when(mockResourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId())).thenReturn(
-                new HashSet<>(resourceSet));
+        when(mockResourceWithParentControllerDelegate.getResourcesForParent(eq(RESOURCE_1.getParentId()),
+                any())).thenReturn(new HashSet<>(resourceSet));
         when(mockOrderableListBuilder.buildList(any())).thenReturn(resourceList);
-        assertThat(orderableResourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId(), true),
-                is(equalTo(resourceList)));
-        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(RESOURCE_1.getParentId());
+        assertThat(orderableResourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId(), true,
+                MAYBE_USER_DATA), is(equalTo(resourceList)));
+        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(RESOURCE_1.getParentId(),
+                MAYBE_USER_DATA);
         verify(mockOrderableListBuilder).buildList(resourceSet);
     }
 }

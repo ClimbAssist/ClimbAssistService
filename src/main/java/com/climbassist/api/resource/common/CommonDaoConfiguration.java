@@ -14,6 +14,8 @@ import com.climbassist.api.resource.region.RegionsDao;
 import com.climbassist.api.resource.route.RoutesDao;
 import com.climbassist.api.resource.subarea.SubAreasDao;
 import com.climbassist.api.resource.wall.WallsDao;
+import com.climbassist.api.user.UserConfiguration;
+import com.climbassist.api.user.UserManager;
 import com.climbassist.api.user.authentication.DeletedUsersDao;
 import com.climbassist.common.CommonConfiguration;
 import lombok.NonNull;
@@ -23,7 +25,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import(CommonConfiguration.class)
+@Import({CommonConfiguration.class, UserConfiguration.class})
 public class CommonDaoConfiguration {
 
     @Bean
@@ -88,7 +90,8 @@ public class CommonDaoConfiguration {
 
     @Bean
     public CragsDao cragsDao(@NonNull String region, @Value("${cragsTableName}") @NonNull String cragsTableName,
-                             @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+                             @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder,
+                             @NonNull UserManager userManager) {
         return CragsDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -96,6 +99,7 @@ public class CommonDaoConfiguration {
                 .dynamoDBMapperConfig(dynamoDbMapperConfigBuilder.withTableNameOverride(
                         new DynamoDBMapperConfig.TableNameOverride(cragsTableName))
                         .build())
+                .userManager(userManager)
                 .build();
     }
 

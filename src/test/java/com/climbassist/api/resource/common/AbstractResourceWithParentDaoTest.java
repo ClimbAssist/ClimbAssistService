@@ -2,8 +2,10 @@ package com.climbassist.api.resource.common;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBQueryExpression;
 import com.amazonaws.services.dynamodbv2.datamodeling.PaginatedQueryList;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
+import lombok.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -29,9 +31,9 @@ public abstract class AbstractResourceWithParentDaoTest<Resource extends Resourc
         extends AbstractResourceDaoTest<Resource, ResourceDao> {
 
     @Mock
-    private PaginatedQueryList<Resource> mockPaginatedQueryList;
+    protected PaginatedQueryList<Resource> mockPaginatedQueryList;
     @Captor
-    private ArgumentCaptor<DynamoDBQueryExpression<Resource>> dynamoDbQueryExpressionArgumentCaptor;
+    protected ArgumentCaptor<DynamoDBQueryExpression<Resource>> dynamoDbQueryExpressionArgumentCaptor;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -42,33 +44,34 @@ public abstract class AbstractResourceWithParentDaoTest<Resource extends Resourc
         // have to call these methods out explicitly because they are in a superclass in a different package than the
         // subclass
         nullPointerTester.testMethod(resourceDao, resourceDao.getClass()
-                .getMethod("getResources", String.class));
+                .getMethod("getResources", String.class, Optional.class));
     }
 
     @Test
-    void getResource_returnsResourceFromTable() {
+    protected void getResource_returnsResourceFromTable() {
         when(getMockDynamoDbMapper().load(any(), any(), any())).thenReturn(getTestResource1());
-        assertThat(resourceDao.getResource(getTestResource1().getId()), is(equalTo(Optional.of(getTestResource1()))));
+        assertThat(resourceDao.getResource(getTestResource1().getId(), MAYBE_USER_DATA),
+                is(equalTo(Optional.of(getTestResource1()))));
         verify(getMockDynamoDbMapper()).load(getTestResourceClass(), getTestResource1().getId(),
                 getDynamoDbMapperConfig());
     }
 
     @Test
-    void getResource_returnsEmpty_whenResourceDoesNotExist() {
+    protected void getResource_returnsEmpty_whenResourceDoesNotExist() {
         when(getMockDynamoDbMapper().load(any(), any(), any())).thenReturn(null);
-        assertThat(resourceDao.getResource(getTestResource1().getId()), is(equalTo(Optional.empty())));
+        assertThat(resourceDao.getResource(getTestResource1().getId(), MAYBE_USER_DATA), is(equalTo(Optional.empty())));
         verify(getMockDynamoDbMapper()).load(getTestResourceClass(), getTestResource1().getId(),
                 getDynamoDbMapperConfig());
     }
 
     @Test
     protected void getResources_returnsResourcesFromDynamoDb_whenResourcesExist() {
-        runGetResourcesTest(ImmutableSet.of(getTestResource1(), getTestResource2()));
+        runGetResourcesTest(ImmutableSet.of(getTestResource1(), getTestResource2()), MAYBE_USER_DATA);
     }
 
     @Test
     protected void getResources_returnsEmptySet_whenResourcesDoNotExist() {
-        runGetResourcesTest(ImmutableSet.of());
+        runGetResourcesTest(ImmutableSet.of(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -84,7 +87,9 @@ public abstract class AbstractResourceWithParentDaoTest<Resource extends Resourc
                 getDynamoDbMapperConfig());
     }
 
-    private void runGetResourcesTest(Set<Resource> resources) {
+    protected void runGetResourcesTest(@NonNull Set<Resource> resources,
+                                       @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                       @NonNull Optional<UserData> maybeUserData) {
         DynamoDBQueryExpression<Resource> expectedDynamoDbQueryExpression =
                 new DynamoDBQueryExpression<Resource>().withHashKeyValues(
                         buildIndexHashKey(getTestResource1().getParentId()))
@@ -93,7 +98,7 @@ public abstract class AbstractResourceWithParentDaoTest<Resource extends Resourc
         when(mockPaginatedQueryList.iterator()).thenReturn(resources.iterator());
         when(getMockDynamoDbMapper().query(eq(getTestResourceClass()), any(), any())).thenReturn(
                 mockPaginatedQueryList);
-        assertThat(resourceDao.getResources(getTestResource1().getParentId()), is(equalTo(resources)));
+        assertThat(resourceDao.getResources(getTestResource1().getParentId(), maybeUserData), is(equalTo(resources)));
 
         verify(getMockDynamoDbMapper()).query(eq(getTestResourceClass()),
                 dynamoDbQueryExpressionArgumentCaptor.capture(), eq(getDynamoDbMapperConfig()));

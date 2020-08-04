@@ -5,15 +5,16 @@ import com.climbassist.api.resource.common.DeleteResourceResult;
 import com.climbassist.api.resource.common.ResourceNotEmptyException;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
-import com.climbassist.api.resource.common.ResourceWithImageControllerDelegate;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
-import com.climbassist.api.resource.common.UploadImageResult;
+import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
+import com.climbassist.api.resource.common.image.UploadImageResult;
 import com.climbassist.api.resource.path.Path;
 import com.climbassist.api.resource.path.PathsDao;
 import com.climbassist.api.resource.subarea.SubArea;
 import com.climbassist.api.resource.wall.Wall;
 import com.climbassist.api.resource.wall.WallsDao;
+import com.climbassist.api.user.UserData;
 import com.climbassist.common.s3.S3Proxy;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
@@ -184,6 +185,14 @@ class CragControllerTest {
             .cragId("crag-1")
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentControllerDelegate<Crag, NewCrag, SubArea> mockResourceWithParentControllerDelegate;
@@ -231,17 +240,17 @@ class CragControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(CRAG_1);
-        assertThat(cragController.getResource(CRAG_1.getCragId(), DEPTH), is(equalTo(CRAG_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(CRAG_1.getCragId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(CRAG_1);
+        assertThat(cragController.getResource(CRAG_1.getCragId(), DEPTH, MAYBE_USER_DATA), is(equalTo(CRAG_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(CRAG_1.getCragId(), DEPTH, MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsResourceWithParentControllerDelegate() throws ResourceNotFoundException {
         Set<Crag> crags = ImmutableSet.of(CRAG_1, CRAG_2);
-        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any())).thenReturn(crags);
-        assertThat(cragController.getResourcesForParent(CRAG_1.getSubAreaId()), is(equalTo(crags)));
-        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(CRAG_1.getSubAreaId());
+        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any(), any())).thenReturn(crags);
+        assertThat(cragController.getResourcesForParent(CRAG_1.getSubAreaId(), MAYBE_USER_DATA), is(equalTo(crags)));
+        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(CRAG_1.getSubAreaId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -249,9 +258,9 @@ class CragControllerTest {
         CreateCragResult createCragResult = CreateCragResult.builder()
                 .cragId(CRAG_1.getCragId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createCragResult);
-        assertThat(cragController.createResource(NEW_CRAG_1), is(equalTo(createCragResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_CRAG_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createCragResult);
+        assertThat(cragController.createResource(NEW_CRAG_1, MAYBE_USER_DATA), is(equalTo(createCragResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_CRAG_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -259,19 +268,19 @@ class CragControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(cragController.updateResource(UPDATED_CRAG_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_CRAG_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(cragController.updateResource(UPDATED_CRAG_1, MAYBE_USER_DATA), is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_CRAG_1, MAYBE_USER_DATA);
     }
 
     @Test
     void deleteResource_deletesCragAndImageAndModelLocations_whenCragExistsAndIsEmptyAndHasImageAndModelLocations()
             throws ResourceNotFoundException, ResourceNotEmptyException {
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.of(CRAG_1));
-        when(mockWallsDao.getResources(any())).thenReturn(ImmutableSet.of());
-        assertThat(cragController.deleteResource(CRAG_1.getId()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockCragsDao).getResource(CRAG_1.getId());
-        verify(mockWallsDao).getResources(CRAG_1.getId());
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(CRAG_1));
+        when(mockWallsDao.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        assertThat(cragController.deleteResource(CRAG_1.getId(), MAYBE_USER_DATA), is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockCragsDao).getResource(CRAG_1.getId(), MAYBE_USER_DATA);
+        verify(mockWallsDao).getResources(CRAG_1.getId(), MAYBE_USER_DATA);
         verify(mockCragsDao).deleteResource(CRAG_1.getId());
         verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, EXPECTED_IMAGE_KEY);
         verify(mockS3Proxy).deleteObject(MODELS_BUCKET_NAME, EXPECTED_LOW_RESOLUTION_MODEL_KEY);
@@ -281,21 +290,21 @@ class CragControllerTest {
     @Test
     void deleteResource_deletesCrag_whenCragExistsAndIsEmptyAndDoesNotHaveImageOrModelLocations()
             throws ResourceNotFoundException, ResourceNotEmptyException {
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.of(CRAG_2));
-        when(mockWallsDao.getResources(any())).thenReturn(ImmutableSet.of());
-        assertThat(cragController.deleteResource(CRAG_2.getId()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockCragsDao).getResource(CRAG_2.getId());
-        verify(mockWallsDao).getResources(CRAG_2.getId());
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(CRAG_2));
+        when(mockWallsDao.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        assertThat(cragController.deleteResource(CRAG_2.getId(), MAYBE_USER_DATA), is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockCragsDao).getResource(CRAG_2.getId(), MAYBE_USER_DATA);
+        verify(mockWallsDao).getResources(CRAG_2.getId(), MAYBE_USER_DATA);
         verify(mockCragsDao).deleteResource(CRAG_2.getId());
         verify(mockS3Proxy, never()).deleteObject(any(), any());
     }
 
     @Test
     void deleteResource_throwsCragNotFoundException_whenCragDoesNotExist() {
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockCragNotFoundExceptionFactory.create(any())).thenReturn(new CragNotFoundException(CRAG_1.getId()));
-        assertThrows(CragNotFoundException.class, () -> cragController.deleteResource(CRAG_1.getId()));
-        verify(mockCragsDao).getResource(CRAG_1.getId());
+        assertThrows(CragNotFoundException.class, () -> cragController.deleteResource(CRAG_1.getId(), MAYBE_USER_DATA));
+        verify(mockCragsDao).getResource(CRAG_1.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockCragNotFoundExceptionFactory).create(CRAG_1.getId());
         verify(mockCragsDao, never()).deleteResource(any());
@@ -304,12 +313,12 @@ class CragControllerTest {
 
     @Test
     void deleteResource_throwsCragNotEmptyException_whenCragHasWallChildren() {
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.of(CRAG_1));
-        when(mockWallsDao.getResources(any())).thenReturn(ImmutableSet.of(WALL_1));
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(CRAG_1));
+        when(mockWallsDao.getResources(any(), any())).thenReturn(ImmutableSet.of(WALL_1));
         when(mockCragNotEmptyExceptionFactory.create(any())).thenReturn(new CragNotEmptyException(CRAG_1.getId()));
-        assertThrows(CragNotEmptyException.class, () -> cragController.deleteResource(CRAG_1.getId()));
-        verify(mockCragsDao).getResource(CRAG_1.getId());
-        verify(mockWallsDao).getResources(CRAG_1.getId());
+        assertThrows(CragNotEmptyException.class, () -> cragController.deleteResource(CRAG_1.getId(), MAYBE_USER_DATA));
+        verify(mockCragsDao).getResource(CRAG_1.getId(), MAYBE_USER_DATA);
+        verify(mockWallsDao).getResources(CRAG_1.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockCragNotEmptyExceptionFactory).create(CRAG_1.getId());
         verify(mockCragsDao, never()).deleteResource(any());
@@ -318,13 +327,13 @@ class CragControllerTest {
 
     @Test
     void deleteResource_throwsCragNotEmptyException_whenCragHasPathChildren() {
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.of(CRAG_1));
-        when(mockWallsDao.getResources(any())).thenReturn(ImmutableSet.of());
-        when(mockPathsDao.getResources(any())).thenReturn(ImmutableSet.of(PATH_1));
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(CRAG_1));
+        when(mockWallsDao.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        when(mockPathsDao.getResources(any(), any())).thenReturn(ImmutableSet.of(PATH_1));
         when(mockCragNotEmptyExceptionFactory.create(any())).thenReturn(new CragNotEmptyException(CRAG_1.getId()));
-        assertThrows(CragNotEmptyException.class, () -> cragController.deleteResource(CRAG_1.getId()));
-        verify(mockCragsDao).getResource(CRAG_1.getId());
-        verify(mockWallsDao).getResources(CRAG_1.getId());
+        assertThrows(CragNotEmptyException.class, () -> cragController.deleteResource(CRAG_1.getId(), MAYBE_USER_DATA));
+        verify(mockCragsDao).getResource(CRAG_1.getId(), MAYBE_USER_DATA);
+        verify(mockWallsDao).getResources(CRAG_1.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockCragNotEmptyExceptionFactory).create(CRAG_1.getId());
         verify(mockCragsDao, never()).deleteResource(any());
@@ -337,22 +346,24 @@ class CragControllerTest {
         UploadImageResult uploadImageResult = UploadImageResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithImageControllerDelegate.uploadImage(any(), any())).thenReturn(uploadImageResult);
-        assertThat(cragController.uploadImage(CRAG_1.getCragId(), IMAGE), is(equalTo(uploadImageResult)));
-        verify(mockResourceWithImageControllerDelegate).uploadImage(CRAG_1.getCragId(), IMAGE);
+        when(mockResourceWithImageControllerDelegate.uploadImage(any(), any(), any())).thenReturn(uploadImageResult);
+        assertThat(cragController.uploadImage(CRAG_1.getCragId(), IMAGE, MAYBE_USER_DATA),
+                is(equalTo(uploadImageResult)));
+        verify(mockResourceWithImageControllerDelegate).uploadImage(CRAG_1.getCragId(), IMAGE, MAYBE_USER_DATA);
     }
 
     @Test
     void uploadModels_throwsCragNotFoundException_whenCragDoesNotExist() {
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.empty());
         assertThrows(CragNotFoundException.class,
-                () -> cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL));
-        verify(mockCragsDao).getResource(CRAG_1.getCragId());
+                () -> cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL,
+                        MAYBE_USER_DATA));
+        verify(mockCragsDao).getResource(CRAG_1.getCragId(), MAYBE_USER_DATA);
     }
 
     @Test
     void uploadModels_uploadsToS3AndUpdatesRecord_whenExistingCragHasModel() throws IOException, CragNotFoundException {
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.of(CRAG_1));
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(CRAG_1));
         //noinspection ConstantConditions
         doReturn(CRAG_1.getModel()
                 .getModelLocation()).when(mockS3Proxy)
@@ -361,14 +372,14 @@ class CragControllerTest {
                 .getLowResModelLocation()).when(mockS3Proxy)
                 .putPublicObject(any(), eq(EXPECTED_LOW_RESOLUTION_MODEL_KEY), any(), anyLong());
 
-        assertThat(cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL),
-                is(equalTo(UploadModelsResult.builder()
-                        .successful(true)
-                        .build())));
+        assertThat(cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL,
+                MAYBE_USER_DATA), is(equalTo(UploadModelsResult.builder()
+                .successful(true)
+                .build())));
 
         ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor.forClass(InputStream.class);
 
-        verify(mockCragsDao).getResource(CRAG_1.getCragId());
+        verify(mockCragsDao).getResource(CRAG_1.getCragId(), MAYBE_USER_DATA);
         verify(mockS3Proxy).putPublicObject(eq(MODELS_BUCKET_NAME), eq(EXPECTED_HIGH_RESOLUTION_MODEL_KEY),
                 inputStreamArgumentCaptor.capture(), eq(HIGH_RESOLUTION_MODEL.getSize()));
         assertThat(IOUtils.toString(inputStreamArgumentCaptor.getValue()),
@@ -395,7 +406,7 @@ class CragControllerTest {
                                 .getLowResModelLocation())
                         .build())
                 .build();
-        when(mockCragsDao.getResource(any())).thenReturn(Optional.of(cragWithoutModel));
+        when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(cragWithoutModel));
         doReturn(CRAG_1.getModel()
                 .getModelLocation()).when(mockS3Proxy)
                 .putPublicObject(any(), eq(EXPECTED_HIGH_RESOLUTION_MODEL_KEY), any(), anyLong());
@@ -403,14 +414,14 @@ class CragControllerTest {
                 .getLowResModelLocation()).when(mockS3Proxy)
                 .putPublicObject(any(), eq(EXPECTED_LOW_RESOLUTION_MODEL_KEY), any(), anyLong());
 
-        assertThat(cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL),
-                is(equalTo(UploadModelsResult.builder()
-                        .successful(true)
-                        .build())));
+        assertThat(cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL,
+                MAYBE_USER_DATA), is(equalTo(UploadModelsResult.builder()
+                .successful(true)
+                .build())));
 
         ArgumentCaptor<InputStream> inputStreamArgumentCaptor = ArgumentCaptor.forClass(InputStream.class);
 
-        verify(mockCragsDao).getResource(CRAG_1.getCragId());
+        verify(mockCragsDao).getResource(CRAG_1.getCragId(), MAYBE_USER_DATA);
         verify(mockS3Proxy).putPublicObject(eq(MODELS_BUCKET_NAME), eq(EXPECTED_HIGH_RESOLUTION_MODEL_KEY),
                 inputStreamArgumentCaptor.capture(), eq(HIGH_RESOLUTION_MODEL.getSize()));
         assertThat(IOUtils.toString(inputStreamArgumentCaptor.getValue()),

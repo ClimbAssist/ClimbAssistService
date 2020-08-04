@@ -2,12 +2,14 @@ package com.climbassist.api.resource.crag;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
-import com.climbassist.api.resource.common.AbstractResourceWithParentDaoTest;
+import com.climbassist.api.resource.common.state.AbstractResourceWithStateDaoTest;
+import com.climbassist.api.resource.common.state.State;
 import com.climbassist.api.resource.subarea.SubArea;
+import com.climbassist.api.user.UserManager;
 import lombok.Getter;
 import org.mockito.Mock;
 
-class CragsDaoTest extends AbstractResourceWithParentDaoTest<Crag, SubArea, CragsDao> {
+class CragsDaoTest extends AbstractResourceWithStateDaoTest<Crag, SubArea, CragsDao> {
 
     private static final DynamoDBMapperConfig DYNAMO_DB_MAPPER_CONFIG = DynamoDBMapperConfig.builder()
             .withTableNameOverride(new DynamoDBMapperConfig.TableNameOverride("Crags"))
@@ -34,6 +36,7 @@ class CragsDaoTest extends AbstractResourceWithParentDaoTest<Crag, SubArea, Crag
                     .modelAngle(1.0)
                     .scale(1.0)
                     .build())
+            .state(State.PUBLIC.toString())
             .build();
     private static final Crag CRAG_2 = Crag.builder()
             .cragId("crag-2")
@@ -57,17 +60,46 @@ class CragsDaoTest extends AbstractResourceWithParentDaoTest<Crag, SubArea, Crag
                     .modelAngle(2.0)
                     .scale(2.0)
                     .build())
+            .state(State.PUBLIC.toString())
+            .build();
+    private static final Crag CRAG_IN_REVIEW = Crag.builder()
+            .cragId("crag-3")
+            .subAreaId("sub-area-1")
+            .name("Crag 3")
+            .description("Crag 3")
+            .imageLocation("url3")
+            .location(Location.builder()
+                    .latitude(3.0)
+                    .longitude(3.0)
+                    .zoom(3.0)
+                    .build())
+            .model(Model.builder()
+                    .azimuth(Azimuth.builder()
+                            .minimum(3.0)
+                            .maximum(3.0)
+                            .build())
+                    .light(3.0)
+                    .lowResModelLocation("url3")
+                    .modelLocation("url3")
+                    .modelAngle(3.0)
+                    .scale(3.0)
+                    .build())
+            .state(State.IN_REVIEW.toString())
             .build();
 
     @Getter
     @Mock
     private DynamoDBMapper mockDynamoDbMapper;
 
+    @Mock
+    private UserManager mockUserManager;
+
     @Override
     protected CragsDao buildResourceDao() {
         return CragsDao.builder()
                 .dynamoDBMapper(mockDynamoDbMapper)
                 .dynamoDBMapperConfig(DYNAMO_DB_MAPPER_CONFIG)
+                .userManager(mockUserManager)
                 .build();
     }
 
@@ -108,5 +140,10 @@ class CragsDaoTest extends AbstractResourceWithParentDaoTest<Crag, SubArea, Crag
         return Crag.builder()
                 .cragId(resourceId)
                 .build();
+    }
+
+    @Override
+    protected Crag getTestResourceInReview() {
+        return CRAG_IN_REVIEW;
     }
 }

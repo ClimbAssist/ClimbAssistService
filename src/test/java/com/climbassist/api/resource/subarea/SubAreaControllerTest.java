@@ -7,6 +7,7 @@ import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,6 +54,14 @@ class SubAreaControllerTest {
             .description("New description")
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentControllerDelegate<SubArea, NewSubArea, Area> mockResourceWithParentControllerDelegate;
@@ -77,17 +87,20 @@ class SubAreaControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(SUB_AREA_1);
-        assertThat(subAreaController.getResource(SUB_AREA_1.getSubAreaId(), DEPTH), is(equalTo(SUB_AREA_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(SUB_AREA_1.getSubAreaId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(SUB_AREA_1);
+        assertThat(subAreaController.getResource(SUB_AREA_1.getSubAreaId(), DEPTH, MAYBE_USER_DATA),
+                is(equalTo(SUB_AREA_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(SUB_AREA_1.getSubAreaId(), DEPTH,
+                MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsResourceWithParentControllerDelegate() throws ResourceNotFoundException {
         Set<SubArea> subAreas = ImmutableSet.of(SUB_AREA_1, SUB_AREA_2);
-        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any())).thenReturn(subAreas);
-        assertThat(subAreaController.getResourcesForParent(SUB_AREA_1.getAreaId()), is(equalTo(subAreas)));
-        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(SUB_AREA_1.getAreaId());
+        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any(), any())).thenReturn(subAreas);
+        assertThat(subAreaController.getResourcesForParent(SUB_AREA_1.getAreaId(), MAYBE_USER_DATA),
+                is(equalTo(subAreas)));
+        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(SUB_AREA_1.getAreaId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -95,9 +108,9 @@ class SubAreaControllerTest {
         CreateSubAreaResult createSubAreaResult = CreateSubAreaResult.builder()
                 .subAreaId(SUB_AREA_1.getSubAreaId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createSubAreaResult);
-        assertThat(subAreaController.createResource(NEW_SUB_AREA_1), is(equalTo(createSubAreaResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_SUB_AREA_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createSubAreaResult);
+        assertThat(subAreaController.createResource(NEW_SUB_AREA_1, MAYBE_USER_DATA), is(equalTo(createSubAreaResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_SUB_AREA_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -105,9 +118,10 @@ class SubAreaControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(subAreaController.updateResource(UPDATED_SUB_AREA_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_SUB_AREA_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(subAreaController.updateResource(UPDATED_SUB_AREA_1, MAYBE_USER_DATA),
+                is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_SUB_AREA_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -116,8 +130,9 @@ class SubAreaControllerTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithChildrenControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(subAreaController.deleteResource(SUB_AREA_1.getSubAreaId()), is(equalTo(deleteResourceResult)));
-        verify(mockResourceWithChildrenControllerDelegate).deleteResource(SUB_AREA_1.getSubAreaId());
+        when(mockResourceWithChildrenControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(subAreaController.deleteResource(SUB_AREA_1.getSubAreaId(), MAYBE_USER_DATA),
+                is(equalTo(deleteResourceResult)));
+        verify(mockResourceWithChildrenControllerDelegate).deleteResource(SUB_AREA_1.getSubAreaId(), MAYBE_USER_DATA);
     }
 }

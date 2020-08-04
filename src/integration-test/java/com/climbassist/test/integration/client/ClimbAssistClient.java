@@ -6,7 +6,7 @@ import com.climbassist.api.resource.area.CreateAreaResult;
 import com.climbassist.api.resource.area.NewArea;
 import com.climbassist.api.resource.common.DeleteResourceResult;
 import com.climbassist.api.resource.common.UpdateResourceResult;
-import com.climbassist.api.resource.common.UploadImageResult;
+import com.climbassist.api.resource.common.image.UploadImageResult;
 import com.climbassist.api.resource.country.Country;
 import com.climbassist.api.resource.country.CreateCountryResult;
 import com.climbassist.api.resource.country.NewCountry;
@@ -175,12 +175,13 @@ public class ClimbAssistClient {
                 new TypeReference<ApiResponse<ResetPasswordResult>>() {});
     }
 
-    public ApiResponse<Country> getCountry(@NonNull String countryId) {
-        return get("/v1/countries/" + countryId, new TypeReference<ApiResponse<Country>>() {});
+    public ApiResponse<Country> getCountry(@NonNull String countryId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/countries/" + countryId, cookies, new TypeReference<ApiResponse<Country>>() {});
     }
 
-    public ApiResponse<Country> getCountry(@NonNull String countryId, int depth) {
-        return get("/v1/countries/" + countryId + "?depth=" + depth, new TypeReference<ApiResponse<Country>>() {});
+    public ApiResponse<Country> getCountry(@NonNull String countryId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/countries/" + countryId + "?depth=" + depth, cookies,
+                new TypeReference<ApiResponse<Country>>() {});
     }
 
     public ApiResponse<CreateCountryResult> createCountry(@NonNull NewCountry newCountry,
@@ -188,8 +189,8 @@ public class ClimbAssistClient {
         return put("/v1/countries", newCountry, cookies, new TypeReference<ApiResponse<CreateCountryResult>>() {});
     }
 
-    public ApiResponse<Set<Country>> listCountries() {
-        return get("/v1/countries", new TypeReference<ApiResponse<Set<Country>>>() {});
+    public ApiResponse<Set<Country>> listCountries(@NonNull Set<Cookie> cookies) {
+        return get("/v1/countries", cookies, new TypeReference<ApiResponse<Set<Country>>>() {});
     }
 
     public ApiResponse<UpdateResourceResult> updateCountry(@NonNull Country country, @NonNull Set<Cookie> cookies) {
@@ -204,16 +205,17 @@ public class ClimbAssistClient {
         return put("/v1/regions", newRegion, cookies, new TypeReference<ApiResponse<CreateRegionResult>>() {});
     }
 
-    public ApiResponse<Region> getRegion(@NonNull String regionId) {
-        return get("/v1/regions/" + regionId, new TypeReference<ApiResponse<Region>>() {});
+    public ApiResponse<Region> getRegion(@NonNull String regionId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/regions/" + regionId, cookies, new TypeReference<ApiResponse<Region>>() {});
     }
 
-    public ApiResponse<Region> getRegion(@NonNull String regionId, int depth) {
-        return get("/v1/regions/" + regionId + "?depth=" + depth, new TypeReference<ApiResponse<Region>>() {});
+    public ApiResponse<Region> getRegion(@NonNull String regionId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/regions/" + regionId + "?depth=" + depth, cookies, new TypeReference<ApiResponse<Region>>() {});
     }
 
-    public ApiResponse<Set<Region>> listRegions(@NonNull String countryId) {
-        return get("/v1/countries/" + countryId + "/regions", new TypeReference<ApiResponse<Set<Region>>>() {});
+    public ApiResponse<Set<Region>> listRegions(@NonNull String countryId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/countries/" + countryId + "/regions", cookies,
+                new TypeReference<ApiResponse<Set<Region>>>() {});
     }
 
     public ApiResponse<UpdateResourceResult> updateRegion(@NonNull Region region, @NonNull Set<Cookie> cookies) {
@@ -228,16 +230,16 @@ public class ClimbAssistClient {
         return put("/v1/areas", newArea, cookies, new TypeReference<ApiResponse<CreateAreaResult>>() {});
     }
 
-    public ApiResponse<Area> getArea(@NonNull String areaId) {
-        return get("/v1/areas/" + areaId, new TypeReference<ApiResponse<Area>>() {});
+    public ApiResponse<Area> getArea(@NonNull String areaId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/areas/" + areaId, cookies, new TypeReference<ApiResponse<Area>>() {});
     }
 
-    public ApiResponse<Area> getArea(@NonNull String areaId, int depth) {
-        return get("/v1/areas/" + areaId + "?depth=" + depth, new TypeReference<ApiResponse<Area>>() {});
+    public ApiResponse<Area> getArea(@NonNull String areaId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/areas/" + areaId + "?depth=" + depth, cookies, new TypeReference<ApiResponse<Area>>() {});
     }
 
-    public ApiResponse<Set<Area>> listAreas(@NonNull String regionId) {
-        return get("/v1/regions/" + regionId + "/areas", new TypeReference<ApiResponse<Set<Area>>>() {});
+    public ApiResponse<Set<Area>> listAreas(@NonNull String regionId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/regions/" + regionId + "/areas", cookies, new TypeReference<ApiResponse<Set<Area>>>() {});
     }
 
     public ApiResponse<UpdateResourceResult> updateArea(@NonNull Area area, @NonNull Set<Cookie> cookies) {
@@ -253,16 +255,17 @@ public class ClimbAssistClient {
         return put("/v1/sub-areas", newSubArea, cookies, new TypeReference<ApiResponse<CreateSubAreaResult>>() {});
     }
 
-    public ApiResponse<SubArea> getSubArea(@NonNull String subAreaId) {
-        return get("/v1/sub-areas/" + subAreaId, new TypeReference<ApiResponse<SubArea>>() {});
+    public ApiResponse<SubArea> getSubArea(@NonNull String subAreaId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/sub-areas/" + subAreaId, cookies, new TypeReference<ApiResponse<SubArea>>() {});
     }
 
-    public ApiResponse<SubArea> getSubArea(@NonNull String subAreaId, int depth) {
-        return get("/v1/sub-areas/" + subAreaId + "?depth=" + depth, new TypeReference<ApiResponse<SubArea>>() {});
+    public ApiResponse<SubArea> getSubArea(@NonNull String subAreaId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/sub-areas/" + subAreaId + "?depth=" + depth, cookies,
+                new TypeReference<ApiResponse<SubArea>>() {});
     }
 
-    public ApiResponse<Set<SubArea>> listSubAreas(@NonNull String areaId) {
-        return get("/v1/areas/" + areaId + "/sub-areas", new TypeReference<ApiResponse<Set<SubArea>>>() {});
+    public ApiResponse<Set<SubArea>> listSubAreas(@NonNull String areaId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/areas/" + areaId + "/sub-areas", cookies, new TypeReference<ApiResponse<Set<SubArea>>>() {});
     }
 
     public ApiResponse<UpdateResourceResult> updateSubArea(@NonNull SubArea subArea, @NonNull Set<Cookie> cookies) {
@@ -277,16 +280,16 @@ public class ClimbAssistClient {
         return put("/v1/crags", newCrag, cookies, new TypeReference<ApiResponse<CreateCragResult>>() {});
     }
 
-    public ApiResponse<Crag> getCrag(@NonNull String cragId) {
-        return get("/v1/crags/" + cragId, new TypeReference<ApiResponse<Crag>>() {});
+    public ApiResponse<Crag> getCrag(@NonNull String cragId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/crags/" + cragId, cookies, new TypeReference<ApiResponse<Crag>>() {});
     }
 
-    public ApiResponse<Crag> getCrag(@NonNull String cragId, int depth) {
-        return get("/v1/crags/" + cragId + "?depth=" + depth, new TypeReference<ApiResponse<Crag>>() {});
+    public ApiResponse<Crag> getCrag(@NonNull String cragId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/crags/" + cragId + "?depth=" + depth, cookies, new TypeReference<ApiResponse<Crag>>() {});
     }
 
-    public ApiResponse<Set<Crag>> listCrags(@NonNull String subAreaId) {
-        return get("/v1/sub-areas/" + subAreaId + "/crags", new TypeReference<ApiResponse<Set<Crag>>>() {});
+    public ApiResponse<Set<Crag>> listCrags(@NonNull String subAreaId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/sub-areas/" + subAreaId + "/crags", cookies, new TypeReference<ApiResponse<Set<Crag>>>() {});
     }
 
     public ApiResponse<UpdateResourceResult> updateCrag(@NonNull Crag crag, @NonNull Set<Cookie> cookies) {
@@ -315,20 +318,20 @@ public class ClimbAssistClient {
         return put("/v1/walls", newWall, cookies, new TypeReference<ApiResponse<CreateWallResult>>() {});
     }
 
-    public ApiResponse<Wall> getWall(@NonNull String wallId) {
-        return get("/v1/walls/" + wallId, new TypeReference<ApiResponse<Wall>>() {});
+    public ApiResponse<Wall> getWall(@NonNull String wallId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/walls/" + wallId, cookies, new TypeReference<ApiResponse<Wall>>() {});
     }
 
-    public ApiResponse<Wall> getWall(@NonNull String wallId, int depth) {
-        return get("/v1/walls/" + wallId + "?depth=" + depth, new TypeReference<ApiResponse<Wall>>() {});
+    public ApiResponse<Wall> getWall(@NonNull String wallId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/walls/" + wallId + "?depth=" + depth, cookies, new TypeReference<ApiResponse<Wall>>() {});
     }
 
-    public ApiResponse<List<Wall>> listWalls(@NonNull String cragId) {
-        return get("/v1/crags/" + cragId + "/walls", new TypeReference<ApiResponse<List<Wall>>>() {});
+    public ApiResponse<List<Wall>> listWalls(@NonNull String cragId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/crags/" + cragId + "/walls", cookies, new TypeReference<ApiResponse<List<Wall>>>() {});
     }
 
-    public ApiResponse<List<Wall>> listWalls(@NonNull String cragId, boolean ordered) {
-        return get("/v1/crags/" + cragId + "/walls?ordered=" + ordered,
+    public ApiResponse<List<Wall>> listWalls(@NonNull String cragId, boolean ordered, @NonNull Set<Cookie> cookies) {
+        return get("/v1/crags/" + cragId + "/walls?ordered=" + ordered, cookies,
                 new TypeReference<ApiResponse<List<Wall>>>() {});
     }
 
@@ -344,19 +347,19 @@ public class ClimbAssistClient {
         return put("/v1/routes", newRoute, cookies, new TypeReference<ApiResponse<CreateRouteResult>>() {});
     }
 
-    public ApiResponse<Route> getRoute(@NonNull String routeId) {
-        return get("/v1/routes/" + routeId, new TypeReference<ApiResponse<Route>>() {});
+    public ApiResponse<Route> getRoute(@NonNull String routeId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/routes/" + routeId, cookies, new TypeReference<ApiResponse<Route>>() {});
     }
 
-    public ApiResponse<Route> getRoute(@NonNull String routeId, int depth) {
-        return get("/v1/routes/" + routeId + "?depth=" + depth, new TypeReference<ApiResponse<Route>>() {});
+    public ApiResponse<Route> getRoute(@NonNull String routeId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/routes/" + routeId + "?depth=" + depth, cookies, new TypeReference<ApiResponse<Route>>() {});
     }
 
-    public ApiResponse<List<Route>> listRoutes(@NonNull String wallId) {
-        return get("/v1/walls/" + wallId + "/routes", new TypeReference<ApiResponse<List<Route>>>() {});
+    public ApiResponse<List<Route>> listRoutes(@NonNull String wallId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/walls/" + wallId + "/routes", cookies, new TypeReference<ApiResponse<List<Route>>>() {});
     }
 
-    public ApiResponse<List<Route>> listRoutes(@NonNull String wallId, boolean ordered) {
+    public ApiResponse<List<Route>> listRoutes(@NonNull String wallId, boolean ordered, @NonNull Set<Cookie> cookies) {
         return get("/v1/walls/" + wallId + "/routes?ordered=" + ordered,
                 new TypeReference<ApiResponse<List<Route>>>() {});
     }
@@ -373,16 +376,16 @@ public class ClimbAssistClient {
         return put("/v1/pitches", newPitch, cookies, new TypeReference<ApiResponse<CreatePitchResult>>() {});
     }
 
-    public ApiResponse<Pitch> getPitch(@NonNull String pitchId) {
-        return get("/v1/pitches/" + pitchId, new TypeReference<ApiResponse<Pitch>>() {});
+    public ApiResponse<Pitch> getPitch(@NonNull String pitchId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/pitches/" + pitchId, cookies, new TypeReference<ApiResponse<Pitch>>() {});
     }
 
-    public ApiResponse<Pitch> getPitch(@NonNull String pitchId, int depth) {
-        return get("/v1/pitches/" + pitchId + "?depth=" + depth, new TypeReference<ApiResponse<Pitch>>() {});
+    public ApiResponse<Pitch> getPitch(@NonNull String pitchId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/pitches/" + pitchId + "?depth=" + depth, cookies, new TypeReference<ApiResponse<Pitch>>() {});
     }
 
-    public ApiResponse<List<Pitch>> listPitches(@NonNull String routeId) {
-        return get("/v1/routes/" + routeId + "/pitches", new TypeReference<ApiResponse<List<Pitch>>>() {});
+    public ApiResponse<List<Pitch>> listPitches(@NonNull String routeId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/routes/" + routeId + "/pitches", cookies, new TypeReference<ApiResponse<List<Pitch>>>() {});
     }
 
     public ApiResponse<List<Pitch>> listPitches(@NonNull String routeId, boolean ordered) {
@@ -409,16 +412,16 @@ public class ClimbAssistClient {
                 .build(), cookies, new TypeReference<ApiResponse<BatchCreatePointsResult>>() {});
     }
 
-    public ApiResponse<Point> getPoint(@NonNull String pointId) {
-        return get("/v1/points/" + pointId, new TypeReference<ApiResponse<Point>>() {});
+    public ApiResponse<Point> getPoint(@NonNull String pointId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/points/" + pointId, cookies, new TypeReference<ApiResponse<Point>>() {});
     }
 
-    public ApiResponse<List<Point>> listPoints(@NonNull String pitchId) {
-        return get("/v1/pitches/" + pitchId + "/points", new TypeReference<ApiResponse<List<Point>>>() {});
+    public ApiResponse<List<Point>> listPoints(@NonNull String pitchId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/pitches/" + pitchId + "/points", cookies, new TypeReference<ApiResponse<List<Point>>>() {});
     }
 
-    public ApiResponse<List<Point>> listPoints(@NonNull String pitchId, boolean ordered) {
-        return get("/v1/pitches/" + pitchId + "/points?ordered=" + ordered,
+    public ApiResponse<List<Point>> listPoints(@NonNull String pitchId, boolean ordered, @NonNull Set<Cookie> cookies) {
+        return get("/v1/pitches/" + pitchId + "/points?ordered=" + ordered, cookies,
                 new TypeReference<ApiResponse<List<Point>>>() {});
     }
 
@@ -439,16 +442,16 @@ public class ClimbAssistClient {
         return put("/v1/paths", newPath, cookies, new TypeReference<ApiResponse<CreatePathResult>>() {});
     }
 
-    public ApiResponse<Path> getPath(@NonNull String pathId) {
-        return get("/v1/paths/" + pathId, new TypeReference<ApiResponse<Path>>() {});
+    public ApiResponse<Path> getPath(@NonNull String pathId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/paths/" + pathId, cookies, new TypeReference<ApiResponse<Path>>() {});
     }
 
-    public ApiResponse<Path> getPath(@NonNull String pathId, int depth) {
-        return get("/v1/paths/" + pathId + "?depth=" + depth, new TypeReference<ApiResponse<Path>>() {});
+    public ApiResponse<Path> getPath(@NonNull String pathId, int depth, @NonNull Set<Cookie> cookies) {
+        return get("/v1/paths/" + pathId + "?depth=" + depth, cookies, new TypeReference<ApiResponse<Path>>() {});
     }
 
-    public ApiResponse<Set<Path>> listPaths(@NonNull String cragId) {
-        return get("/v1/crags/" + cragId + "/paths", new TypeReference<ApiResponse<Set<Path>>>() {});
+    public ApiResponse<Set<Path>> listPaths(@NonNull String cragId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/crags/" + cragId + "/paths", cookies, new TypeReference<ApiResponse<Set<Path>>>() {});
     }
 
     public ApiResponse<UpdateResourceResult> updatePath(@NonNull Path path, @NonNull Set<Cookie> cookies) {
@@ -473,15 +476,17 @@ public class ClimbAssistClient {
                 .build(), cookies, new TypeReference<ApiResponse<BatchCreatePathPointsResult>>() {});
     }
 
-    public ApiResponse<PathPoint> getPathPoint(@NonNull String pathPointId) {
-        return get("/v1/path-points/" + pathPointId, new TypeReference<ApiResponse<PathPoint>>() {});
+    public ApiResponse<PathPoint> getPathPoint(@NonNull String pathPointId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/path-points/" + pathPointId, cookies, new TypeReference<ApiResponse<PathPoint>>() {});
     }
 
-    public ApiResponse<List<PathPoint>> listPathPoints(@NonNull String pathId) {
-        return get("/v1/paths/" + pathId + "/path-points", new TypeReference<ApiResponse<List<PathPoint>>>() {});
+    public ApiResponse<List<PathPoint>> listPathPoints(@NonNull String pathId, @NonNull Set<Cookie> cookies) {
+        return get("/v1/paths/" + pathId + "/path-points", cookies,
+                new TypeReference<ApiResponse<List<PathPoint>>>() {});
     }
 
-    public ApiResponse<List<PathPoint>> listPathPoints(@NonNull String pathId, boolean ordered) {
+    public ApiResponse<List<PathPoint>> listPathPoints(@NonNull String pathId, boolean ordered,
+                                                       @NonNull Set<Cookie> cookies) {
         return get("/v1/paths/" + pathId + "/path-points?ordered=" + ordered,
                 new TypeReference<ApiResponse<List<PathPoint>>>() {});
     }

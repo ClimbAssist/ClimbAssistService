@@ -7,6 +7,7 @@ import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegat
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.country.Country;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -48,6 +50,14 @@ class RegionControllerTest {
             .name("New name")
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentControllerDelegate<Region, NewRegion, Country> mockResourceWithParentControllerDelegate;
@@ -73,17 +83,19 @@ class RegionControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(REGION_1);
-        assertThat(regionController.getResource(REGION_1.getRegionId(), DEPTH), is(equalTo(REGION_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(REGION_1.getRegionId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(REGION_1);
+        assertThat(regionController.getResource(REGION_1.getRegionId(), DEPTH, MAYBE_USER_DATA), is(equalTo(REGION_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(REGION_1.getRegionId(), DEPTH, MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsResourceWithParentControllerDelegate() throws ResourceNotFoundException {
         Set<Region> regions = ImmutableSet.of(REGION_1, REGION_2);
-        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any())).thenReturn(regions);
-        assertThat(regionController.getResourcesForParent(REGION_1.getCountryId()), is(equalTo(regions)));
-        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(REGION_1.getCountryId());
+        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any(), any())).thenReturn(regions);
+        assertThat(regionController.getResourcesForParent(REGION_1.getCountryId(), MAYBE_USER_DATA),
+                is(equalTo(regions)));
+        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(REGION_1.getCountryId(),
+                MAYBE_USER_DATA);
     }
 
     @Test
@@ -91,9 +103,9 @@ class RegionControllerTest {
         CreateRegionResult createRegionResult = CreateRegionResult.builder()
                 .regionId(REGION_1.getRegionId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createRegionResult);
-        assertThat(regionController.createResource(NEW_REGION_1), is(equalTo(createRegionResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_REGION_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createRegionResult);
+        assertThat(regionController.createResource(NEW_REGION_1, MAYBE_USER_DATA), is(equalTo(createRegionResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_REGION_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -101,9 +113,10 @@ class RegionControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(regionController.updateResource(UPDATED_REGION_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_REGION_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(regionController.updateResource(UPDATED_REGION_1, MAYBE_USER_DATA),
+                is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_REGION_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -112,8 +125,9 @@ class RegionControllerTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithChildrenControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(regionController.deleteResource(REGION_1.getRegionId()), is(equalTo(deleteResourceResult)));
-        verify(mockResourceWithChildrenControllerDelegate).deleteResource(REGION_1.getRegionId());
+        when(mockResourceWithChildrenControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(regionController.deleteResource(REGION_1.getRegionId(), MAYBE_USER_DATA),
+                is(equalTo(deleteResourceResult)));
+        verify(mockResourceWithChildrenControllerDelegate).deleteResource(REGION_1.getRegionId(), MAYBE_USER_DATA);
     }
 }

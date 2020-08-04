@@ -1,11 +1,13 @@
 package com.climbassist.api.resource.pitch;
 
+import com.climbassist.api.user.UserData;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -29,10 +31,12 @@ class PitchConsistencyWaiter {
         CountDownLatch countDownLatch;
         int attempts;
         ScheduledExecutorService scheduledExecutorService;
+        @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+        Optional<UserData> maybeUserData;
 
         @Override
         public void run() {
-            boolean pitchExists = pitchesDao.getResources(routeId)
+            boolean pitchExists = pitchesDao.getResources(routeId, maybeUserData)
                     .contains(expectedPitch);
             if (shouldExist == pitchExists) {
                 countDownLatch.countDown();
@@ -40,7 +44,7 @@ class PitchConsistencyWaiter {
             else if (attempts < MAX_RETRIES) {
                 scheduledExecutorService.schedule(
                         new PitchConsistencyRunnable(routeId, expectedPitch, shouldExist, countDownLatch, attempts + 1,
-                                scheduledExecutorService), 1, TimeUnit.SECONDS);
+                                scheduledExecutorService, maybeUserData), 1, TimeUnit.SECONDS);
             }
         }
     }
@@ -50,7 +54,9 @@ class PitchConsistencyWaiter {
     @NonNull
     private final PitchesDao pitchesDao;
 
-    public void waitForConsistency(String routeId, Pitch expectedPitch, boolean shouldExist)
+    public void waitForConsistency(String routeId, Pitch expectedPitch, boolean shouldExist,
+                                   @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                           Optional<UserData> maybeUserData)
             throws PitchConsistencyException, InterruptedException {
         log.info(String.format("Waiting for consistency for pitch %s in route %s, which %s exist.",
                 expectedPitch.getPitchId(), routeId, shouldExist ? "should" : "should not"));
@@ -58,7 +64,7 @@ class PitchConsistencyWaiter {
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
         scheduledExecutorService.schedule(
                 new PitchConsistencyRunnable(routeId, expectedPitch, shouldExist, countDownLatch, 0,
-                        scheduledExecutorService), 0, TimeUnit.SECONDS);
+                        scheduledExecutorService, maybeUserData), 0, TimeUnit.SECONDS);
         if (!countDownLatch.await(10, TimeUnit.SECONDS)) {
             throw new PitchConsistencyException(expectedPitch.getPitchId());
         }

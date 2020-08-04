@@ -2,7 +2,8 @@ package com.climbassist.api.resource.crag;
 
 import com.climbassist.api.resource.common.ResourceFactory;
 import com.climbassist.api.resource.common.ResourceIdGenerator;
-import com.climbassist.api.resource.common.ResourceWithImageFactory;
+import com.climbassist.api.resource.common.image.ResourceWithImageFactory;
+import com.climbassist.api.resource.common.state.State;
 import lombok.Builder;
 import lombok.NonNull;
 
@@ -37,6 +38,7 @@ public class CragFactory extends ResourceFactory<Crag, NewCrag> implements Resou
                                 .longitude(parking.getLongitude())
                                 .build())
                         .collect(Collectors.toSet()))
+                .state(State.IN_REVIEW.toString())
                 .build();
     }
 

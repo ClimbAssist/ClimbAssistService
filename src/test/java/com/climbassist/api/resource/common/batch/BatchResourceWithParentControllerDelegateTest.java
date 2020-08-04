@@ -11,6 +11,7 @@ import com.climbassist.api.resource.common.ResourceWithChildren;
 import com.climbassist.api.resource.common.ResourceWithParent;
 import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParent;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
@@ -172,6 +173,14 @@ class BatchResourceWithParentControllerDelegateTest {
     private static final BatchNewResourcesImpl BATCH_NEW_RESOURCES = BatchNewResourcesImpl.builder()
             .batchNewResources(ImmutableList.of(BATCH_NEW_RESOURCE_1, BATCH_NEW_RESOURCE_2, BATCH_NEW_RESOURCE_3))
             .build();
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceControllerDelegate<ResourceImpl, NewResourceImpl> mockResourceControllerDelegate;
@@ -221,7 +230,7 @@ class BatchResourceWithParentControllerDelegateTest {
         BatchCreateResourcesResultImpl batchCreateResourcesResult = BatchCreateResourcesResultImpl.builder()
                 .resourceIds(ImmutableList.of(RESOURCE_1.getId(), RESOURCE_2.getId(), RESOURCE_3.getId()))
                 .build();
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
         doReturn(NEW_RESOURCE_3).when(mockBatchResourceFactory)
                 .create(anyString(), any(), anyBoolean());
         doReturn(NEW_RESOURCE_2, NEW_RESOURCE_1).when(mockBatchResourceFactory)
@@ -240,9 +249,9 @@ class BatchResourceWithParentControllerDelegateTest {
                 .createResource(NEW_RESOURCE_1);
         when(mockBatchCreateResourceResultFactory.create(any())).thenReturn(batchCreateResourcesResult);
         assertThat(
-                batchResourceWithParentControllerDelegate.batchCreateResources(RESOURCE_1.getId(), BATCH_NEW_RESOURCES),
-                is(equalTo(batchCreateResourcesResult)));
-        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
+                batchResourceWithParentControllerDelegate.batchCreateResources(RESOURCE_1.getId(), BATCH_NEW_RESOURCES,
+                        MAYBE_USER_DATA), is(equalTo(batchCreateResourcesResult)));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
         verify(mockBatchResourceFactory).create(PARENT_RESOURCE_1.getId(), BATCH_NEW_RESOURCE_3, false);
         verify(mockResourceControllerDelegate).createResource(NEW_RESOURCE_3);
         verify(mockBatchResourceFactory).create(PARENT_RESOURCE_1.getId(), BATCH_NEW_RESOURCE_2, false,
@@ -267,7 +276,7 @@ class BatchResourceWithParentControllerDelegateTest {
                 .resourceIds(ImmutableList.of(RESOURCE_1.getId()))
                 .build();
 
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
         when(mockBatchResourceFactory.create(anyString(), any(), anyBoolean())).thenReturn(newResource);
         when(mockResourceControllerDelegate.createResource(any())).thenReturn(CreateResourceResultImpl.builder()
                 .resourceId(RESOURCE_1.getId())
@@ -279,9 +288,9 @@ class BatchResourceWithParentControllerDelegateTest {
         assertThat(batchResourceWithParentControllerDelegate.batchCreateResources(PARENT_RESOURCE_1.getId(),
                 BatchNewResourcesImpl.builder()
                         .batchNewResources(ImmutableList.of(BATCH_NEW_RESOURCE_1))
-                        .build()), is(equalTo(batchCreateResourcesResult)));
+                        .build(), MAYBE_USER_DATA), is(equalTo(batchCreateResourcesResult)));
 
-        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
         verify(mockBatchResourceFactory).create(PARENT_RESOURCE_1.getId(), BATCH_NEW_RESOURCE_1, true);
         verify(mockResourceControllerDelegate).createResource(newResource);
         verify(mockBatchCreateResourceResultFactory).create(resourceIds);
@@ -289,13 +298,13 @@ class BatchResourceWithParentControllerDelegateTest {
 
     @Test
     void batchCreateResources_throwsParentResourceNotFoundException_whenParentResourceDoesNotExist() {
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockParentResourceNotFoundExceptionFactory.create(any())).thenReturn(
                 new ParentResourceNotFoundExceptionImpl(PARENT_RESOURCE_1.getId()));
         assertThrows(ParentResourceNotFoundExceptionImpl.class,
                 () -> batchResourceWithParentControllerDelegate.batchCreateResources(PARENT_RESOURCE_1.getId(),
-                        BATCH_NEW_RESOURCES));
-        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
+                        BATCH_NEW_RESOURCES, MAYBE_USER_DATA));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockParentResourceNotFoundExceptionFactory).create(PARENT_RESOURCE_1.getId());
         verify(mockResourceControllerDelegate, never()).createResource(any());
@@ -303,39 +312,41 @@ class BatchResourceWithParentControllerDelegateTest {
 
     @Test
     void batchDeleteResources_throwsResourceNotFoundException_whenParentIdDoesNotExist() {
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockParentResourceNotFoundExceptionFactory.create(any())).thenReturn(
                 new ResourceNotFoundExceptionImpl(PARENT_RESOURCE_1.getId()));
         assertThrows(ResourceNotFoundExceptionImpl.class,
-                () -> batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId()));
-        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
+                () -> batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId(),
+                        MAYBE_USER_DATA));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockParentResourceNotFoundExceptionFactory).create(PARENT_RESOURCE_1.getId());
     }
 
     @Test
     void batchDeleteResources_doesNothing_whenParentResourceHasNoChildren() throws ResourceNotFoundException {
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
-        when(mockResourceDao.getResources(any())).thenReturn(ImmutableSet.of());
-        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId()),
-                is(equalTo(DeleteResourceResult.builder()
-                        .successful(true)
-                        .build())));
-        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
-        verify(mockResourceDao).getResources(PARENT_RESOURCE_1.getId());
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockResourceDao.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId(),
+                MAYBE_USER_DATA), is(equalTo(DeleteResourceResult.builder()
+                .successful(true)
+                .build())));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
+        verify(mockResourceDao).getResources(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
         verify(mockResourceDao, never()).deleteResource(any());
     }
 
     @Test
     void batchDeleteResources_deletesAllResourcesUnderParent() throws ResourceNotFoundException {
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
-        when(mockResourceDao.getResources(any())).thenReturn(ImmutableSet.of(RESOURCE_1, RESOURCE_2, RESOURCE_3));
-        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId()),
-                is(equalTo(DeleteResourceResult.builder()
-                        .successful(true)
-                        .build())));
-        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId());
-        verify(mockResourceDao).getResources(PARENT_RESOURCE_1.getId());
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockResourceDao.getResources(any(), any())).thenReturn(
+                ImmutableSet.of(RESOURCE_1, RESOURCE_2, RESOURCE_3));
+        assertThat(batchResourceWithParentControllerDelegate.batchDeleteResources(PARENT_RESOURCE_1.getId(),
+                MAYBE_USER_DATA), is(equalTo(DeleteResourceResult.builder()
+                .successful(true)
+                .build())));
+        verify(mockParentResourceDao).getResource(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
+        verify(mockResourceDao).getResources(PARENT_RESOURCE_1.getId(), MAYBE_USER_DATA);
         verify(mockResourceDao).deleteResource(RESOURCE_1.getId());
         verify(mockResourceDao).deleteResource(RESOURCE_2.getId());
         verify(mockResourceDao).deleteResource(RESOURCE_3.getId());

@@ -1,5 +1,6 @@
 package com.climbassist.api.resource.common;
 
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import lombok.Builder;
@@ -30,19 +31,19 @@ class ResourceWithParentControllerDelegateTest {
 
     @Builder
     @Value
-    private static final class ResourceImpl implements ResourceWithParent<ParentResourceImpl> {
+    private static class ResourceImpl implements ResourceWithParent<ParentResourceImpl> {
 
-        private String id;
-        private String parentId;
-        private String name;
+        String id;
+        String parentId;
+        String name;
     }
 
     @Builder
     @Value
-    private static final class NewResourceImpl implements NewResourceWithParent<ResourceImpl, ParentResourceImpl> {
+    private static class NewResourceImpl implements NewResourceWithParent<ResourceImpl, ParentResourceImpl> {
 
-        private String name;
-        private String parentId;
+        String name;
+        String parentId;
     }
 
     @Builder
@@ -70,7 +71,7 @@ class ResourceWithParentControllerDelegateTest {
     @Getter
     private static final class CreateResourceResultImpl implements CreateResourceResult<ResourceImpl> {
 
-        private String resourceId;
+        private final String resourceId;
     }
 
     private static final ParentResourceImpl PARENT_RESOURCE_1 = ParentResourceImpl.builder()
@@ -102,6 +103,14 @@ class ResourceWithParentControllerDelegateTest {
             .build();
     private static final ParentResourceNotFoundExceptionImpl PARENT_RESOURCE_NOT_FOUND_EXCEPTION =
             new ParentResourceNotFoundExceptionImpl(PARENT_RESOURCE_1.getId());
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentDao<ResourceImpl, ParentResourceImpl> mockResourceDao;
@@ -137,24 +146,26 @@ class ResourceWithParentControllerDelegateTest {
     @Test
     void getResourcesForParent_returnsResources_whenParentExists() throws ResourceNotFoundException {
         Set<ResourceImpl> resources = ImmutableSet.of(RESOURCE_1, RESOURCE_2);
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
-        when(mockResourceDao.getResources(RESOURCE_1.getParentId())).thenReturn(resources);
-        assertThat(resourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId()),
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockResourceDao.getResources(RESOURCE_1.getParentId(), MAYBE_USER_DATA)).thenReturn(resources);
+        assertThat(
+                resourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId(), MAYBE_USER_DATA),
                 is(equalTo(resources)));
-        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId());
-        verify(mockResourceDao).getResources(RESOURCE_1.getParentId());
+        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId(), MAYBE_USER_DATA);
+        verify(mockResourceDao).getResources(RESOURCE_1.getParentId(), MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_throwsParentResourceNotFoundException_whenParentDoesNotExist() {
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockParentResourceNotFoundExceptionFactory.create(any())).thenReturn(PARENT_RESOURCE_NOT_FOUND_EXCEPTION);
         assertThrows(ParentResourceNotFoundExceptionImpl.class,
-                () -> resourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId()));
-        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId());
+                () -> resourceWithParentControllerDelegate.getResourcesForParent(RESOURCE_1.getParentId(),
+                        MAYBE_USER_DATA));
+        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockParentResourceNotFoundExceptionFactory).create(PARENT_RESOURCE_1.getId());
-        verify(mockResourceDao, never()).getResources(any());
+        verify(mockResourceDao, never()).getResources(any(), any());
     }
 
     @Test
@@ -162,21 +173,21 @@ class ResourceWithParentControllerDelegateTest {
         CreateResourceResultImpl createResourceResult = CreateResourceResultImpl.builder()
                 .resourceId(RESOURCE_1.getId())
                 .build();
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.of(PARENT_RESOURCE_1));
         when(mockResourceControllerDelegate.createResource(any())).thenReturn(createResourceResult);
-        assertThat(resourceWithParentControllerDelegate.createResource(NEW_RESOURCE_1),
+        assertThat(resourceWithParentControllerDelegate.createResource(NEW_RESOURCE_1, MAYBE_USER_DATA),
                 is(equalTo(createResourceResult)));
-        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId());
+        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId(), MAYBE_USER_DATA);
         verify(mockResourceControllerDelegate).createResource(NEW_RESOURCE_1);
     }
 
     @Test
     void createResource_throwsParentResourceNotFoundException_whenParentDoesNotExist() {
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockParentResourceNotFoundExceptionFactory.create(any())).thenReturn(PARENT_RESOURCE_NOT_FOUND_EXCEPTION);
         assertThrows(ParentResourceNotFoundExceptionImpl.class,
-                () -> resourceWithParentControllerDelegate.createResource(NEW_RESOURCE_1));
-        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId());
+                () -> resourceWithParentControllerDelegate.createResource(NEW_RESOURCE_1, MAYBE_USER_DATA));
+        verify(mockParentResourceDao).getResource(RESOURCE_1.getParentId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockParentResourceNotFoundExceptionFactory).create(PARENT_RESOURCE_1.getId());
         verify(mockResourceControllerDelegate, never()).createResource(any());
@@ -187,24 +198,24 @@ class ResourceWithParentControllerDelegateTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.of(PARENT_RESOURCE_2));
-        when(mockResourceControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(resourceWithParentControllerDelegate.updateResource(UPDATED_RESOURCE_1),
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.of(PARENT_RESOURCE_2));
+        when(mockResourceControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(resourceWithParentControllerDelegate.updateResource(UPDATED_RESOURCE_1, MAYBE_USER_DATA),
                 is(equalTo(updateResourceResult)));
-        verify(mockParentResourceDao).getResource(UPDATED_RESOURCE_1.getParentId());
-        verify(mockResourceControllerDelegate).updateResource(UPDATED_RESOURCE_1);
+        verify(mockParentResourceDao).getResource(UPDATED_RESOURCE_1.getParentId(), MAYBE_USER_DATA);
+        verify(mockResourceControllerDelegate).updateResource(UPDATED_RESOURCE_1, MAYBE_USER_DATA);
     }
 
     @Test
     void updateResource_throwsParentResourceNotFoundException_whenParentDoesNotExist()
             throws ResourceNotFoundException {
-        when(mockParentResourceDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockParentResourceDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockParentResourceNotFoundExceptionFactory.create(any())).thenReturn(PARENT_RESOURCE_NOT_FOUND_EXCEPTION);
         assertThrows(ParentResourceNotFoundExceptionImpl.class,
-                () -> resourceWithParentControllerDelegate.updateResource(UPDATED_RESOURCE_1));
-        verify(mockParentResourceDao).getResource(UPDATED_RESOURCE_1.getParentId());
+                () -> resourceWithParentControllerDelegate.updateResource(UPDATED_RESOURCE_1, MAYBE_USER_DATA));
+        verify(mockParentResourceDao).getResource(UPDATED_RESOURCE_1.getParentId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockParentResourceNotFoundExceptionFactory).create(UPDATED_RESOURCE_1.getParentId());
-        verify(mockResourceControllerDelegate, never()).updateResource(any());
+        verify(mockResourceControllerDelegate, never()).updateResource(any(), any());
     }
 }

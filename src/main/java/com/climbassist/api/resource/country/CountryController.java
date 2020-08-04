@@ -8,6 +8,8 @@ import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.ValidDepth;
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.authorization.AdministratorAuthorizationHandler;
 import com.climbassist.api.user.authorization.Authorization;
 import com.climbassist.metrics.Metrics;
@@ -20,8 +22,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
+import java.util.Optional;
 import java.util.Set;
 
 @Builder
@@ -39,9 +44,10 @@ public class CountryController {
     @Metrics(api = "GetCountry")
     @RequestMapping(path = "/v1/countries/{countryId}", method = RequestMethod.GET)
     public Country getResource(@ValidCountryId @NonNull @PathVariable String countryId,
-                               @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth)
-            throws ResourceNotFoundException {
-        return resourceWithChildrenControllerDelegate.getResource(countryId, depth);
+                               @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth,
+                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+        return resourceWithChildrenControllerDelegate.getResource(countryId, depth, maybeUserData);
     }
 
     @Metrics(api = "ListCountries")
@@ -60,16 +66,20 @@ public class CountryController {
     @Metrics(api = "UpdateCountry")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/countries", method = RequestMethod.POST)
-    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Country country)
+    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Country country,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return resourceControllerDelegate.updateResource(country);
+        return resourceControllerDelegate.updateResource(country, maybeUserData);
     }
 
     @Metrics(api = "DeleteCountry")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/countries/{countryId}", method = RequestMethod.DELETE)
-    public DeleteResourceResult deleteResource(@NonNull @ValidCountryId @PathVariable String countryId)
+    public DeleteResourceResult deleteResource(@NonNull @ValidCountryId @PathVariable String countryId,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException, ResourceNotEmptyException {
-        return resourceWithChildrenControllerDelegate.deleteResource(countryId);
+        return resourceWithChildrenControllerDelegate.deleteResource(countryId, maybeUserData);
     }
 }

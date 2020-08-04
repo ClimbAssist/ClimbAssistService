@@ -12,6 +12,8 @@ import com.climbassist.api.resource.common.batch.BatchResourceWithParentControll
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.path.Path;
 import com.climbassist.api.resource.path.ValidPathId;
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.authorization.AdministratorAuthorizationHandler;
 import com.climbassist.api.user.authorization.Authorization;
 import com.climbassist.metrics.Metrics;
@@ -25,9 +27,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 @Builder
 @RestController
@@ -49,25 +53,35 @@ public class PathPointController {
 
     @Metrics(api = "GetPathPoint")
     @RequestMapping(path = "/v1/path-points/{pathPointId}", method = RequestMethod.GET)
-    public PathPoint getResource(@ValidPathPointId @NonNull @PathVariable String pathPointId)
-            throws ResourceNotFoundException {
-        return resourceControllerDelegate.getResource(pathPointId);
+    public PathPoint getResource(@ValidPathPointId @NonNull @PathVariable String pathPointId,
+                                 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                 @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                 @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+        return resourceControllerDelegate.getResource(pathPointId, maybeUserData);
     }
 
     @Metrics(api = "ListPathPoints")
     @RequestMapping(path = "/v1/paths/{pathId}/path-points", method = RequestMethod.GET)
     public List<PathPoint> getResourcesForParent(@ValidPathId @NonNull @PathVariable String pathId,
-                                                 @RequestParam(required = false) boolean ordered)
+                                                 @RequestParam(required = false) boolean ordered,
+                                                 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                                 @SessionAttribute(
+                                                         value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                                 @NonNull Optional<UserData> maybeUserData)
             throws InvalidOrderingException, ResourceNotFoundException {
-        return orderableResourceWithParentControllerDelegate.getResourcesForParent(pathId, ordered);
+        return orderableResourceWithParentControllerDelegate.getResourcesForParent(pathId, ordered, maybeUserData);
     }
 
     @Metrics(api = "CreatePathPoint")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/path-points", method = RequestMethod.PUT)
-    public CreateResourceResult<PathPoint> createResource(@NonNull @Valid @RequestBody NewPathPoint newPath)
+    public CreateResourceResult<PathPoint> createResource(@NonNull @Valid @RequestBody NewPathPoint newPath,
+                                                          @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                                          @SessionAttribute(
+                                                                  value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                                          @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return resourceWithParentControllerDelegate.createResource(newPath);
+        return resourceWithParentControllerDelegate.createResource(newPath, maybeUserData);
     }
 
     @Metrics(api = "BatchCreatePathPoints")
@@ -75,31 +89,45 @@ public class PathPointController {
     @RequestMapping(path = "/v1/paths/{pathId}/path-points", method = RequestMethod.PUT)
     public BatchCreateResourcesResult<PathPoint, Path> batchCreateResources(
             @ValidPathId @NonNull @PathVariable String pathId,
-            @NonNull @Valid @RequestBody BatchNewPathPoints batchNewPathPoints) throws ResourceNotFoundException {
-        return batchResourceWithParentControllerDelegate.batchCreateResources(pathId, batchNewPathPoints);
+            @NonNull @Valid @RequestBody BatchNewPathPoints batchNewPathPoints,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+            @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+        return batchResourceWithParentControllerDelegate.batchCreateResources(pathId, batchNewPathPoints,
+                maybeUserData);
     }
 
     @Metrics(api = "UpdatePathPoint")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/path-points", method = RequestMethod.POST)
-    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody PathPoint pathPoint)
+    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody PathPoint pathPoint,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                               @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return resourceWithParentControllerDelegate.updateResource(pathPoint);
+        return resourceWithParentControllerDelegate.updateResource(pathPoint, maybeUserData);
     }
 
     @Metrics(api = "DeletePathPoint")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/path-points/{pathPointId}", method = RequestMethod.DELETE)
-    public DeleteResourceResult deleteResource(@NonNull @ValidPathPointId @PathVariable String pathPointId)
+    public DeleteResourceResult deleteResource(@NonNull @ValidPathPointId @PathVariable String pathPointId,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                               @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return resourceControllerDelegate.deleteResource(pathPointId);
+        return resourceControllerDelegate.deleteResource(pathPointId, maybeUserData);
     }
 
     @Metrics(api = "BatchDeletePathPoints")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/paths/{pathId}/path-points", method = RequestMethod.DELETE)
-    public DeleteResourceResult batchDeleteResources(@NonNull @ValidPathId @PathVariable String pathId)
+    public DeleteResourceResult batchDeleteResources(@NonNull @ValidPathId @PathVariable String pathId,
+                                                     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                                     @SessionAttribute(
+                                                             value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                                     @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return batchResourceWithParentControllerDelegate.batchDeleteResources(pathId);
+        return batchResourceWithParentControllerDelegate.batchDeleteResources(pathId, maybeUserData);
     }
 }

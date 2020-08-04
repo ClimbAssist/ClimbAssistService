@@ -259,11 +259,12 @@ update APIs.
             "longitude": double
         },
         ...
-    ]
+    ],
     "walls": [ // only present if the resource has children
         Wall,
         ...
-    ]
+    ],
+    "state": string, "IN_REVIEW" | "PUBLIC"
 }
 ```
 
@@ -408,6 +409,14 @@ For create and update APIs on orderable resources, the `first` and `next` fields
 automatically updated, so any changes to the ordering will require multiple calls to update each of the affected
 resources. The server will only validate that all `next` fields are existing resources, and will not attempt to validate
 other requirements for a valid ordering.
+
+## State
+
+Some resources types have a `state` field. This is used to hide resources from non-administrator users until they have
+been approved by an administrator. If a resource has state `IN_REVIEW` and the caller is not an administrator, the APIs
+will behave exactly as if that resource does not exist. It will not appear in queries using the `depth` parameter
+either. The state can be updated by calling the appropriate update API. All newly created resources with state will
+always start with state `IN_REVIEW`.
 
 ## Optional Update Parameters
 

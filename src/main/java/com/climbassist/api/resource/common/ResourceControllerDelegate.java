@@ -1,7 +1,10 @@
 package com.climbassist.api.resource.common;
 
+import com.climbassist.api.user.UserData;
 import lombok.Builder;
 import lombok.NonNull;
+
+import java.util.Optional;
 
 @Builder
 public class ResourceControllerDelegate<Resource extends com.climbassist.api.resource.common.Resource,
@@ -16,8 +19,9 @@ public class ResourceControllerDelegate<Resource extends com.climbassist.api.res
     @NonNull
     protected final CreateResourceResultFactory<Resource> createResourceResultFactory;
 
-    public Resource getResource(@NonNull String resourceId) throws ResourceNotFoundException {
-        return resourceDao.getResource(resourceId)
+    public Resource getResource(@NonNull String resourceId, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+        return resourceDao.getResource(resourceId, maybeUserData)
                 .orElseThrow(() -> resourceNotFoundExceptionFactory.create(resourceId));
     }
 
@@ -27,8 +31,11 @@ public class ResourceControllerDelegate<Resource extends com.climbassist.api.res
         return createResourceResultFactory.create(resource.getId());
     }
 
-    public UpdateResourceResult updateResource(@NonNull Resource resource) throws ResourceNotFoundException {
-        resourceDao.getResource(resource.getId())
+    public UpdateResourceResult updateResource(@NonNull Resource resource,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                                       Optional<UserData> maybeUserData)
+            throws ResourceNotFoundException {
+        resourceDao.getResource(resource.getId(), maybeUserData)
                 .orElseThrow(() -> resourceNotFoundExceptionFactory.create(resource.getId()));
         resourceDao.saveResource(resource);
         return UpdateResourceResult.builder()
@@ -36,8 +43,9 @@ public class ResourceControllerDelegate<Resource extends com.climbassist.api.res
                 .build();
     }
 
-    public DeleteResourceResult deleteResource(@NonNull String resourceId) throws ResourceNotFoundException {
-        resourceDao.getResource(resourceId)
+    public DeleteResourceResult deleteResource(@NonNull String resourceId, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+        resourceDao.getResource(resourceId, maybeUserData)
                 .orElseThrow(() -> resourceNotFoundExceptionFactory.create(resourceId));
         resourceDao.deleteResource(resourceId);
         return DeleteResourceResult.builder()

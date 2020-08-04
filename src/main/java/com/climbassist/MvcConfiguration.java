@@ -14,6 +14,7 @@ import com.climbassist.api.resource.route.RouteConfiguration;
 import com.climbassist.api.resource.subarea.SubAreaConfiguration;
 import com.climbassist.api.resource.wall.WallConfiguration;
 import com.climbassist.api.user.UserConfiguration;
+import com.climbassist.api.user.authentication.UserAuthenticationConfiguration;
 import com.climbassist.health.HealthConfiguration;
 import com.climbassist.logging.LoggingConfiguration;
 import com.climbassist.main.MainConfiguration;
@@ -33,7 +34,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
         CragConfiguration.class, HealthConfiguration.class, LoggingConfiguration.class, MainConfiguration.class,
         MetricsConfiguration.class, PathConfiguration.class, PathPointConfiguration.class, PitchConfiguration.class,
         PointConfiguration.class, RegionConfiguration.class, RouteConfiguration.class, SubAreaConfiguration.class,
-        UserConfiguration.class, WallConfiguration.class})
+        UserAuthenticationConfiguration.class, UserConfiguration.class, WallConfiguration.class})
 public class MvcConfiguration implements WebMvcConfigurer {
 
     @Override

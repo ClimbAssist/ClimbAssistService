@@ -10,6 +10,7 @@ import com.climbassist.api.resource.common.batch.BatchResourceWithParentControll
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.pitch.Anchors;
 import com.climbassist.api.resource.pitch.Pitch;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -123,6 +125,14 @@ class PointControllerTest {
     private static final DeleteResourceResult DELETE_RESOURCE_RESULT = DeleteResourceResult.builder()
             .successful(true)
             .build();
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceControllerDelegate<Point, NewPoint> mockResourceControllerDelegate;
@@ -157,29 +167,33 @@ class PointControllerTest {
 
     @Test
     void getResource_callsResourceControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceControllerDelegate.getResource(any())).thenReturn(POINT_1);
-        assertThat(pointController.getResource(POINT_1.getPointId()), is(equalTo(POINT_1)));
-        verify(mockResourceControllerDelegate).getResource(POINT_1.getPointId());
+        when(mockResourceControllerDelegate.getResource(any(), any())).thenReturn(POINT_1);
+        assertThat(pointController.getResource(POINT_1.getPointId(), MAYBE_USER_DATA), is(equalTo(POINT_1)));
+        verify(mockResourceControllerDelegate).getResource(POINT_1.getPointId(), MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsFalse()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<Point> points = ImmutableList.of(POINT_1, POINT_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                points);
-        assertThat(pointController.getResourcesForParent(POINT_1.getPitchId(), false), is(equalTo(points)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(POINT_1.getPitchId(), false);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(points);
+        assertThat(pointController.getResourcesForParent(POINT_1.getPitchId(), false, MAYBE_USER_DATA),
+                is(equalTo(points)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(POINT_1.getPitchId(), false,
+                MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsTrue()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<Point> points = ImmutableList.of(POINT_1, POINT_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                points);
-        assertThat(pointController.getResourcesForParent(POINT_1.getPitchId(), true), is(equalTo(points)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(POINT_1.getPitchId(), true);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(points);
+        assertThat(pointController.getResourcesForParent(POINT_1.getPitchId(), true, MAYBE_USER_DATA),
+                is(equalTo(points)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(POINT_1.getPitchId(), true,
+                MAYBE_USER_DATA);
     }
 
     @Test
@@ -187,9 +201,9 @@ class PointControllerTest {
         CreatePointResult createPointResult = CreatePointResult.builder()
                 .pointId(POINT_1.getPointId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createPointResult);
-        assertThat(pointController.createResource(NEW_POINT_1), is(equalTo(createPointResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_POINT_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createPointResult);
+        assertThat(pointController.createResource(NEW_POINT_1, MAYBE_USER_DATA), is(equalTo(createPointResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_POINT_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -197,12 +211,12 @@ class PointControllerTest {
         BatchCreatePointsResult batchCreatePointsResult = BatchCreatePointsResult.builder()
                 .pointIds(ImmutableList.of(POINT_1.getPointId(), POINT_2.getPointId(), POINT_3.getPointId()))
                 .build();
-        when(mockBatchResourceWithParentControllerDelegate.batchCreateResources(anyString(), any())).thenReturn(
+        when(mockBatchResourceWithParentControllerDelegate.batchCreateResources(anyString(), any(), any())).thenReturn(
                 batchCreatePointsResult);
-        assertThat(pointController.batchCreateResources(PITCH_1.getPitchId(), BATCH_NEW_POINTS),
+        assertThat(pointController.batchCreateResources(PITCH_1.getPitchId(), BATCH_NEW_POINTS, MAYBE_USER_DATA),
                 is(equalTo(batchCreatePointsResult)));
         verify(mockBatchResourceWithParentControllerDelegate).batchCreateResources(PITCH_1.getPitchId(),
-                BATCH_NEW_POINTS);
+                BATCH_NEW_POINTS, MAYBE_USER_DATA);
     }
 
     @Test
@@ -210,24 +224,26 @@ class PointControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(pointController.updateResource(UPDATED_POINT_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_POINT_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(pointController.updateResource(UPDATED_POINT_1, MAYBE_USER_DATA), is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_POINT_1, MAYBE_USER_DATA);
     }
 
     @Test
     void deleteResource_callsResourceControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceControllerDelegate.deleteResource(any())).thenReturn(DELETE_RESOURCE_RESULT);
-        assertThat(pointController.deleteResource(POINT_1.getPointId()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockResourceControllerDelegate).deleteResource(POINT_1.getPointId());
+        when(mockResourceControllerDelegate.deleteResource(any(), any())).thenReturn(DELETE_RESOURCE_RESULT);
+        assertThat(pointController.deleteResource(POINT_1.getPointId(), MAYBE_USER_DATA),
+                is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockResourceControllerDelegate).deleteResource(POINT_1.getPointId(), MAYBE_USER_DATA);
     }
 
     @Test
     void batchDeleteResources_callsBatchResourceWithParentControllerDelegate_whenPitchIdIsSupplied()
             throws ResourceNotFoundException {
-        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(any(String.class))).thenReturn(
+        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(any(String.class), any())).thenReturn(
                 DELETE_RESOURCE_RESULT);
-        assertThat(pointController.batchDeleteResources(PITCH_1.getId()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(PITCH_1.getId());
+        assertThat(pointController.batchDeleteResources(PITCH_1.getId(), MAYBE_USER_DATA),
+                is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(PITCH_1.getId(), MAYBE_USER_DATA);
     }
 }

@@ -1,4 +1,4 @@
-package com.climbassist.api.resource.grade;
+package com.climbassist.api.resource.common.grade;
 
 import org.hibernate.validator.constraints.ConstraintComposition;
 import org.hibernate.validator.constraints.Range;

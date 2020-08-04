@@ -7,7 +7,7 @@ import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegat
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.region.Region;
-import com.climbassist.api.resource.subarea.SubArea;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,6 +24,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,6 +55,14 @@ class AreaControllerTest {
             .description(AREA_1.getDescription())
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentControllerDelegate<Area, NewArea, Region> mockResourceWithParentControllerDelegate;
@@ -78,17 +88,18 @@ class AreaControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(AREA_1);
-        assertThat(areaController.getResource(AREA_1.getAreaId(), DEPTH), is(equalTo(AREA_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(AREA_1.getAreaId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(
+                AREA_1); // TODO use a real value instead of MAYBE_USER_DATA
+        assertThat(areaController.getResource(AREA_1.getAreaId(), DEPTH, MAYBE_USER_DATA), is(equalTo(AREA_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(AREA_1.getAreaId(), DEPTH, MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsResourceWithParentControllerDelegate() throws ResourceNotFoundException {
         Set<Area> areas = ImmutableSet.of(AREA_1, AREA_2);
-        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any())).thenReturn(areas);
-        assertThat(areaController.getResourcesForParent(AREA_1.getRegionId()), is(equalTo(areas)));
-        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(AREA_1.getRegionId());
+        when(mockResourceWithParentControllerDelegate.getResourcesForParent(any(), any())).thenReturn(areas);
+        assertThat(areaController.getResourcesForParent(AREA_1.getRegionId(), MAYBE_USER_DATA), is(equalTo(areas)));
+        verify(mockResourceWithParentControllerDelegate).getResourcesForParent(AREA_1.getRegionId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -96,9 +107,10 @@ class AreaControllerTest {
         CreateAreaResult createAreaResult = CreateAreaResult.builder()
                 .areaId(AREA_1.getAreaId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createAreaResult);
-        assertThat(areaController.createResource(NEW_AREA_1), is(equalTo(createAreaResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_AREA_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(
+                createAreaResult);
+        assertThat(areaController.createResource(NEW_AREA_1, MAYBE_USER_DATA), is(equalTo(createAreaResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_AREA_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -106,9 +118,10 @@ class AreaControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(areaController.updateResource(UPDATED_AREA_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_AREA_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(
+                updateResourceResult);
+        assertThat(areaController.updateResource(UPDATED_AREA_1, MAYBE_USER_DATA), is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_AREA_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -117,8 +130,10 @@ class AreaControllerTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithChildrenControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(areaController.deleteResource(AREA_1.getAreaId()), is(equalTo(deleteResourceResult)));
-        verify(mockResourceWithChildrenControllerDelegate).deleteResource(AREA_1.getAreaId());
+        when(mockResourceWithChildrenControllerDelegate.deleteResource(any(), any())).thenReturn(
+                deleteResourceResult);
+        assertThat(areaController.deleteResource(AREA_1.getAreaId(), MAYBE_USER_DATA),
+                is(equalTo(deleteResourceResult)));
+        verify(mockResourceWithChildrenControllerDelegate).deleteResource(AREA_1.getAreaId(), MAYBE_USER_DATA);
     }
 }

@@ -9,6 +9,7 @@ import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.batch.BatchResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.path.Path;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -78,6 +80,14 @@ class PathPointControllerTest {
     private static final DeleteResourceResult DELETE_RESOURCE_RESULT = DeleteResourceResult.builder()
             .successful(true)
             .build();
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceControllerDelegate<PathPoint, NewPathPoint> mockResourceControllerDelegate;
@@ -113,30 +123,34 @@ class PathPointControllerTest {
 
     @Test
     void getResource_callsResourceControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceControllerDelegate.getResource(any())).thenReturn(PATH_POINT_1);
-        assertThat(pathPointController.getResource(PATH_POINT_1.getPathPointId()), is(equalTo(PATH_POINT_1)));
-        verify(mockResourceControllerDelegate).getResource(PATH_POINT_1.getPathPointId());
+        when(mockResourceControllerDelegate.getResource(any(), any())).thenReturn(PATH_POINT_1);
+        assertThat(pathPointController.getResource(PATH_POINT_1.getPathPointId(), MAYBE_USER_DATA),
+                is(equalTo(PATH_POINT_1)));
+        verify(mockResourceControllerDelegate).getResource(PATH_POINT_1.getPathPointId(), MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsFalse()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<PathPoint> pathPoints = ImmutableList.of(PATH_POINT_1, PATH_POINT_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                pathPoints);
-        assertThat(pathPointController.getResourcesForParent(PATH_POINT_1.getPathId(), false), is(equalTo(pathPoints)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(PATH_POINT_1.getPathId(),
-                false);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(pathPoints);
+        assertThat(pathPointController.getResourcesForParent(PATH_POINT_1.getPathId(), false, MAYBE_USER_DATA),
+                is(equalTo(pathPoints)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(PATH_POINT_1.getPathId(), false,
+                MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsTrue()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<PathPoint> pathPoints = ImmutableList.of(PATH_POINT_1, PATH_POINT_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                pathPoints);
-        assertThat(pathPointController.getResourcesForParent(PATH_POINT_1.getPathId(), true), is(equalTo(pathPoints)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(PATH_POINT_1.getPathId(), true);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(pathPoints);
+        assertThat(pathPointController.getResourcesForParent(PATH_POINT_1.getPathId(), true, MAYBE_USER_DATA),
+                is(equalTo(pathPoints)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(PATH_POINT_1.getPathId(), true,
+                MAYBE_USER_DATA);
     }
 
     @Test
@@ -144,9 +158,10 @@ class PathPointControllerTest {
         CreatePathPointResult createPathPointResult = CreatePathPointResult.builder()
                 .pathPointId(PATH_POINT_1.getPathPointId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createPathPointResult);
-        assertThat(pathPointController.createResource(NEW_PATH_POINT_1), is(equalTo(createPathPointResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_PATH_POINT_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createPathPointResult);
+        assertThat(pathPointController.createResource(NEW_PATH_POINT_1, MAYBE_USER_DATA),
+                is(equalTo(createPathPointResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_PATH_POINT_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -154,12 +169,12 @@ class PathPointControllerTest {
         BatchCreatePathPointsResult batchCreatePathPointsResult = BatchCreatePathPointsResult.builder()
                 .pathPointIds(ImmutableList.of(PATH_POINT_1.getId(), PATH_POINT_2.getId()))
                 .build();
-        when(mockBatchResourceWithParentControllerDelegate.batchCreateResources(anyString(), any())).thenReturn(
+        when(mockBatchResourceWithParentControllerDelegate.batchCreateResources(anyString(), any(), any())).thenReturn(
                 batchCreatePathPointsResult);
-        assertThat(pathPointController.batchCreateResources(PATH_1.getPathId(), BATCH_NEW_PATH_POINTS),
+        assertThat(pathPointController.batchCreateResources(PATH_1.getPathId(), BATCH_NEW_PATH_POINTS, MAYBE_USER_DATA),
                 is(equalTo(batchCreatePathPointsResult)));
         verify(mockBatchResourceWithParentControllerDelegate).batchCreateResources(PATH_1.getPathId(),
-                BATCH_NEW_PATH_POINTS);
+                BATCH_NEW_PATH_POINTS, MAYBE_USER_DATA);
     }
 
     @Test
@@ -167,25 +182,27 @@ class PathPointControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(pathPointController.updateResource(UPDATED_PATH_POINT_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_PATH_POINT_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(pathPointController.updateResource(UPDATED_PATH_POINT_1, MAYBE_USER_DATA),
+                is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_PATH_POINT_1, MAYBE_USER_DATA);
     }
 
     @Test
     void deleteResource_callsResourceControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceControllerDelegate.deleteResource(any())).thenReturn(DELETE_RESOURCE_RESULT);
-        assertThat(pathPointController.deleteResource(PATH_POINT_1.getPathPointId()),
+        when(mockResourceControllerDelegate.deleteResource(any(), any())).thenReturn(DELETE_RESOURCE_RESULT);
+        assertThat(pathPointController.deleteResource(PATH_POINT_1.getPathPointId(), MAYBE_USER_DATA),
                 is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockResourceControllerDelegate).deleteResource(PATH_POINT_1.getPathPointId());
+        verify(mockResourceControllerDelegate).deleteResource(PATH_POINT_1.getPathPointId(), MAYBE_USER_DATA);
     }
 
     @Test
     void batchDeleteResources_callsBatchResourceWithParentControllerDelegate_whenPathIdIsSupplied()
             throws ResourceNotFoundException {
-        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(any(String.class))).thenReturn(
+        when(mockBatchResourceWithParentControllerDelegate.batchDeleteResources(any(String.class), any())).thenReturn(
                 DELETE_RESOURCE_RESULT);
-        assertThat(pathPointController.batchDeleteResources(PATH_1.getId()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(PATH_1.getId());
+        assertThat(pathPointController.batchDeleteResources(PATH_1.getId(), MAYBE_USER_DATA),
+                is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockBatchResourceWithParentControllerDelegate).batchDeleteResources(PATH_1.getId(), MAYBE_USER_DATA);
     }
 }

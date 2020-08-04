@@ -2,6 +2,7 @@ package com.climbassist.api.resource.common;
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
+import com.climbassist.api.user.UserData;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
@@ -18,7 +19,9 @@ public abstract class ResourceDao<Resource extends com.climbassist.api.resource.
     @NonNull
     protected final DynamoDBMapper dynamoDBMapper;
 
-    public Optional<Resource> getResource(@NonNull String resourceId) {
+    public Optional<Resource> getResource(@NonNull String resourceId,
+                                          @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                          @NonNull Optional<UserData> maybeUserData) {
         return Optional.ofNullable(dynamoDBMapper.load(getResourceTypeClass(), resourceId, dynamoDBMapperConfig));
     }
 

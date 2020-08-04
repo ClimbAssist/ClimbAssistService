@@ -1,4 +1,4 @@
-package com.climbassist.api.resource.common;
+package com.climbassist.api.resource.common.image;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;

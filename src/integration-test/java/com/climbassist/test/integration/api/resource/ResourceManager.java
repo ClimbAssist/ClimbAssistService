@@ -4,6 +4,7 @@ import com.climbassist.api.resource.area.Area;
 import com.climbassist.api.resource.area.CreateAreaResult;
 import com.climbassist.api.resource.area.NewArea;
 import com.climbassist.api.resource.common.ResourceWithChildren;
+import com.climbassist.api.resource.common.state.State;
 import com.climbassist.api.resource.country.Country;
 import com.climbassist.api.resource.country.CreateCountryResult;
 import com.climbassist.api.resource.country.NewCountry;
@@ -394,6 +395,7 @@ public class ResourceManager {
                                 .longitude(parking.getLongitude())
                                 .build())
                         .collect(Collectors.toSet()))
+                .state(State.IN_REVIEW.toString())
                 .build();
 
         if (depth > 0) {

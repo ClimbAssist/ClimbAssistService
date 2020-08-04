@@ -1,6 +1,7 @@
 package com.climbassist.api.resource.common;
 
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetriever;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import lombok.Builder;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collection;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -55,23 +57,23 @@ class ResourceWithChildrenControllerDelegateTest {
     @Builder
     private static final class NewResourceImpl implements NewResource<ResourceImpl> {
 
-        private String name;
+        private final String name;
     }
 
     @Builder
     @Value
-    private static final class ChildResourceImpl1 implements ResourceWithParent<ResourceImpl> {
+    private static class ChildResourceImpl1 implements ResourceWithParent<ResourceImpl> {
 
-        private String id;
-        private String parentId;
+        String id;
+        String parentId;
     }
 
     @Builder
     @Value
-    private static final class ChildResourceImpl2 implements ResourceWithParent<ResourceImpl> {
+    private static class ChildResourceImpl2 implements ResourceWithParent<ResourceImpl> {
 
-        private String id;
-        private String parentId;
+        String id;
+        String parentId;
     }
 
     private static final class ResourceNotEmptyExceptionImpl extends ResourceNotEmptyException {
@@ -108,6 +110,15 @@ class ResourceWithChildrenControllerDelegateTest {
             .childResources2(CHILD_RESOURCES_2)
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
+
     @Mock
     private ResourceWithParentDao<ChildResourceImpl1, ResourceImpl> mockChildResourceDao1;
     @Mock
@@ -146,13 +157,14 @@ class ResourceWithChildrenControllerDelegateTest {
     @Test
     void getResource_callsResourceControllerDelegateAndGetsChildrenFromRecursiveResourceRetriever_whenDepthIsGreaterThanZeroAndThereIsOneRecursiveResourceRetriever()
             throws ResourceNotFoundException {
-        when(mockResourceControllerDelegate.getResource(any())).thenReturn(RESOURCE);
-        when(mockRecursiveResourceRetriever1.getChildrenRecursively(any(), anyInt())).thenReturn(CHILD_RESOURCES_1);
+        when(mockResourceControllerDelegate.getResource(any(), any())).thenReturn(RESOURCE);
+        when(mockRecursiveResourceRetriever1.getChildrenRecursively(any(), anyInt(), any())).thenReturn(
+                CHILD_RESOURCES_1);
         when(mockRecursiveResourceRetriever1.getChildClass()).thenReturn(ChildResourceImpl1.class);
-        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH),
+        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA),
                 is(equalTo(RESOURCE_WITH_CHILDREN_1)));
-        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId());
-        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE.getId(), DEPTH);
+        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA);
         verify(mockRecursiveResourceRetriever1).getChildClass();
     }
 
@@ -167,27 +179,31 @@ class ResourceWithChildrenControllerDelegateTest {
                                 ImmutableSet.of(mockRecursiveResourceRetriever1, mockRecursiveResourceRetriever2))
                         .resourceControllerDelegate(mockResourceControllerDelegate)
                         .build();
-        when(mockResourceControllerDelegate.getResource(any())).thenReturn(RESOURCE);
-        when(mockRecursiveResourceRetriever1.getChildrenRecursively(any(), anyInt())).thenReturn(CHILD_RESOURCES_1);
+        when(mockResourceControllerDelegate.getResource(any(), any())).thenReturn(RESOURCE);
+        when(mockRecursiveResourceRetriever1.getChildrenRecursively(any(), anyInt(), any())).thenReturn(
+                CHILD_RESOURCES_1);
         when(mockRecursiveResourceRetriever1.getChildClass()).thenReturn(ChildResourceImpl1.class);
-        when(mockRecursiveResourceRetriever2.getChildrenRecursively(any(), anyInt())).thenReturn(CHILD_RESOURCES_2);
+        when(mockRecursiveResourceRetriever2.getChildrenRecursively(any(), anyInt(), any())).thenReturn(
+                CHILD_RESOURCES_2);
         when(mockRecursiveResourceRetriever2.getChildClass()).thenReturn(ChildResourceImpl2.class);
-        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH),
+        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA),
                 is(equalTo(RESOURCE_WITH_CHILDREN_2)));
-        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId());
-        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE.getId(), DEPTH);
+        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA);
         verify(mockRecursiveResourceRetriever1).getChildClass();
-        verify(mockRecursiveResourceRetriever2).getChildrenRecursively(RESOURCE.getId(), DEPTH);
+        verify(mockRecursiveResourceRetriever2).getChildrenRecursively(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA);
         verify(mockRecursiveResourceRetriever2).getChildClass();
     }
 
     @Test
     void getResource_returnsResourceWithNullChildren_whenResourceHasNoChildren() throws ResourceNotFoundException {
-        when(mockResourceControllerDelegate.getResource(any())).thenReturn(RESOURCE);
-        when(mockRecursiveResourceRetriever1.getChildrenRecursively(any(), anyInt())).thenReturn(ImmutableSet.of());
-        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH), is(equalTo(RESOURCE)));
-        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId());
-        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE.getId(), DEPTH);
+        when(mockResourceControllerDelegate.getResource(any(), any())).thenReturn(RESOURCE);
+        when(mockRecursiveResourceRetriever1.getChildrenRecursively(any(), anyInt(), any())).thenReturn(
+                ImmutableSet.of());
+        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA),
+                is(equalTo(RESOURCE)));
+        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever1).getChildrenRecursively(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA);
     }
 
     @Test
@@ -200,23 +216,25 @@ class ResourceWithChildrenControllerDelegateTest {
                         .recursiveResourceRetrievers(ImmutableSet.of())
                         .resourceControllerDelegate(mockResourceControllerDelegate)
                         .build();
-        when(mockResourceControllerDelegate.getResource(any())).thenReturn(RESOURCE);
-        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH), is(equalTo(RESOURCE)));
-        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId());
+        when(mockResourceControllerDelegate.getResource(any(), any())).thenReturn(RESOURCE);
+        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), DEPTH, MAYBE_USER_DATA),
+                is(equalTo(RESOURCE)));
+        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
     }
 
     @Test
     void getResource_throwsIllegalArgumentException_whenDepthIsLessThanZero() {
         assertThrows(IllegalArgumentException.class,
-                () -> resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), -5));
+                () -> resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), -5, MAYBE_USER_DATA));
     }
 
     @Test
     void getResource_returnsResourceWithoutChildren_whenDepthIsZero() throws ResourceNotFoundException {
-        when(mockResourceControllerDelegate.getResource(any())).thenReturn(RESOURCE);
-        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), 0), is(equalTo(RESOURCE)));
-        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId());
-        verify(mockRecursiveResourceRetriever1, never()).getChildrenRecursively(any(), anyInt());
+        when(mockResourceControllerDelegate.getResource(any(), any())).thenReturn(RESOURCE);
+        assertThat(resourceWithChildrenControllerDelegate.getResource(RESOURCE.getId(), 0, MAYBE_USER_DATA),
+                is(equalTo(RESOURCE)));
+        verify(mockResourceControllerDelegate).getResource(RESOURCE.getId(), MAYBE_USER_DATA);
+        verify(mockRecursiveResourceRetriever1, never()).getChildrenRecursively(any(), anyInt(), any());
     }
 
     @Test
@@ -225,12 +243,12 @@ class ResourceWithChildrenControllerDelegateTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockChildResourceDao1.getResources(any())).thenReturn(ImmutableSet.of());
-        when(mockResourceControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId()),
+        when(mockChildResourceDao1.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        when(mockResourceControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId(), MAYBE_USER_DATA),
                 is(equalTo(deleteResourceResult)));
-        verify(mockChildResourceDao1).getResources(RESOURCE.getId());
-        verify(mockResourceControllerDelegate).deleteResource(RESOURCE.getId());
+        verify(mockChildResourceDao1).getResources(RESOURCE.getId(), MAYBE_USER_DATA);
+        verify(mockResourceControllerDelegate).deleteResource(RESOURCE.getId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -247,14 +265,14 @@ class ResourceWithChildrenControllerDelegateTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockChildResourceDao1.getResources(any())).thenReturn(ImmutableSet.of());
-        when(mockChildResourceDao2.getResources(any())).thenReturn(ImmutableSet.of());
-        when(mockResourceControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId()),
+        when(mockChildResourceDao1.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        when(mockChildResourceDao2.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        when(mockResourceControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId(), MAYBE_USER_DATA),
                 is(equalTo(deleteResourceResult)));
-        verify(mockChildResourceDao1).getResources(RESOURCE.getId());
-        verify(mockChildResourceDao2).getResources(RESOURCE.getId());
-        verify(mockResourceControllerDelegate).deleteResource(RESOURCE.getId());
+        verify(mockChildResourceDao1).getResources(RESOURCE.getId(), MAYBE_USER_DATA);
+        verify(mockChildResourceDao2).getResources(RESOURCE.getId(), MAYBE_USER_DATA);
+        verify(mockResourceControllerDelegate).deleteResource(RESOURCE.getId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -271,10 +289,10 @@ class ResourceWithChildrenControllerDelegateTest {
         DeleteResourceResult deleteResourceResult = DeleteResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceControllerDelegate.deleteResource(any())).thenReturn(deleteResourceResult);
-        assertThat(resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId()),
+        when(mockResourceControllerDelegate.deleteResource(any(), any())).thenReturn(deleteResourceResult);
+        assertThat(resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId(), MAYBE_USER_DATA),
                 is(equalTo(deleteResourceResult)));
-        verify(mockResourceControllerDelegate).deleteResource(RESOURCE.getId());
+        verify(mockResourceControllerDelegate).deleteResource(RESOURCE.getId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -284,12 +302,12 @@ class ResourceWithChildrenControllerDelegateTest {
                 .parentId(RESOURCE.getId())
                 .build();
         ResourceNotEmptyExceptionImpl resourceNotEmptyException = new ResourceNotEmptyExceptionImpl(RESOURCE.getId());
-        when(mockChildResourceDao1.getResources(any())).thenReturn(ImmutableSet.of(childResource));
+        when(mockChildResourceDao1.getResources(any(), any())).thenReturn(ImmutableSet.of(childResource));
         when(mockResourceNotEmptyExceptionFactory.create(any())).thenReturn(resourceNotEmptyException);
         assertThrows(ResourceNotEmptyExceptionImpl.class,
-                () -> resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId()));
+                () -> resourceWithChildrenControllerDelegate.deleteResource(RESOURCE.getId(), MAYBE_USER_DATA));
         //noinspection ThrowableNotThrown
         verify(mockResourceNotEmptyExceptionFactory).create(RESOURCE.getId());
-        verify(mockResourceControllerDelegate, never()).deleteResource(any());
+        verify(mockResourceControllerDelegate, never()).deleteResource(any(), any());
     }
 }

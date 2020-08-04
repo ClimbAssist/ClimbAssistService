@@ -2,7 +2,7 @@ package com.climbassist.api.resource.route;
 
 import com.climbassist.api.resource.common.ResourceFactory;
 import com.climbassist.api.resource.common.ResourceIdGenerator;
-import com.climbassist.api.resource.common.ResourceWithImageFactory;
+import com.climbassist.api.resource.common.image.ResourceWithImageFactory;
 import lombok.Builder;
 import lombok.NonNull;
 

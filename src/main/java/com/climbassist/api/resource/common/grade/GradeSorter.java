@@ -1,4 +1,4 @@
-package com.climbassist.api.resource.grade;
+package com.climbassist.api.resource.common.grade;
 
 import com.climbassist.api.resource.pitch.Pitch;
 import com.climbassist.api.resource.route.Route;

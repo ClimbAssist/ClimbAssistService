@@ -5,6 +5,7 @@ import com.climbassist.api.resource.common.ResourceWithParent;
 import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableListBuilder;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParent;
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
@@ -18,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -79,6 +81,14 @@ class RecursiveOrderableResourceWithNoChildrenRetrieverTest {
     private static final List<ResourceImpl> RESOURCE_LIST = ImmutableList.of(RESOURCE_1, RESOURCE_2, RESOURCE_3);
     private static final Set<ResourceImpl> RESOURCE_SET = ImmutableSet.<ResourceImpl>builder().addAll(RESOURCE_LIST)
             .build();
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentDao<ResourceImpl, ParentResourceImpl> mockResourceDao;
@@ -110,14 +120,14 @@ class RecursiveOrderableResourceWithNoChildrenRetrieverTest {
     void getChildrenRecursively_throwsIllegalArgumentException_whenDepthIsLessThanZero() {
         assertThrows(IllegalArgumentException.class,
                 () -> recursiveOrderableResourceWithNoChildrenRetriever.getChildrenRecursively(RESOURCE_1.getParentId(),
-                        -5));
+                        -5, MAYBE_USER_DATA));
     }
 
     @Test
     void getChildrenRecursively_throwsIllegalArgumentException_whenDepthIsZero() {
         assertThrows(IllegalArgumentException.class,
                 () -> recursiveOrderableResourceWithNoChildrenRetriever.getChildrenRecursively(RESOURCE_1.getParentId(),
-                        0));
+                        0, MAYBE_USER_DATA));
     }
 
     @Test
@@ -131,11 +141,12 @@ class RecursiveOrderableResourceWithNoChildrenRetrieverTest {
     }
 
     private void runSuccessTest(int depth) {
-        when(mockResourceDao.getResources(any())).thenReturn(RESOURCE_SET);
+        when(mockResourceDao.getResources(any(), any())).thenReturn(RESOURCE_SET);
         when(mockOrderableListBuilder.buildList(any())).thenReturn(RESOURCE_LIST);
-        assertThat(recursiveOrderableResourceWithNoChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(),
-                depth), is(equalTo(RESOURCE_LIST)));
-        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId());
+        assertThat(
+                recursiveOrderableResourceWithNoChildrenRetriever.getChildrenRecursively(PARENT_RESOURCE.getId(), depth,
+                        MAYBE_USER_DATA), is(equalTo(RESOURCE_LIST)));
+        verify(mockResourceDao).getResources(PARENT_RESOURCE.getId(), MAYBE_USER_DATA);
         verify(mockOrderableListBuilder).buildList(RESOURCE_SET);
     }
 }

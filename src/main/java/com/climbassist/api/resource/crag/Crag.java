@@ -6,15 +6,17 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIndexHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
 import com.climbassist.api.resource.common.InvalidChildException;
-import com.climbassist.api.resource.common.ResourceWithImage;
 import com.climbassist.api.resource.common.ResourceWithParent;
 import com.climbassist.api.resource.common.ResourceWithParentAndChildren;
 import com.climbassist.api.resource.common.ValidDescription;
 import com.climbassist.api.resource.common.ValidName;
+import com.climbassist.api.resource.common.image.ResourceWithImage;
+import com.climbassist.api.resource.common.state.ResourceWithState;
 import com.climbassist.api.resource.path.Path;
 import com.climbassist.api.resource.subarea.SubArea;
 import com.climbassist.api.resource.subarea.ValidSubAreaId;
 import com.climbassist.api.resource.wall.Wall;
+import com.climbassist.common.OneOf;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.collect.ImmutableList;
@@ -26,6 +28,7 @@ import lombok.NoArgsConstructor;
 
 import javax.annotation.Nullable;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +40,7 @@ import java.util.Set;
 @DynamoDBTable(tableName = "") // this is not used because we always use a TableNameOverride in the DAO
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NoArgsConstructor
-public class Crag implements ResourceWithParentAndChildren<Crag, SubArea>, ResourceWithImage {
+public class Crag implements ResourceWithParentAndChildren<Crag, SubArea>, ResourceWithImage, ResourceWithState {
 
     public static final String GLOBAL_SECONDARY_INDEX_NAME = "SubAreaIndex";
 
@@ -74,6 +77,10 @@ public class Crag implements ResourceWithParentAndChildren<Crag, SubArea>, Resou
     @Nullable
     @Size(min = 1, max = 10, message = "Parking must contain between 1 and 10 elements.")
     private Set<Parking> parking;
+
+    @NotNull(message = "State must be present.")
+    @OneOf(values = {"IN_REVIEW", "PUBLIC"}, message = "State must be one of IN_REVIEW or PUBLIC.")
+    private String state;
 
     @DynamoDBIgnore
     private List<Wall> walls;

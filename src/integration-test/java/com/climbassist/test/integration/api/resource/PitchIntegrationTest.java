@@ -75,7 +75,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getPitch_returnsPitchNotFoundException_whenPitchDoesNotExist() {
-        ApiResponse<Pitch> apiResponse = climbAssistClient.getPitch("does-not-exist");
+        ApiResponse<Pitch> apiResponse = climbAssistClient.getPitch("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -106,7 +106,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void listPitches_returnsRouteNotFoundException_whenRouteDoesNotExist() {
-        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches("does-not-exist");
+        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -114,7 +114,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listPitches_returnsEmptyList_whenThereAreNoPitches() {
         testUserManager.makeUserAdministrator(username);
         Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
-        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId());
+        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
     }
@@ -123,7 +123,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listPitches_returnsSinglePitch_whenThereIsOnlyOnePitch() {
         testUserManager.makeUserAdministrator(username);
         Pitch Pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
-        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(Pitch.getRouteId());
+        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(Pitch.getRouteId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableList.of(Pitch))));
     }
@@ -133,7 +133,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Pitch> Pitches = resourceManager.createPitches(route.getRouteId(), cookies);
-        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId());
+        ApiResponse<List<Pitch>> apiResponse = climbAssistClient.listPitches(route.getRouteId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(Pitches.toArray()));
     }
@@ -205,10 +205,10 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Pitch expectedPitch = resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
-        Pitch actualPitch = climbAssistClient.getPitch(expectedPitch.getPitchId())
+        Pitch actualPitch = climbAssistClient.getPitch(expectedPitch.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch, is(equalTo(expectedPitch)));
-        Route updatedRoute = climbAssistClient.getRoute(route.getRouteId())
+        Route updatedRoute = climbAssistClient.getRoute(route.getRouteId(), cookies)
                 .getData();
         assertThat(updatedRoute.getGrade(), is(equalTo(actualPitch.getGrade())));
         assertThat(updatedRoute.getGradeModifier(), is(equalTo(actualPitch.getGradeModifier())));
@@ -237,10 +237,10 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
                 .getData()
                 .getPitchId());
         Pitch expectedPitch = resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
-        Pitch actualPitch = climbAssistClient.getPitch(expectedPitch.getPitchId())
+        Pitch actualPitch = climbAssistClient.getPitch(expectedPitch.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch, is(equalTo(expectedPitch)));
-        Route updatedRoute = climbAssistClient.getRoute(route.getRouteId())
+        Route updatedRoute = climbAssistClient.getRoute(route.getRouteId(), cookies)
                 .getData();
         assertThat(updatedRoute.getGrade(), is(equalTo(actualPitch.getGrade())));
         assertThat(updatedRoute.getGradeModifier(), is(equalTo(actualPitch.getGradeModifier())));
@@ -270,10 +270,10 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
                 .getData()
                 .getPitchId());
         Pitch expectedPitch = resourceManager.createPitch(route.getRouteId(), cookies, true, 0);
-        Pitch actualPitch = climbAssistClient.getPitch(expectedPitch.getPitchId())
+        Pitch actualPitch = climbAssistClient.getPitch(expectedPitch.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch, is(equalTo(expectedPitch)));
-        Route updatedRoute = climbAssistClient.getRoute(route.getRouteId())
+        Route updatedRoute = climbAssistClient.getRoute(route.getRouteId(), cookies)
                 .getData();
         assertThat(updatedRoute.getGrade(), is(equalTo(higherPitch.getGrade())));
         assertThat(updatedRoute.getGradeModifier(), is(equalTo(higherPitch.getGradeModifier())));
@@ -287,9 +287,9 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         Pitch expectedPitch2 = resourceManager.createPitch(route.getRouteId(), cookies, false, 0);
         Pitch expectedPitch1 = resourceManager.createPitch(route.getRouteId(), cookies, true,
                 expectedPitch2.getPitchId(), 0);
-        Pitch actualPitch1 = climbAssistClient.getPitch(expectedPitch1.getPitchId())
+        Pitch actualPitch1 = climbAssistClient.getPitch(expectedPitch1.getPitchId(), cookies)
                 .getData();
-        Pitch actualPitch2 = climbAssistClient.getPitch(expectedPitch2.getPitchId())
+        Pitch actualPitch2 = climbAssistClient.getPitch(expectedPitch2.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch1, is(equalTo(expectedPitch1)));
         assertThat(actualPitch2, is(equalTo(expectedPitch2)));
@@ -434,7 +434,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId())
+        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch, is(equalTo(updatedPitch)));
         assertRouteGradesMatchPitch(newPitch);
@@ -481,7 +481,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId())
+        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch, is(equalTo(updatedPitch)));
         assertRouteGradesMatchPitch(updatedPitch);
@@ -531,11 +531,11 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId())
+        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch, is(equalTo(updatedPitch)));
         assertRouteGradesMatchPitch(updatedPitch);
-        Route updatedNewRoute = climbAssistClient.getRoute(newPitch.getRouteId())
+        Route updatedNewRoute = climbAssistClient.getRoute(newPitch.getRouteId(), cookies)
                 .getData();
         assertThat(updatedNewRoute.getGrade(), is(equalTo(newPitch.getGrade())));
         assertThat(updatedNewRoute.getGradeModifier(), is(equalTo(newPitch.getGradeModifier())));
@@ -570,9 +570,9 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Pitch> getPitchResult = climbAssistClient.getPitch(pitch.getPitchId());
+        ApiResponse<Pitch> getPitchResult = climbAssistClient.getPitch(pitch.getPitchId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getPitchResult);
-        Route route = climbAssistClient.getRoute(pitch.getRouteId())
+        Route route = climbAssistClient.getRoute(pitch.getRouteId(), cookies)
                 .getData();
         assertThat(route.getGrade(), is(nullValue()));
         assertThat(route.getGradeModifier(), is(nullValue()));
@@ -604,7 +604,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Pitch> getPitchResult = climbAssistClient.getPitch(pitch.getPitchId());
+        ApiResponse<Pitch> getPitchResult = climbAssistClient.getPitch(pitch.getPitchId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getPitchResult);
         assertRouteGradesMatchPitch(newPitch);
     }
@@ -623,7 +623,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         Pitch pitch = ResourceManager.getPitch(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(pitch, Pitch.class, maybeRequestDepth.orElse(0));
         ApiResponse<Pitch> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getPitch(pitch.getPitchId(),
-                maybeRequestDepth.get()) : climbAssistClient.getPitch(pitch.getPitchId());
+                maybeRequestDepth.get(), cookies) : climbAssistClient.getPitch(pitch.getPitchId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(pitch)));
     }
@@ -652,14 +652,14 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId())
+        Pitch actualPitch = climbAssistClient.getPitch(originalPitch.getPitchId(), cookies)
                 .getData();
         assertThat(actualPitch, is(equalTo(updatedPitch)));
         assertRouteGradesMatchPitch(updatedPitch);
     }
 
     private void assertRouteGradesMatchPitch(Pitch pitch) {
-        Route updatedRoute = climbAssistClient.getRoute(pitch.getRouteId())
+        Route updatedRoute = climbAssistClient.getRoute(pitch.getRouteId(), cookies)
                 .getData();
         assertThat(updatedRoute.getGrade(), is(equalTo(pitch.getGrade())));
         assertThat(updatedRoute.getGradeModifier(), is(equalTo(pitch.getGradeModifier())));
@@ -667,7 +667,7 @@ public class PitchIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     private void assertRouteGradesMatchPitch(NewPitch newPitch) {
-        Route updatedRoute = climbAssistClient.getRoute(newPitch.getRouteId())
+        Route updatedRoute = climbAssistClient.getRoute(newPitch.getRouteId(), cookies)
                 .getData();
         assertThat(updatedRoute.getGrade(), is(equalTo(newPitch.getGrade())));
         assertThat(updatedRoute.getGradeModifier(), is(equalTo(newPitch.getGradeModifier())));

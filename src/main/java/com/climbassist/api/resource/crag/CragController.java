@@ -6,15 +6,17 @@ import com.climbassist.api.resource.common.DeleteResourceResult;
 import com.climbassist.api.resource.common.ResourceNotEmptyException;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
-import com.climbassist.api.resource.common.ResourceWithImageControllerDelegate;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
-import com.climbassist.api.resource.common.UploadImageResult;
 import com.climbassist.api.resource.common.ValidDepth;
+import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
+import com.climbassist.api.resource.common.image.UploadImageResult;
 import com.climbassist.api.resource.path.PathsDao;
 import com.climbassist.api.resource.subarea.SubArea;
 import com.climbassist.api.resource.subarea.ValidSubAreaId;
 import com.climbassist.api.resource.wall.WallsDao;
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.authorization.AdministratorAuthorizationHandler;
 import com.climbassist.api.user.authorization.Authorization;
 import com.climbassist.common.s3.S3Proxy;
@@ -29,10 +31,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 @Builder
@@ -72,43 +77,53 @@ public class CragController {
     @Metrics(api = "GetCrag")
     @RequestMapping(path = "/v1/crags/{cragId}", method = RequestMethod.GET)
     public Crag getResource(@ValidCragId @NonNull @PathVariable String cragId,
-                            @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth)
-            throws ResourceNotFoundException {
-        return resourceWithChildrenControllerDelegate.getResource(cragId, depth);
+                            @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth,
+                            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                               @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+        return resourceWithChildrenControllerDelegate.getResource(cragId, depth, maybeUserData);
     }
 
     @Metrics(api = "ListCrags")
     @RequestMapping(path = "/v1/sub-areas/{subAreaId}/crags", method = RequestMethod.GET)
-    public Set<Crag> getResourcesForParent(@ValidSubAreaId @NonNull @PathVariable String subAreaId)
+    public Set<Crag> getResourcesForParent(@ValidSubAreaId @NonNull @PathVariable String subAreaId,
+                                           @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return resourceWithParentControllerDelegate.getResourcesForParent(subAreaId);
+        return resourceWithParentControllerDelegate.getResourcesForParent(subAreaId, maybeUserData);
     }
 
     @Metrics(api = "CreateCrag")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/crags", method = RequestMethod.PUT)
-    public CreateResourceResult<Crag> createResource(@NonNull @Valid @RequestBody NewCrag newCrag)
+    public CreateResourceResult<Crag> createResource(@NonNull @Valid @RequestBody NewCrag newCrag, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                               @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return resourceWithParentControllerDelegate.createResource(newCrag);
+        return resourceWithParentControllerDelegate.createResource(newCrag, maybeUserData);
     }
 
     @Metrics(api = "UpdateCrag")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/crags", method = RequestMethod.POST)
-    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Crag crag)
+    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Crag crag,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        return resourceWithParentControllerDelegate.updateResource(crag);
+        return resourceWithParentControllerDelegate.updateResource(crag, maybeUserData);
     }
 
     @Metrics(api = "DeleteCrag")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/crags/{cragId}", method = RequestMethod.DELETE)
-    public DeleteResourceResult deleteResource(@NonNull @ValidCragId @PathVariable String cragId)
+    public DeleteResourceResult deleteResource(@NonNull @ValidCragId @PathVariable String cragId,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException, ResourceNotEmptyException {
-        Crag crag = cragsDao.getResource(cragId)
+        Crag crag = cragsDao.getResource(cragId, maybeUserData)
                 .orElseThrow(() -> cragNotFoundExceptionFactory.create(cragId));
-        if (!wallsDao.getResources(cragId)
-                .isEmpty() || !pathsDao.getResources(cragId)
+        if (!wallsDao.getResources(cragId, maybeUserData)
+                .isEmpty() || !pathsDao.getResources(cragId, maybeUserData)
                 .isEmpty()) {
             throw cragNotEmptyExceptionFactory.create(cragId);
         }
@@ -143,10 +158,12 @@ public class CragController {
                                            @NonNull @RequestParam(HIGH_RESOLUTION_MODEL_NAME)
                                                    MultipartFile highResolutionModel,
                                            @NonNull @RequestParam(LOW_RESOLUTION_MODEL_NAME)
-                                                   MultipartFile lowResolutionModel)
+                                                   MultipartFile lowResolutionModel,
+                                           @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData)
             throws IOException, CragNotFoundException {
 
-        Crag crag = cragsDao.getResource(cragId)
+        Crag crag = cragsDao.getResource(cragId, maybeUserData)
                 .orElseThrow(() -> new CragNotFoundException(cragId));
 
         String highResolutionModelLocation = s3Proxy.putPublicObject(modelsBucketName,
@@ -177,8 +194,10 @@ public class CragController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/crags/{cragId}/photo", method = RequestMethod.POST)
     public UploadImageResult uploadImage(@ValidCragId @NonNull @PathVariable String cragId,
-                                         @NonNull @RequestParam(IMAGE_NAME) MultipartFile image)
+                                         @NonNull @RequestParam(IMAGE_NAME) MultipartFile image,
+                                         @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                           @NonNull Optional<UserData> maybeUserData)
             throws IOException, ResourceNotFoundException {
-        return resourceWithImageControllerDelegate.uploadImage(cragId, image);
+        return resourceWithImageControllerDelegate.uploadImage(cragId, image, maybeUserData);
     }
 }

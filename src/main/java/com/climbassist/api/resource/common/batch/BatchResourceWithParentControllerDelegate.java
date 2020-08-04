@@ -8,11 +8,13 @@ import com.climbassist.api.resource.common.ResourceNotFoundExceptionFactory;
 import com.climbassist.api.resource.common.ResourceWithChildren;
 import com.climbassist.api.resource.common.ResourceWithParentDao;
 import com.climbassist.api.resource.common.ordering.OrderableResourceWithParent;
+import com.climbassist.api.user.UserData;
 import lombok.Builder;
 import lombok.NonNull;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 
 @Builder
 public class BatchResourceWithParentControllerDelegate<Resource extends OrderableResourceWithParent<Resource,
@@ -36,9 +38,12 @@ public class BatchResourceWithParentControllerDelegate<Resource extends Orderabl
     private final BatchCreateResourceResultFactory<Resource, ParentResource> batchCreateResourceResultFactory;
 
     public BatchCreateResourcesResult<Resource, ParentResource> batchCreateResources(@NonNull String parentResourceId,
-                                                                                     @NonNull BatchNewResources<Resource, ParentResource, BatchNewResource> batchNewResources)
+                                                                                     @NonNull BatchNewResources<Resource, ParentResource, BatchNewResource> batchNewResources,
+                                                                                     @SuppressWarnings(
+                                                                                             "OptionalUsedAsFieldOrParameterType")
+                                                                                             Optional<UserData> maybeUserData)
             throws ResourceNotFoundException {
-        parentResourceDao.getResource(parentResourceId)
+        parentResourceDao.getResource(parentResourceId, maybeUserData)
                 .orElseThrow(() -> parentResourceNotFoundExceptionFactory.create(parentResourceId));
 
         List<String> resourceIds = new LinkedList<>();
@@ -63,10 +68,13 @@ public class BatchResourceWithParentControllerDelegate<Resource extends Orderabl
         return batchCreateResourceResultFactory.create(resourceIds);
     }
 
-    public DeleteResourceResult batchDeleteResources(@NonNull String parentId) throws ResourceNotFoundException {
-        parentResourceDao.getResource(parentId)
+    public DeleteResourceResult batchDeleteResources(@NonNull String parentId,
+                                                     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                                             Optional<UserData> maybeUserData)
+            throws ResourceNotFoundException {
+        parentResourceDao.getResource(parentId, maybeUserData)
                 .orElseThrow(() -> parentResourceNotFoundExceptionFactory.create(parentId));
-        resourceDao.getResources(parentId)
+        resourceDao.getResources(parentId, maybeUserData)
                 .forEach(resource -> resourceDao.deleteResource(resource.getId()));
         return DeleteResourceResult.builder()
                 .successful(true)

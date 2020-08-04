@@ -5,7 +5,8 @@ import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.climbassist.api.resource.common.DeleteResourceResult;
 import com.climbassist.api.resource.common.UpdateResourceResult;
-import com.climbassist.api.resource.common.UploadImageResult;
+import com.climbassist.api.resource.common.image.UploadImageResult;
+import com.climbassist.api.resource.common.state.State;
 import com.climbassist.api.resource.country.Country;
 import com.climbassist.api.resource.crag.Azimuth;
 import com.climbassist.api.resource.crag.Crag;
@@ -98,7 +99,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getCrag_returnsCragNotFoundException_whenCragDoesNotExist() {
-        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag("does-not-exist");
+        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -128,7 +129,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         List<Wall> walls = resourceManager.createWalls(crag.getCragId(), cookies);
         crag.setWalls(walls);
-        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), 1);
+        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), 1, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(crag)));
     }
@@ -144,8 +145,58 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
+    public void getCrag_returnsCrag_whenCragIsInReviewAndUserIsAdministrator() {
+        testUserManager.makeUserAdministrator(username);
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), cookies);
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData(), is(equalTo(crag)));
+    }
+
+    @Test
+    public void getCrag_returnsCragNotFoundException_whenCragIsInReviewAndUserIsNotAdministrator() {
+        testUserManager.makeUserAdministrator(username);
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        testUserManager.makeUserNotAdministrator(username);
+        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), cookies);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
+    }
+
+    @Test
+    public void getCrag_returnsCragNotFoundException_whenCragIsInReviewAndUserIsNotSignedIn() {
+        testUserManager.makeUserAdministrator(username);
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        testUserManager.makeUserNotAdministrator(username);
+        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), ImmutableSet.of());
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
+    }
+
+    @Test
+    public void getCrag_returnsCrag_whenCragIsPublicAndUserIsNotAdministrator() {
+        testUserManager.makeUserAdministrator(username);
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        crag.setState(State.PUBLIC.toString());
+        climbAssistClient.updateCrag(crag, cookies);
+        testUserManager.makeUserNotAdministrator(username);
+        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), cookies);
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData(), is(equalTo(crag)));
+    }
+
+    @Test
+    public void getCrag_returnsCrag_whenCragIsPublicAndUserIsNotSignedIn() {
+        testUserManager.makeUserAdministrator(username);
+        Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        crag.setState(State.PUBLIC.toString());
+        climbAssistClient.updateCrag(crag, cookies);
+        ApiResponse<Crag> apiResponse = climbAssistClient.getCrag(crag.getCragId(), ImmutableSet.of());
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData(), is(equalTo(crag)));
+    }
+
+    @Test
     public void listCrags_returnsSubAreaNotFoundException_whenSubAreaDoesNotExist() {
-        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags("does-not-exist");
+        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -153,7 +204,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listCrags_returnsEmptyList_whenThereAreNoCrags() {
         testUserManager.makeUserAdministrator(username);
         SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
-        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId());
+        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
     }
@@ -162,7 +213,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listCrags_returnsSingleCrag_whenThereIsOnlyOneCrag() {
         testUserManager.makeUserAdministrator(username);
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
-        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(crag.getSubAreaId());
+        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(crag.getSubAreaId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(crag))));
     }
@@ -173,9 +224,66 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
         SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Crag crag1 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
         Crag crag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
-        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId());
+        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(crag1, crag2))));
+    }
+
+    @Test
+    public void listCrags_listsAllCrags_whenSomeCragsAreInReviewAndUserIsAdministrator() {
+        testUserManager.makeUserAdministrator(username);
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        Crag crag1 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        Crag crag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        crag2.setState(State.PUBLIC.toString());
+        climbAssistClient.updateCrag(crag2, cookies);
+        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId(), cookies);
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(crag1, crag2))));
+    }
+
+    @Test
+    public void listCrags_listsOnlyPublicCrags_whenSomeCragsAreInReviewAndUserIsNotAdministrator() {
+        testUserManager.makeUserAdministrator(username);
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        Crag crag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        crag2.setState(State.PUBLIC.toString());
+        climbAssistClient.updateCrag(crag2, cookies);
+        testUserManager.makeUserNotAdministrator(username);
+        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId(), cookies);
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(crag2))));
+    }
+
+    @Test
+    public void listCrags_listsOnlyPublicCrags_whenSomeCragsAreInReviewAndUserIsNotSignedIn() {
+        testUserManager.makeUserAdministrator(username);
+        SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
+        resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        Crag crag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        crag2.setState(State.PUBLIC.toString());
+        climbAssistClient.updateCrag(crag2, cookies);
+        ApiResponse<Set<Crag>> apiResponse = climbAssistClient.listCrags(subArea.getSubAreaId(), ImmutableSet.of());
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData(), is(equalTo(ImmutableSet.of(crag2))));
+    }
+
+    @Test
+    public void getCountry_listsOnlyPublicCrags_whenSomeCragsAndInReviewAndUserIsNotSignedIn() {
+        testUserManager.makeUserAdministrator(username);
+        Country country = resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1);
+        SubArea subArea = ResourceManager.getSubArea(country);
+        resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        Crag crag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
+        crag2.setState(State.PUBLIC.toString());
+        climbAssistClient.updateCrag(crag2, cookies);
+        ApiResponse<Country> apiResponse = climbAssistClient.getCountry(country.getCountryId(), RESOURCE_DEPTH,
+                ImmutableSet.of());
+        ExceptionUtils.assertNoException(apiResponse);
+        Set<Crag> actualCrags = ResourceManager.getSubArea(apiResponse.getData())
+                .getCrags();
+        assertThat(actualCrags, is(equalTo(ImmutableSet.of(crag2))));
     }
 
     @Test
@@ -206,7 +314,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Crag expectedCrag = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
-        Crag actualCrag = climbAssistClient.getCrag(expectedCrag.getCragId())
+        Crag actualCrag = climbAssistClient.getCrag(expectedCrag.getCragId(), cookies)
                 .getData();
         assertThat(actualCrag, is(equalTo(expectedCrag)));
     }
@@ -217,9 +325,9 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
         SubArea subArea = ResourceManager.getSubArea(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Crag expectedCrag1 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
         Crag expectedCrag2 = resourceManager.createCrag(subArea.getSubAreaId(), cookies, 0);
-        Crag actualCrag1 = climbAssistClient.getCrag(expectedCrag1.getCragId())
+        Crag actualCrag1 = climbAssistClient.getCrag(expectedCrag1.getCragId(), cookies)
                 .getData();
-        Crag actualCrag2 = climbAssistClient.getCrag(expectedCrag2.getCragId())
+        Crag actualCrag2 = climbAssistClient.getCrag(expectedCrag2.getCragId(), cookies)
                 .getData();
         assertThat(actualCrag1, is(equalTo(expectedCrag1)));
         assertThat(actualCrag2, is(equalTo(expectedCrag2)));
@@ -269,6 +377,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
                 .description(crag.getDescription())
                 .location(crag.getLocation())
                 .parking(crag.getParking())
+                .state(State.IN_REVIEW.toString())
                 .build(), cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
@@ -294,6 +403,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
                         .latitude(2.0)
                         .longitude(2.0)
                         .build()))
+                .state(State.IN_REVIEW.toString())
                 .build(), cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
@@ -322,12 +432,13 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
                         .longitude(2.0)
                         .zoom(2.0)
                         .build())
+                .state(State.PUBLIC.toString())
                 .build();
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateCrag(updatedCrag, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Crag actualCrag = climbAssistClient.getCrag(originalCrag.getCragId())
+        Crag actualCrag = climbAssistClient.getCrag(originalCrag.getCragId(), cookies)
                 .getData();
         assertThat(actualCrag, is(equalTo(updatedCrag)));
     }
@@ -368,12 +479,13 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
                         .scale(1.0)
                         .build())
                 .imageLocation("integ")
+                .state(State.PUBLIC.toString())
                 .build();
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateCrag(updatedCrag, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Crag actualCrag = climbAssistClient.getCrag(originalCrag.getCragId())
+        Crag actualCrag = climbAssistClient.getCrag(originalCrag.getCragId(), cookies)
                 .getData();
         assertThat(actualCrag, is(equalTo(updatedCrag)));
     }
@@ -414,6 +526,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
                         .scale(1.0)
                         .build())
                 .imageLocation("integ")
+                .state(State.PUBLIC.toString())
                 .build();
         climbAssistClient.updateCrag(updatedCragWithOptionalParameters, cookies);
 
@@ -436,13 +549,14 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
                         .longitude(2.0)
                         .zoom(2.0)
                         .build())
+                .state(State.PUBLIC.toString())
                 .build();
         ApiResponse<UpdateResourceResult> apiResponse = climbAssistClient.updateCrag(
                 updatedCragWithoutOptionalParameters, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Crag actualCrag = climbAssistClient.getCrag(originalCrag.getCragId())
+        Crag actualCrag = climbAssistClient.getCrag(originalCrag.getCragId(), cookies)
                 .getData();
         assertThat(actualCrag, is(equalTo(updatedCragWithoutOptionalParameters)));
     }
@@ -549,7 +663,7 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Crag> getCragResult = climbAssistClient.getCrag(crag.getCragId());
+        ApiResponse<Crag> getCragResult = climbAssistClient.getCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getCragResult);
     }
 
@@ -585,13 +699,13 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
         uploadModels(crag.getCragId(), HIGH_RESOLUTION_MODEL_1, LOW_RESOLUTION_MODEL_1);
         uploadImage(crag.getCragId(), IMAGE_1);
-        crag = climbAssistClient.getCrag(crag.getCragId())
+        crag = climbAssistClient.getCrag(crag.getCragId(), cookies)
                 .getData();
         ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Crag> getCragResult = climbAssistClient.getCrag(crag.getCragId());
+        ApiResponse<Crag> getCragResult = climbAssistClient.getCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getCragResult);
         //noinspection ConstantConditions
         assertS3ObjectDoesNotExist(crag.getModel()
@@ -607,20 +721,20 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
         Crag crag = ResourceManager.getCrag(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(crag, Crag.class, maybeRequestDepth.orElse(0));
         ApiResponse<Crag> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getCrag(crag.getCragId(),
-                maybeRequestDepth.get()) : climbAssistClient.getCrag(crag.getCragId());
+                maybeRequestDepth.get(), cookies) : climbAssistClient.getCrag(crag.getCragId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(crag)));
     }
 
     private void uploadModels(String cragId, File highResolutionModel, File lowResolutionModel) throws IOException {
-        Crag originalCrag = climbAssistClient.getCrag(cragId)
+        Crag originalCrag = climbAssistClient.getCrag(cragId, cookies)
                 .getData();
         ApiResponse<UploadModelsResult> apiResponse = climbAssistClient.uploadCragModel(cragId, highResolutionModel,
                 lowResolutionModel, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Crag actualCrag = climbAssistClient.getCrag(cragId)
+        Crag actualCrag = climbAssistClient.getCrag(cragId, cookies)
                 .getData();
         assertThat(actualCrag.getModel(), is(not(nullValue())));
         assertThat(actualCrag.getModel()
@@ -637,13 +751,13 @@ public class CragIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     private void uploadImage(String cragId, File image) throws IOException {
-        Crag originalCrag = climbAssistClient.getCrag(cragId)
+        Crag originalCrag = climbAssistClient.getCrag(cragId, cookies)
                 .getData();
         ApiResponse<UploadImageResult> apiResponse = climbAssistClient.uploadCragImage(cragId, image, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Crag actualCrag = climbAssistClient.getCrag(cragId)
+        Crag actualCrag = climbAssistClient.getCrag(cragId, cookies)
                 .getData();
         assertThat(actualCrag.getImageLocation(), is(not(nullValue())));
         originalCrag.setImageLocation(actualCrag.getImageLocation());

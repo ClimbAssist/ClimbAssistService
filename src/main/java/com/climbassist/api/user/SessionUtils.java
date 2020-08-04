@@ -13,6 +13,7 @@ import java.util.Arrays;
 public class SessionUtils {
 
     public static final String ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME = "accessToken";
+    public static final String USER_DATA_SESSION_ATTRIBUTE_NAME = "userData";
 
     private static final String ACCESS_TOKEN_COOKIE_NAME = "climbassist_accesstoken";
     private static final String REFRESH_TOKEN_COOKIE_NAME = "climbassist_refreshtoken";

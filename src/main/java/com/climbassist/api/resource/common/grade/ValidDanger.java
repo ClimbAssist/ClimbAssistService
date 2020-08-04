@@ -1,4 +1,4 @@
-package com.climbassist.api.resource.grade;
+package com.climbassist.api.resource.common.grade;
 
 import com.climbassist.common.OneOf;
 import org.hibernate.validator.constraints.ConstraintComposition;
@@ -14,9 +14,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
 @ConstraintComposition
 @Constraint(validatedBy = {})
-@OneOf(values = {"a", "a/b", "b", "b/c", "c", "c/d", "d", "+", "-"},
-        message = "Grade modifier must be one of a, a/b, b, b/c, c, c/d, d, -, or +.")
-public @interface ValidGradeModifier {
+@OneOf(values = {"R", "X", "PG13"}, message = "Danger must be one of R, X, or PG13.")
+public @interface ValidDanger {
 
     String message() default "";
 

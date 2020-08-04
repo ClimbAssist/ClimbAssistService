@@ -75,7 +75,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getRoute_returnsRouteNotFoundException_whenRouteDoesNotExist() {
-        ApiResponse<Route> apiResponse = climbAssistClient.getRoute("does-not-exist");
+        ApiResponse<Route> apiResponse = climbAssistClient.getRoute("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -111,7 +111,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void listRoutes_returnsWallNotFoundException_whenWallDoesNotExist() {
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes("does-not-exist");
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -119,7 +119,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listRoutes_returnsEmptyList_whenThereAreNoRoutes() {
         testUserManager.makeUserAdministrator(username);
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId());
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
     }
@@ -128,7 +128,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listRoutes_returnsSingleRoute_whenThereIsOnlyOneRoute() {
         testUserManager.makeUserAdministrator(username);
         Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(route.getWallId());
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(route.getWallId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableList.of(route))));
     }
@@ -138,7 +138,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Route> routes = resourceManager.createRoutes(wall.getWallId(), cookies);
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId());
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(routes.toArray()));
     }
@@ -148,7 +148,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Route> routes = resourceManager.createRoutes(wall.getWallId(), cookies);
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), true);
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), true, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(routes)));
     }
@@ -158,7 +158,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<Route> routes = resourceManager.createRoutes(wall.getWallId(), cookies);
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), false);
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), false, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(routes.toArray()));
     }
@@ -169,7 +169,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         resourceManager.createRoute(wall.getWallId(), cookies, true, 0);
         resourceManager.createRoute(wall.getWallId(), cookies, true, 0);
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), true);
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), true, cookies);
         ExceptionUtils.assertSpecificException(apiResponse, 409, "InvalidOrderingException");
     }
 
@@ -179,7 +179,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Route route1 = resourceManager.createRoute(wall.getWallId(), cookies, true, 0);
         Route route2 = resourceManager.createRoute(wall.getWallId(), cookies, true, 0);
-        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), false);
+        ApiResponse<List<Route>> apiResponse = climbAssistClient.listRoutes(wall.getWallId(), false, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(route1, route2));
     }
@@ -208,7 +208,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Route expectedRoute = resourceManager.createRoute(wall.getWallId(), cookies, true, 0);
-        Route actualRoute = climbAssistClient.getRoute(expectedRoute.getRouteId())
+        Route actualRoute = climbAssistClient.getRoute(expectedRoute.getRouteId(), cookies)
                 .getData();
         assertThat(actualRoute, is(equalTo(expectedRoute)));
     }
@@ -220,9 +220,9 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         Route expectedRoute2 = resourceManager.createRoute(wall.getWallId(), cookies, false, 0);
         Route expectedRoute1 = resourceManager.createRoute(wall.getWallId(), cookies, true, expectedRoute2.getRouteId(),
                 0);
-        Route actualRoute1 = climbAssistClient.getRoute(expectedRoute1.getRouteId())
+        Route actualRoute1 = climbAssistClient.getRoute(expectedRoute1.getRouteId(), cookies)
                 .getData();
-        Route actualRoute2 = climbAssistClient.getRoute(expectedRoute2.getRouteId())
+        Route actualRoute2 = climbAssistClient.getRoute(expectedRoute2.getRouteId(), cookies)
                 .getData();
         assertThat(actualRoute1, is(equalTo(expectedRoute1)));
         assertThat(actualRoute2, is(equalTo(expectedRoute2)));
@@ -319,7 +319,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         updatedRoute.setFirst(null);
-        Route actualRoute = climbAssistClient.getRoute(originalRoute.getRouteId())
+        Route actualRoute = climbAssistClient.getRoute(originalRoute.getRouteId(), cookies)
                 .getData();
         assertThat(actualRoute, is(equalTo(updatedRoute)));
     }
@@ -352,7 +352,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Route> getRouteResult = climbAssistClient.getRoute(route.getRouteId());
+        ApiResponse<Route> getRouteResult = climbAssistClient.getRoute(route.getRouteId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getRouteResult);
     }
 
@@ -370,7 +370,7 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(route, Route.class, maybeRequestDepth.orElse(0));
         ApiResponse<Route> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getRoute(route.getRouteId(),
-                maybeRequestDepth.get()) : climbAssistClient.getRoute(route.getRouteId());
+                maybeRequestDepth.get(), cookies) : climbAssistClient.getRoute(route.getRouteId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(route)));
     }

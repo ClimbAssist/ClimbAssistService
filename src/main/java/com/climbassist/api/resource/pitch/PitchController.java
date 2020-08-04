@@ -8,15 +8,17 @@ import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.ValidDepth;
+import com.climbassist.api.resource.common.grade.Grade;
+import com.climbassist.api.resource.common.grade.GradeSorter;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
-import com.climbassist.api.resource.grade.Grade;
-import com.climbassist.api.resource.grade.GradeSorter;
 import com.climbassist.api.resource.point.PointsDao;
 import com.climbassist.api.resource.route.Center;
 import com.climbassist.api.resource.route.Route;
 import com.climbassist.api.resource.route.RouteNotFoundExceptionFactory;
 import com.climbassist.api.resource.route.RoutesDao;
 import com.climbassist.api.resource.route.ValidRouteId;
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.authorization.AdministratorAuthorizationHandler;
 import com.climbassist.api.user.authorization.Authorization;
 import com.climbassist.metrics.Metrics;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -70,56 +73,70 @@ public class PitchController {
     @Metrics(api = "GetPitch")
     @RequestMapping(path = "/v1/pitches/{pitchId}", method = RequestMethod.GET)
     public Pitch getResource(@ValidPitchId @NonNull @PathVariable String pitchId,
-                             @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth)
-            throws ResourceNotFoundException {
-        return resourceWithChildrenControllerDelegate.getResource(pitchId, depth);
+                             @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth,
+                             @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                             @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                             @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+        return resourceWithChildrenControllerDelegate.getResource(pitchId, depth, maybeUserData);
     }
 
     @Metrics(api = "ListPitches")
     @RequestMapping(path = "/v1/routes/{routeId}/pitches", method = RequestMethod.GET)
     public List<Pitch> getResourcesForParent(@ValidRouteId @NonNull @PathVariable String routeId,
-                                             @RequestParam(required = false) boolean ordered)
+                                             @RequestParam(required = false) boolean ordered,
+                                             @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                             @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                             @NonNull Optional<UserData> maybeUserData)
             throws InvalidOrderingException, ResourceNotFoundException {
-        return orderableResourceWithParentControllerDelegate.getResourcesForParent(routeId, ordered);
+        return orderableResourceWithParentControllerDelegate.getResourcesForParent(routeId, ordered, maybeUserData);
     }
 
     @Metrics(api = "CreatePitch")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/pitches", method = RequestMethod.PUT)
-    public CreateResourceResult<Pitch> createResource(@NonNull @Valid @RequestBody NewPitch newPitch)
+    public CreateResourceResult<Pitch> createResource(@NonNull @Valid @RequestBody NewPitch newPitch,
+                                                      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                                      @SessionAttribute(
+                                                              value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                                      @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
-        Route route = routesDao.getResource(newPitch.getParentId())
+        // TODO this might get wonky once we start restricting permissions to specific resources
+        Route route = routesDao.getResource(newPitch.getParentId(), maybeUserData)
                 .orElseThrow(() -> routeNotFoundExceptionFactory.create(newPitch.getParentId()));
         Pitch pitch = pitchFactory.create(newPitch);
         pitchesDao.saveResource(pitch);
-        pitchConsistencyWaiter.waitForConsistency(route.getRouteId(), pitch, true);
-        updateRouteGrade(route);
+        pitchConsistencyWaiter.waitForConsistency(route.getRouteId(), pitch, true, maybeUserData);
+        updateRouteGrade(route, maybeUserData);
         return createPitchResultFactory.create(pitch.getId());
     }
 
     @Metrics(api = "UpdatePitch")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/pitches", method = RequestMethod.POST)
-    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Pitch pitch)
+    public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Pitch pitch,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                               @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException, PitchConsistencyException, InterruptedException {
-        Pitch oldPitch = pitchesDao.getResource(pitch.getPitchId())
+        // TODO this might get wonky once we start restricting permissions to specific resources
+        Pitch oldPitch = pitchesDao.getResource(pitch.getPitchId(), maybeUserData)
                 .orElseThrow(() -> pitchNotFoundExceptionFactory.create(pitch.getId()));
-        Route newRoute = routesDao.getResource(pitch.getRouteId())
+        Route newRoute = routesDao.getResource(pitch.getRouteId(), maybeUserData)
                 .orElseThrow(() -> routeNotFoundExceptionFactory.create(pitch.getRouteId()));
         pitchesDao.saveResource(pitch);
-        pitchConsistencyWaiter.waitForConsistency(newRoute.getRouteId(), pitch, true);
-        updateRouteGrade(newRoute);
+        pitchConsistencyWaiter.waitForConsistency(newRoute.getRouteId(), pitch, true, maybeUserData);
+        updateRouteGrade(newRoute, maybeUserData);
         // update the route that the pitch used to belong to, if it has been moved to a new route
         if (!oldPitch.getRouteId()
                 .equals(pitch.getRouteId())) {
-            Optional<Route> maybeOldRoute = routesDao.getResource(oldPitch.getRouteId());
+            Optional<Route> maybeOldRoute = routesDao.getResource(oldPitch.getRouteId(), maybeUserData);
             if (maybeOldRoute.isPresent()) {
                 log.info(String.format("The route for pitch %s has changed. Updating the grades for the old route %s.",
                         pitch.getPitchId(), maybeOldRoute.get()
                                 .getRouteId()));
                 pitchConsistencyWaiter.waitForConsistency(maybeOldRoute.get()
-                        .getRouteId(), pitch, false);
-                updateRouteGrade(maybeOldRoute.get());
+                        .getRouteId(), pitch, false, maybeUserData);
+                updateRouteGrade(maybeOldRoute.get(), maybeUserData);
             }
         }
         return UpdateResourceResult.builder()
@@ -130,29 +147,34 @@ public class PitchController {
     @Metrics(api = "DeletePitch")
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/pitches/{pitchId}", method = RequestMethod.DELETE)
-    public DeleteResourceResult deleteResource(@NonNull @ValidPitchId @PathVariable String pitchId)
+    public DeleteResourceResult deleteResource(@NonNull @ValidPitchId @PathVariable String pitchId,
+                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+                                               @NonNull Optional<UserData> maybeUserData)
             throws ResourceNotFoundException, ResourceNotEmptyException, PitchConsistencyException,
             InterruptedException {
-        Pitch pitch = pitchesDao.getResource(pitchId)
+        // TODO this might get wonky once we start restricting permissions to specific resources
+        Pitch pitch = pitchesDao.getResource(pitchId, maybeUserData)
                 .orElseThrow(() -> pitchNotFoundExceptionFactory.create(pitchId));
-        if (!pointsDao.getResources(pitchId)
+        if (!pointsDao.getResources(pitchId, maybeUserData)
                 .isEmpty()) {
             throw pitchNotEmptyExceptionFactory.create(pitchId);
         }
-        Optional<Route> maybeRoute = routesDao.getResource(pitch.getRouteId());
+        Optional<Route> maybeRoute = routesDao.getResource(pitch.getRouteId(), maybeUserData);
         pitchesDao.deleteResource(pitchId);
         if (maybeRoute.isPresent()) {
             pitchConsistencyWaiter.waitForConsistency(maybeRoute.get()
-                    .getRouteId(), pitch, false);
-            updateRouteGrade(maybeRoute.get());
+                    .getRouteId(), pitch, false, maybeUserData);
+            updateRouteGrade(maybeRoute.get(), maybeUserData);
         }
         return DeleteResourceResult.builder()
                 .successful(true)
                 .build();
     }
 
-    private void updateRouteGrade(Route route) {
-        Set<Pitch> pitches = pitchesDao.getResources(route.getRouteId());
+    private void updateRouteGrade(Route route, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            Optional<UserData> maybeUserData) {
+        Set<Pitch> pitches = pitchesDao.getResources(route.getRouteId(), maybeUserData);
         log.info(
                 String.format("Updating route %s after modifying child pitch. Child pitches are %s", route.getRouteId(),
                         pitches.stream()

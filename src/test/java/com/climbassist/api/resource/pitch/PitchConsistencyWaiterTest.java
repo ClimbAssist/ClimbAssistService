@@ -1,5 +1,6 @@
 package com.climbassist.api.resource.pitch;
 
+import com.climbassist.api.user.UserData;
 import com.google.common.collect.ImmutableSet;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -73,6 +75,14 @@ class PitchConsistencyWaiterTest {
             .add(PITCH_1)
             .build();
     private static final int MAX_RETRIES = 10;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private PitchesDao mockPitchesDao;
@@ -89,9 +99,9 @@ class PitchConsistencyWaiterTest {
     @Test
     void waitForConsistency_returns_whenPitchShouldExistAndFirstCallIsConsistent()
             throws InterruptedException, PitchConsistencyException {
-        when(mockPitchesDao.getResources(any())).thenReturn(PITCHES_WITH_EXPECTED);
-        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, true);
-        verify(mockPitchesDao).getResources(PITCH_1.getRouteId());
+        when(mockPitchesDao.getResources(any(), any())).thenReturn(PITCHES_WITH_EXPECTED);
+        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, true, MAYBE_USER_DATA);
+        verify(mockPitchesDao).getResources(PITCH_1.getRouteId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -100,29 +110,29 @@ class PitchConsistencyWaiterTest {
         doReturn(PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED,
                 PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED, PITCHES_WITHOUT_EXPECTED,
                 PITCHES_WITHOUT_EXPECTED, PITCHES_WITH_EXPECTED).when(mockPitchesDao)
-                .getResources(any());
-        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, true);
-        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId());
+                .getResources(any(), any());
+        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, true, MAYBE_USER_DATA);
+        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId(), MAYBE_USER_DATA);
     }
 
     @Test
     void waitForConsistency_throwPitchConsistencyException_whenPitchShouldExistAndNoCallsAreConsistent() {
         doReturn(PITCHES_WITHOUT_EXPECTED).when(mockPitchesDao)
-                .getResources(any());
+                .getResources(any(), any());
         PitchConsistencyException pitchConsistencyException = assertThrows(PitchConsistencyException.class,
-                () -> pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, true));
+                () -> pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, true, MAYBE_USER_DATA));
         assertThat(pitchConsistencyException.getMessage(), is(equalTo(String.format(
                 "Consistency was not achieved while modifying pitch %s. Its parent route(s) may or may not have been " +
                         "updated.", PITCH_1.getPitchId()))));
-        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId());
+        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId(), MAYBE_USER_DATA);
     }
 
     @Test
     void waitForConsistency_returns_whenPitchShouldNotExistAndFirstCallIsConsistent()
             throws InterruptedException, PitchConsistencyException {
-        when(mockPitchesDao.getResources(any())).thenReturn(PITCHES_WITHOUT_EXPECTED);
-        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, false);
-        verify(mockPitchesDao).getResources(PITCH_1.getRouteId());
+        when(mockPitchesDao.getResources(any(), any())).thenReturn(PITCHES_WITHOUT_EXPECTED);
+        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, false, MAYBE_USER_DATA);
+        verify(mockPitchesDao).getResources(PITCH_1.getRouteId(), MAYBE_USER_DATA);
     }
 
     @Test
@@ -131,20 +141,20 @@ class PitchConsistencyWaiterTest {
         doReturn(PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED,
                 PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED, PITCHES_WITH_EXPECTED,
                 PITCHES_WITH_EXPECTED, PITCHES_WITHOUT_EXPECTED).when(mockPitchesDao)
-                .getResources(any());
-        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, false);
-        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId());
+                .getResources(any(), any());
+        pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, false, MAYBE_USER_DATA);
+        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId(), MAYBE_USER_DATA);
     }
 
     @Test
     void waitForConsistency_throwPitchConsistencyException_whenPitchShouldNotExistAndNoCallsAreConsistent() {
         doReturn(PITCHES_WITH_EXPECTED).when(mockPitchesDao)
-                .getResources(any());
+                .getResources(any(), any());
         PitchConsistencyException pitchConsistencyException = assertThrows(PitchConsistencyException.class,
-                () -> pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, false));
+                () -> pitchConsistencyWaiter.waitForConsistency(PITCH_1.getRouteId(), PITCH_1, false, MAYBE_USER_DATA));
         assertThat(pitchConsistencyException.getMessage(), is(equalTo(String.format(
                 "Consistency was not achieved while modifying pitch %s. Its parent route(s) may or may not have been " +
                         "updated.", PITCH_1.getPitchId()))));
-        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId());
+        verify(mockPitchesDao, times(MAX_RETRIES)).getResources(PITCH_1.getRouteId(), MAYBE_USER_DATA);
     }
 }

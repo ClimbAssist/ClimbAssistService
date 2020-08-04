@@ -1,6 +1,7 @@
 package com.climbassist.api.user.authorization;
 
 import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.UserManager;
 import com.climbassist.api.user.authentication.AccessTokenExpiredException;
 import com.climbassist.api.user.authentication.UserSessionData;
@@ -16,12 +17,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 
 @Builder
 @Slf4j
 public class UserDataDecorationFilter implements Filter {
-
-    public static final String USER_ID_ATTRIBUTE_NAME = "userId";
 
     @NonNull
     private final UserManager userManager;
@@ -30,6 +30,8 @@ public class UserDataDecorationFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
             throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
+        httpServletRequest.getSession()
+                .setAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME, Optional.empty());
 
         if (SessionUtils.hasSessionCookies(httpServletRequest)) {
             UserSessionData userSessionData = SessionUtils.getUserSessionData(httpServletRequest);
@@ -56,9 +58,10 @@ public class UserDataDecorationFilter implements Filter {
     }
 
     private void setAttributes(HttpServletRequest httpServletRequest, String accessToken) {
-        httpServletRequest.setAttribute(USER_ID_ATTRIBUTE_NAME, userManager.getUserData(accessToken)
-                .getUserId());
+        UserData userData = userManager.getUserData(accessToken);
         httpServletRequest.getSession()
                 .setAttribute(SessionUtils.ACCESS_TOKEN_SESSION_ATTRIBUTE_NAME, accessToken);
+        httpServletRequest.getSession()
+                .setAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME, Optional.of(userData));
     }
 }

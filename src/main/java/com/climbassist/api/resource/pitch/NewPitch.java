@@ -2,9 +2,9 @@ package com.climbassist.api.resource.pitch;
 
 import com.climbassist.api.resource.common.NewResourceWithParent;
 import com.climbassist.api.resource.common.ValidDescription;
-import com.climbassist.api.resource.grade.ValidDanger;
-import com.climbassist.api.resource.grade.ValidGrade;
-import com.climbassist.api.resource.grade.ValidGradeModifier;
+import com.climbassist.api.resource.common.grade.ValidDanger;
+import com.climbassist.api.resource.common.grade.ValidGrade;
+import com.climbassist.api.resource.common.grade.ValidGradeModifier;
 import com.climbassist.api.resource.route.Route;
 import com.climbassist.api.resource.route.ValidRouteId;
 import com.fasterxml.jackson.annotation.JsonIgnore;

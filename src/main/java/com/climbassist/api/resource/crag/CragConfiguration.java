@@ -4,7 +4,7 @@ import com.climbassist.api.resource.common.CommonDaoConfiguration;
 import com.climbassist.api.resource.common.ResourceControllerDelegate;
 import com.climbassist.api.resource.common.ResourceIdGenerator;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
-import com.climbassist.api.resource.common.ResourceWithImageControllerDelegate;
+import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetriever;
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetrieverConfiguration;

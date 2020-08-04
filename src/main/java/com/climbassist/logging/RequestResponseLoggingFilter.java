@@ -1,7 +1,8 @@
 package com.climbassist.logging;
 
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.UserManager;
-import com.climbassist.api.user.authorization.UserDataDecorationFilter;
 import com.climbassist.wrapper.request.RequestWrapper;
 import com.climbassist.wrapper.response.ResponseWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Builder
 @Slf4j
@@ -55,6 +57,10 @@ public class RequestResponseLoggingFilter implements Filter {
 
             boolean isJson = isJson(requestWrapper.getBody());
 
+            //noinspection unchecked
+            Optional<UserData> maybeUserData = (Optional<UserData>) requestWrapper.getSession()
+                    .getAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME);
+
             LoggableRequest loggableRequest = LoggableRequest.builder()
                     .protocol(requestWrapper.getProtocol())
                     .sender(requestWrapper.getRemoteAddr())
@@ -63,7 +69,8 @@ public class RequestResponseLoggingFilter implements Filter {
                     .queryString(requestWrapper.getQueryString())
                     .queryParameters(queryParameters)
                     .headers(getHeaders(requestWrapper))
-                    .userId((String) requestWrapper.getAttribute(UserDataDecorationFilter.USER_ID_ATTRIBUTE_NAME))
+                    .userId(maybeUserData.map(UserData::getUserId)
+                            .orElse(null))
                     .body(isJson ? null : requestWrapper.getBody())
                     .jsonBody(isJson ? requestWrapper.getBody() : null)
                     .build();

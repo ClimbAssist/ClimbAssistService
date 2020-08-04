@@ -77,7 +77,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getPathPoint_returnsPathPointNotFoundException_whenPathPointDoesNotExist() {
-        ApiResponse<PathPoint> apiResponse = climbAssistClient.getPathPoint("does-not-exist");
+        ApiResponse<PathPoint> apiResponse = climbAssistClient.getPathPoint("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -85,14 +85,14 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
     public void getPathPoint_returnsPathPoint() {
         testUserManager.makeUserAdministrator(username);
         PathPoint pathPoint = ResourceManager.getPathPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
-        ApiResponse<PathPoint> apiResponse = climbAssistClient.getPathPoint(pathPoint.getPathPointId());
+        ApiResponse<PathPoint> apiResponse = climbAssistClient.getPathPoint(pathPoint.getPathPointId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(pathPoint)));
     }
 
     @Test
     public void listPathPoints_returnsPathNotFoundException_whenPathDoesNotExist() {
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints("does-not-exist");
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -100,7 +100,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listPathPoints_returnsEmptyList_whenThereAreNoPathPoints() {
         testUserManager.makeUserAdministrator(username);
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId());
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(empty()));
     }
@@ -109,7 +109,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
     public void listPathPoints_returnsSinglePathPoint_whenThereIsOnlyOnePathPoint() {
         testUserManager.makeUserAdministrator(username);
         PathPoint pathPoint = ResourceManager.getPathPoint(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(pathPoint.getPathId());
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(pathPoint.getPathId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(ImmutableList.of(pathPoint))));
     }
@@ -119,7 +119,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<PathPoint> pathPoints = resourceManager.createPathPoints(path.getPathId(), cookies);
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId());
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(pathPoints.toArray()));
     }
@@ -129,7 +129,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<PathPoint> pathPoints = resourceManager.createPathPoints(path.getPathId(), cookies);
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), true);
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), true, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(pathPoints)));
     }
@@ -139,7 +139,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         List<PathPoint> pathPoints = resourceManager.createPathPoints(path.getPathId(), cookies);
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), false);
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), false, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(pathPoints.toArray()));
     }
@@ -150,7 +150,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         resourceManager.createPathPoint(path.getPathId(), cookies, true);
         resourceManager.createPathPoint(path.getPathId(), cookies, true);
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), true);
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), true, cookies);
         ExceptionUtils.assertSpecificException(apiResponse, 409, "InvalidOrderingException");
     }
 
@@ -160,7 +160,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         PathPoint pathPoint1 = resourceManager.createPathPoint(path.getPathId(), cookies, true);
         PathPoint pathPoint2 = resourceManager.createPathPoint(path.getPathId(), cookies, true);
-        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), false);
+        ApiResponse<List<PathPoint>> apiResponse = climbAssistClient.listPathPoints(path.getPathId(), false, cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), containsInAnyOrder(pathPoint1, pathPoint2));
     }
@@ -182,7 +182,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Path path = ResourceManager.getPath(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         PathPoint expectedPathPoint = resourceManager.createPathPoint(path.getPathId(), cookies, true);
-        PathPoint actualPathPoint = climbAssistClient.getPathPoint(expectedPathPoint.getPathPointId())
+        PathPoint actualPathPoint = climbAssistClient.getPathPoint(expectedPathPoint.getPathPointId(), cookies)
                 .getData();
         assertThat(actualPathPoint, is(equalTo(expectedPathPoint)));
     }
@@ -194,9 +194,9 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         PathPoint expectedPathPoint2 = resourceManager.createPathPoint(path.getPathId(), cookies, false);
         PathPoint expectedPathPoint1 = resourceManager.createPathPoint(path.getPathId(), cookies, true,
                 expectedPathPoint2.getPathPointId());
-        PathPoint actualPathPoint1 = climbAssistClient.getPathPoint(expectedPathPoint1.getPathPointId())
+        PathPoint actualPathPoint1 = climbAssistClient.getPathPoint(expectedPathPoint1.getPathPointId(), cookies)
                 .getData();
-        PathPoint actualPathPoint2 = climbAssistClient.getPathPoint(expectedPathPoint2.getPathPointId())
+        PathPoint actualPathPoint2 = climbAssistClient.getPathPoint(expectedPathPoint2.getPathPointId(), cookies)
                 .getData();
         assertThat(actualPathPoint1, is(equalTo(expectedPathPoint1)));
         assertThat(actualPathPoint2, is(equalTo(expectedPathPoint2)));
@@ -271,7 +271,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
                 .getPathPointIds();
         pathPointIds.forEach(pathPointId -> resourceManager.addResourceToResourceIds(PathPoint.class, pathPointId));
         assertThat(pathPointIds, hasSize(numberOfPathPoints));
-        List<PathPoint> actualPathPoints = climbAssistClient.listPathPoints(pathId)
+        List<PathPoint> actualPathPoints = climbAssistClient.listPathPoints(pathId, cookies)
                 .getData();
         assertThat(actualPathPoints, containsInAnyOrder(Stream.concat(
                 buildExpectedPathPoints(numberOfPathPoints, pathPointIds, pathId), Stream.of(originalPathPoint))
@@ -328,7 +328,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
         updatedPathPoint.setFirst(null);
-        PathPoint actualPathPoint = climbAssistClient.getPathPoint(originalPathPoint.getPathPointId())
+        PathPoint actualPathPoint = climbAssistClient.getPathPoint(originalPathPoint.getPathPointId(), cookies)
                 .getData();
         assertThat(actualPathPoint, is(equalTo(updatedPathPoint)));
     }
@@ -362,7 +362,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<PathPoint> getPathPointResult = climbAssistClient.getPathPoint(pathPoint.getPathPointId());
+        ApiResponse<PathPoint> getPathPointResult = climbAssistClient.getPathPoint(pathPoint.getPathPointId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getPathPointResult);
     }
 
@@ -390,7 +390,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        assertThat(climbAssistClient.listPathPoints(pathId)
+        assertThat(climbAssistClient.listPathPoints(pathId, cookies)
                 .getData(), is(empty()));
     }
 
@@ -403,7 +403,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        assertThat(climbAssistClient.listPathPoints(pathId)
+        assertThat(climbAssistClient.listPathPoints(pathId, cookies)
                 .getData(), is(empty()));
     }
 
@@ -417,7 +417,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        assertThat(climbAssistClient.listPathPoints(pathId)
+        assertThat(climbAssistClient.listPathPoints(pathId, cookies)
                 .getData(), is(empty()));
     }
 
@@ -435,7 +435,7 @@ public class PathPointIntegrationTest extends AbstractTestNGSpringContextTests {
         assertThat(pathPointIds, hasSize(numberOfPathPoints));
         List<PathPoint> expectedPathPoints = buildExpectedPathPoints(numberOfPathPoints, pathPointIds, pathId).collect(
                 Collectors.toList());
-        List<PathPoint> actualPathPoints = climbAssistClient.listPathPoints(pathId, true)
+        List<PathPoint> actualPathPoints = climbAssistClient.listPathPoints(pathId, true, cookies)
                 .getData();
         assertThat(actualPathPoints, is(equalTo(expectedPathPoints)));
     }

@@ -30,7 +30,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 @ContextConfiguration(classes = {ClimbAssistClientConfiguration.class, ResourceManagerConfiguration.class,
@@ -68,7 +67,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
 
     @Test
     public void getCountry_returnsCountryNotFoundException_whenCountryDoesNotExist() {
-        ApiResponse<Country> apiResponse = climbAssistClient.getCountry("does-not-exist");
+        ApiResponse<Country> apiResponse = climbAssistClient.getCountry("does-not-exist", cookies);
         ExceptionUtils.assertResourceNotFoundException(apiResponse);
     }
 
@@ -108,7 +107,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Country country1 = resourceManager.createCountry(cookies, 0);
         Country country2 = resourceManager.createCountry(cookies, 0);
-        ApiResponse<Set<Country>> apiResponse = climbAssistClient.listCountries();
+        ApiResponse<Set<Country>> apiResponse = climbAssistClient.listCountries(cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), hasItems(country1, country2));
     }
@@ -117,7 +116,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
     public void createCountry_createsCountry() {
         testUserManager.makeUserAdministrator(username);
         Country expectedCountry = resourceManager.createCountry(cookies, 0);
-        Country actualCountry = climbAssistClient.getCountry(expectedCountry.getCountryId())
+        Country actualCountry = climbAssistClient.getCountry(expectedCountry.getCountryId(), cookies)
                 .getData();
         assertThat(actualCountry, is(equalTo(expectedCountry)));
     }
@@ -127,9 +126,9 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Country expectedCountry1 = resourceManager.createCountry(cookies, 0);
         Country expectedCountry2 = resourceManager.createCountry(cookies, 0);
-        Country actualCountry1 = climbAssistClient.getCountry(expectedCountry1.getCountryId())
+        Country actualCountry1 = climbAssistClient.getCountry(expectedCountry1.getCountryId(), cookies)
                 .getData();
-        Country actualCountry2 = climbAssistClient.getCountry(expectedCountry2.getCountryId())
+        Country actualCountry2 = climbAssistClient.getCountry(expectedCountry2.getCountryId(), cookies)
                 .getData();
         assertThat(actualCountry1, is(equalTo(expectedCountry1)));
         assertThat(actualCountry2, is(equalTo(expectedCountry2)));
@@ -174,7 +173,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        Country actualCountry = climbAssistClient.getCountry(originalCountry.getCountryId())
+        Country actualCountry = climbAssistClient.getCountry(originalCountry.getCountryId(), cookies)
                 .getData();
         assertThat(actualCountry, is(equalTo(updatedCountry)));
     }
@@ -208,7 +207,7 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData()
                 .isSuccessful(), is(true));
-        ApiResponse<Country> getCountryResult = climbAssistClient.getCountry(country.getCountryId());
+        ApiResponse<Country> getCountryResult = climbAssistClient.getCountry(country.getCountryId(), cookies);
         ExceptionUtils.assertResourceNotFoundException(getCountryResult);
     }
 
@@ -227,7 +226,8 @@ public class CountryIntegrationTest extends AbstractTestNGSpringContextTests {
         Country country = resourceManager.createCountry(cookies, actualDepth);
         resourceManager.removeChildren(country, Country.class, maybeRequestDepth.orElse(0));
         ApiResponse<Country> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getCountry(
-                country.getCountryId(), maybeRequestDepth.get()) : climbAssistClient.getCountry(country.getCountryId());
+                country.getCountryId(), maybeRequestDepth.get(), cookies) : climbAssistClient.getCountry(
+                country.getCountryId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(country)));
     }

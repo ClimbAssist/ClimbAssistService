@@ -6,14 +6,15 @@ import com.climbassist.api.resource.common.OrderableResourceWithParentController
 import com.climbassist.api.resource.common.ResourceNotEmptyException;
 import com.climbassist.api.resource.common.ResourceNotFoundException;
 import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
-import com.climbassist.api.resource.common.ResourceWithImageControllerDelegate;
 import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
-import com.climbassist.api.resource.common.UploadImageResult;
+import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
+import com.climbassist.api.resource.common.image.UploadImageResult;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.pitch.Pitch;
 import com.climbassist.api.resource.pitch.PitchesDao;
 import com.climbassist.api.resource.wall.Wall;
+import com.climbassist.api.user.UserData;
 import com.climbassist.common.s3.S3Proxy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -124,6 +125,14 @@ class RouteControllerTest {
             .routeId(ROUTE_1.getId())
             .build();
     private static final int DEPTH = 5;
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("33")
+            .username("frodo-baggins")
+            .email("frodo@baggend.shire")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private ResourceWithParentControllerDelegate<Route, NewRoute, Wall> mockResourceWithParentControllerDelegate;
@@ -171,29 +180,33 @@ class RouteControllerTest {
 
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
-        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt())).thenReturn(ROUTE_1);
-        assertThat(routeController.getResource(ROUTE_1.getRouteId(), DEPTH), is(equalTo(ROUTE_1)));
-        verify(mockResourceWithChildrenControllerDelegate).getResource(ROUTE_1.getRouteId(), DEPTH);
+        when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(ROUTE_1);
+        assertThat(routeController.getResource(ROUTE_1.getRouteId(), DEPTH, MAYBE_USER_DATA), is(equalTo(ROUTE_1)));
+        verify(mockResourceWithChildrenControllerDelegate).getResource(ROUTE_1.getRouteId(), DEPTH, MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsFalse()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<Route> routes = ImmutableList.of(ROUTE_1, ROUTE_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                routes);
-        assertThat(routeController.getResourcesForParent(ROUTE_1.getWallId(), false), is(equalTo(routes)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(ROUTE_1.getWallId(), false);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(routes);
+        assertThat(routeController.getResourcesForParent(ROUTE_1.getWallId(), false, MAYBE_USER_DATA),
+                is(equalTo(routes)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(ROUTE_1.getWallId(), false,
+                MAYBE_USER_DATA);
     }
 
     @Test
     void getResourcesForParent_callsOrderableResourceWithParentControllerDelegate_whenOrderedIsTrue()
             throws ResourceNotFoundException, InvalidOrderingException {
         List<Route> routes = ImmutableList.of(ROUTE_1, ROUTE_2);
-        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean())).thenReturn(
-                routes);
-        assertThat(routeController.getResourcesForParent(ROUTE_1.getWallId(), true), is(equalTo(routes)));
-        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(ROUTE_1.getWallId(), true);
+        when(mockOrderableResourceWithParentControllerDelegate.getResourcesForParent(any(), anyBoolean(),
+                any())).thenReturn(routes);
+        assertThat(routeController.getResourcesForParent(ROUTE_1.getWallId(), true, MAYBE_USER_DATA),
+                is(equalTo(routes)));
+        verify(mockOrderableResourceWithParentControllerDelegate).getResourcesForParent(ROUTE_1.getWallId(), true,
+                MAYBE_USER_DATA);
     }
 
     @Test
@@ -201,9 +214,9 @@ class RouteControllerTest {
         CreateRouteResult createRouteResult = CreateRouteResult.builder()
                 .routeId(ROUTE_1.getRouteId())
                 .build();
-        when(mockResourceWithParentControllerDelegate.createResource(any())).thenReturn(createRouteResult);
-        assertThat(routeController.createResource(NEW_ROUTE_1), is(equalTo(createRouteResult)));
-        verify(mockResourceWithParentControllerDelegate).createResource(NEW_ROUTE_1);
+        when(mockResourceWithParentControllerDelegate.createResource(any(), any())).thenReturn(createRouteResult);
+        assertThat(routeController.createResource(NEW_ROUTE_1, MAYBE_USER_DATA), is(equalTo(createRouteResult)));
+        verify(mockResourceWithParentControllerDelegate).createResource(NEW_ROUTE_1, MAYBE_USER_DATA);
     }
 
     @Test
@@ -211,19 +224,20 @@ class RouteControllerTest {
         UpdateResourceResult updateResourceResult = UpdateResourceResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithParentControllerDelegate.updateResource(any())).thenReturn(updateResourceResult);
-        assertThat(routeController.updateResource(UPDATED_ROUTE_1), is(equalTo(updateResourceResult)));
-        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_ROUTE_1);
+        when(mockResourceWithParentControllerDelegate.updateResource(any(), any())).thenReturn(updateResourceResult);
+        assertThat(routeController.updateResource(UPDATED_ROUTE_1, MAYBE_USER_DATA), is(equalTo(updateResourceResult)));
+        verify(mockResourceWithParentControllerDelegate).updateResource(UPDATED_ROUTE_1, MAYBE_USER_DATA);
     }
 
     @Test
     void deleteResource_deletesResourceAndImage_whenResourceExistsAndIsEmptyAndHasImageLocation()
             throws ResourceNotFoundException, ResourceNotEmptyException {
-        when(mockRoutesDao.getResource(any())).thenReturn(Optional.of(ROUTE_1));
-        when(mockPitchesDao.getResources(any())).thenReturn(ImmutableSet.of());
-        assertThat(routeController.deleteResource(ROUTE_1.getId()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockRoutesDao).getResource(ROUTE_1.getId());
-        verify(mockPitchesDao).getResources(ROUTE_1.getId());
+        when(mockRoutesDao.getResource(any(), any())).thenReturn(Optional.of(ROUTE_1));
+        when(mockPitchesDao.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        assertThat(routeController.deleteResource(ROUTE_1.getId(), MAYBE_USER_DATA),
+                is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockRoutesDao).getResource(ROUTE_1.getId(), MAYBE_USER_DATA);
+        verify(mockPitchesDao).getResources(ROUTE_1.getId(), MAYBE_USER_DATA);
         verify(mockRoutesDao).deleteResource(ROUTE_1.getId());
         verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, IMAGE_KEY);
     }
@@ -231,21 +245,23 @@ class RouteControllerTest {
     @Test
     void deleteResource_deletesResource_whenResourceExistsAndIsEmptyAndDoesNotHaveImageLocation()
             throws ResourceNotFoundException, ResourceNotEmptyException {
-        when(mockRoutesDao.getResource(any())).thenReturn(Optional.of(ROUTE_2));
-        when(mockPitchesDao.getResources(any())).thenReturn(ImmutableSet.of());
-        assertThat(routeController.deleteResource(ROUTE_2.getId()), is(equalTo(DELETE_RESOURCE_RESULT)));
-        verify(mockRoutesDao).getResource(ROUTE_2.getId());
-        verify(mockPitchesDao).getResources(ROUTE_2.getId());
+        when(mockRoutesDao.getResource(any(), any())).thenReturn(Optional.of(ROUTE_2));
+        when(mockPitchesDao.getResources(any(), any())).thenReturn(ImmutableSet.of());
+        assertThat(routeController.deleteResource(ROUTE_2.getId(), MAYBE_USER_DATA),
+                is(equalTo(DELETE_RESOURCE_RESULT)));
+        verify(mockRoutesDao).getResource(ROUTE_2.getId(), MAYBE_USER_DATA);
+        verify(mockPitchesDao).getResources(ROUTE_2.getId(), MAYBE_USER_DATA);
         verify(mockRoutesDao).deleteResource(ROUTE_2.getId());
         verify(mockS3Proxy, never()).deleteObject(any(), any());
     }
 
     @Test
     void deleteResource_throwsResourceNotFoundException_whenResourceDoesNotExist() {
-        when(mockRoutesDao.getResource(any())).thenReturn(Optional.empty());
+        when(mockRoutesDao.getResource(any(), any())).thenReturn(Optional.empty());
         when(mockRouteNotFoundExceptionFactory.create(any())).thenReturn(new RouteNotFoundException(ROUTE_1.getId()));
-        assertThrows(RouteNotFoundException.class, () -> routeController.deleteResource(ROUTE_1.getId()));
-        verify(mockRoutesDao).getResource(ROUTE_1.getId());
+        assertThrows(RouteNotFoundException.class,
+                () -> routeController.deleteResource(ROUTE_1.getId(), MAYBE_USER_DATA));
+        verify(mockRoutesDao).getResource(ROUTE_1.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockRouteNotFoundExceptionFactory).create(ROUTE_1.getId());
         verify(mockRoutesDao, never()).deleteResource(any());
@@ -254,12 +270,13 @@ class RouteControllerTest {
 
     @Test
     void deleteResource_throwsResourceNotEmptyException_whenResourceIsNotEmpty() {
-        when(mockRoutesDao.getResource(any())).thenReturn(Optional.of(ROUTE_1));
-        when(mockPitchesDao.getResources(any())).thenReturn(ImmutableSet.of(PITCH));
+        when(mockRoutesDao.getResource(any(), any())).thenReturn(Optional.of(ROUTE_1));
+        when(mockPitchesDao.getResources(any(), any())).thenReturn(ImmutableSet.of(PITCH));
         when(mockRouteNotEmptyExceptionFactory.create(any())).thenReturn(new RouteNotEmptyException(ROUTE_1.getId()));
-        assertThrows(RouteNotEmptyException.class, () -> routeController.deleteResource(ROUTE_1.getId()));
-        verify(mockRoutesDao).getResource(ROUTE_1.getId());
-        verify(mockPitchesDao).getResources(ROUTE_1.getId());
+        assertThrows(RouteNotEmptyException.class,
+                () -> routeController.deleteResource(ROUTE_1.getId(), MAYBE_USER_DATA));
+        verify(mockRoutesDao).getResource(ROUTE_1.getId(), MAYBE_USER_DATA);
+        verify(mockPitchesDao).getResources(ROUTE_1.getId(), MAYBE_USER_DATA);
         //noinspection ThrowableNotThrown
         verify(mockRouteNotEmptyExceptionFactory).create(ROUTE_1.getId());
         verify(mockRoutesDao, never()).deleteResource(any());
@@ -272,8 +289,9 @@ class RouteControllerTest {
         UploadImageResult uploadImageResult = UploadImageResult.builder()
                 .successful(true)
                 .build();
-        when(mockResourceWithImageControllerDelegate.uploadImage(any(), any())).thenReturn(uploadImageResult);
-        assertThat(routeController.uploadImage(ROUTE_1.getRouteId(), IMAGE), is(equalTo(uploadImageResult)));
-        verify(mockResourceWithImageControllerDelegate).uploadImage(ROUTE_1.getRouteId(), IMAGE);
+        when(mockResourceWithImageControllerDelegate.uploadImage(any(), any(), any())).thenReturn(uploadImageResult);
+        assertThat(routeController.uploadImage(ROUTE_1.getRouteId(), IMAGE, MAYBE_USER_DATA),
+                is(equalTo(uploadImageResult)));
+        verify(mockResourceWithImageControllerDelegate).uploadImage(ROUTE_1.getRouteId(), IMAGE, MAYBE_USER_DATA);
     }
 }
