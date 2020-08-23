@@ -1,4 +1,4 @@
-package com.climbassist.api.contact.recaptcha;
+package com.climbassist.common.recaptcha;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

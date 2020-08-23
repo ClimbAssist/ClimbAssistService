@@ -1,4 +1,4 @@
-package com.climbassist.api.contact.recaptcha;
+package com.climbassist.common.recaptcha;
 
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
@@ -28,7 +28,9 @@ class RecaptchaKeysRetrieverTest {
             .siteKey("site-key")
             .secretKey("secret-key")
             .build();
+    private static final String RECAPTCHA_BACK_DOOR_RESPONSE = "letmein";
     private static final String RECAPTCHA_KEYS_SECRET_ID = "ClimbAssistRecaptchaKeys";
+    private static final String RECAPTCHA_BACK_DOOR_RESPONSE_SECRET_ID = "RecaptchaBackDoorResponse";
 
     @Mock
     private AWSSecretsManager mockAwsSecretsManager;
@@ -43,6 +45,7 @@ class RecaptchaKeysRetrieverTest {
                 .recaptchaKeysSecretId(RECAPTCHA_KEYS_SECRET_ID)
                 .awsSecretsManager(mockAwsSecretsManager)
                 .objectMapper(mockObjectMapper)
+                .recaptchaBackDoorResponseSecretId(RECAPTCHA_BACK_DOOR_RESPONSE_SECRET_ID)
                 .build();
     }
 
@@ -56,5 +59,15 @@ class RecaptchaKeysRetrieverTest {
         verify(mockAwsSecretsManager).getSecretValue(
                 new GetSecretValueRequest().withSecretId(RECAPTCHA_KEYS_SECRET_ID));
         verify(mockObjectMapper).readValue(recaptchaKeysAsString, RecaptchaKeys.class);
+    }
+
+    @Test
+    void retrieveRecaptchaBackDoorResponse_returnsRecaptchaBackDoorResponseFromSecretsManager() {
+        when(mockAwsSecretsManager.getSecretValue(any())).thenReturn(
+                new GetSecretValueResult().withSecretString(RECAPTCHA_BACK_DOOR_RESPONSE));
+        assertThat(recaptchaKeysRetriever.retrieveRecaptchaBackDoorResponse(),
+                is(equalTo(RECAPTCHA_BACK_DOOR_RESPONSE)));
+        verify(mockAwsSecretsManager).getSecretValue(
+                new GetSecretValueRequest().withSecretId(RECAPTCHA_BACK_DOOR_RESPONSE_SECRET_ID));
     }
 }

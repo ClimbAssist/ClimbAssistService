@@ -4,21 +4,28 @@ import com.climbassist.api.user.Alias;
 import com.climbassist.api.user.CookieTestUtils;
 import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.UserManager;
+import com.climbassist.common.recaptcha.RecaptchaVerificationException;
+import com.climbassist.common.recaptcha.RecaptchaVerifier;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.function.Supplier;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -98,6 +105,10 @@ class UserAuthenticationControllerTest {
     private DeletedUsersDao mockDeletedUsersDao;
     @Mock
     private Supplier<ZonedDateTime> mockCurrentZonedDateTimeSupplier;
+    @Mock
+    private RecaptchaVerifier mockRecaptchaVerifier;
+
+    private MockHttpServletRequest mockHttpServletRequest;
 
     private MockHttpServletResponse mockHttpServletResponse;
 
@@ -110,7 +121,10 @@ class UserAuthenticationControllerTest {
                 .deletedUsersDao(mockDeletedUsersDao)
                 .userDataRetentionTimeMinutes(USER_DATA_RETENTION_TIME_MINUTES)
                 .currentZonedDateTimeSupplier(mockCurrentZonedDateTimeSupplier)
+                .recaptchaVerifier(mockRecaptchaVerifier)
                 .build();
+        mockHttpServletRequest = new MockHttpServletRequest();
+        mockHttpServletRequest.setRemoteAddr("0.0.0.0");
         mockHttpServletResponse = new MockHttpServletResponse();
     }
 
@@ -126,11 +140,26 @@ class UserAuthenticationControllerTest {
     }
 
     @Test
-    void register_registersUserAndReturnsUsernameAndEmail() throws EmailExistsException, UsernameExistsException {
-        assertThat(userAuthenticationController.register(REGISTER_USER_REQUEST),
+    void register_registersUserAndReturnsUsernameAndEmail()
+            throws EmailExistsException, UsernameExistsException, IOException, RecaptchaVerificationException {
+        assertThat(userAuthenticationController.register(REGISTER_USER_REQUEST, mockHttpServletRequest),
                 is(equalTo(EXPECTED_REGISTER_USER_RESULT)));
+        verify(mockRecaptchaVerifier).verifyRecaptchaResult(REGISTER_USER_REQUEST.getRecaptchaResponse(),
+                mockHttpServletRequest.getRemoteAddr());
         verify(mockUserManager).register(REGISTER_USER_REQUEST.getUsername(), REGISTER_USER_REQUEST.getEmail(),
                 REGISTER_USER_REQUEST.getPassword());
+    }
+
+    @Test
+    void register_throwsRecaptchaVerificationException_whenRecaptchaIsUnsuccessful()
+            throws EmailExistsException, UsernameExistsException, IOException, RecaptchaVerificationException {
+        doThrow(new RecaptchaVerificationException(ImmutableSet.of())).when(mockRecaptchaVerifier)
+                .verifyRecaptchaResult(any(), any());
+        assertThrows(RecaptchaVerificationException.class,
+                () -> userAuthenticationController.register(REGISTER_USER_REQUEST, mockHttpServletRequest));
+        verify(mockRecaptchaVerifier).verifyRecaptchaResult(REGISTER_USER_REQUEST.getRecaptchaResponse(),
+                mockHttpServletRequest.getRemoteAddr());
+        verify(mockUserManager, never()).register(any(), any(), any());
     }
 
     @Test

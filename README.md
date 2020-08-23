@@ -107,7 +107,8 @@ the artifact to deploy.
 
     `-DresourceNameSuffix=-<name> -DaccountId=172776452117 -Dregion=us-west-2 -DuserPoolClientId=<user pool client ID
      from your development stack> -DuserPoolId=<user pool ID from your development stack> 
-     -DclimbAssistEmail=-<name>@climbassist.com`
+     -DclimbAssistEmail=-<name>@climbassist.com -DuserDataRetentionTimeMinutes=1 
+     -DrecaptchaBackDoorResponseSecretId=RecaptchaBackDoorResponse-<name>`
      
      Alternatively, if you don't have an @climbassist.com email address, you can use dev@climbassist.com for the email.
 
@@ -141,7 +142,8 @@ Running from the Command Line
 
     `-DresourceNameSuffix=-<name> -DaccountId=172776452117 -Dregion=us-west-2 -DuserPoolClientId=<user pool client ID
      from your development stack> -DuserPoolId=<user pool ID from your development stack>
-     -DclimbAssistEmail=-<name>@climbassist.com`
+     -DclimbAssistEmail=-<name>@climbassist.com -DuserDataRetentionTimeMinutes=1 
+     -DrecaptchaBackDoorResponseSecretId=RecaptchaBackDoorResponse-<name>`
      
      Alternatively, if you don't have an @climbassist.com email address, you can use dev@climbassist.com for the email.
 
@@ -159,4 +161,5 @@ The integration tests in the package are located under `src/integration-test`.
 2. Run the integration tests 
 
         $ mvn verify -Dregion=us-west-2 -DuserPoolId=<user pool ID from your development stack> 
-        -DapplicationEndpoint=<Elastic Beanstalk application endpoint from your development stack>`
+        -DapplicationEndpoint=<Elastic Beanstalk application endpoint from your development stack>
+        -DrecaptchaBackDoorResponseSecretId=RecaptchaBackDoorResponse-<name>`

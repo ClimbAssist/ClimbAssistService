@@ -89,7 +89,7 @@ class AreaControllerTest {
     @Test
     void getResource_callsResourceWithChildrenControllerDelegate() throws ResourceNotFoundException {
         when(mockResourceWithChildrenControllerDelegate.getResource(any(), anyInt(), any())).thenReturn(
-                AREA_1); // TODO use a real value instead of MAYBE_USER_DATA
+                AREA_1);
         assertThat(areaController.getResource(AREA_1.getAreaId(), DEPTH, MAYBE_USER_DATA), is(equalTo(AREA_1)));
         verify(mockResourceWithChildrenControllerDelegate).getResource(AREA_1.getAreaId(), DEPTH, MAYBE_USER_DATA);
     }

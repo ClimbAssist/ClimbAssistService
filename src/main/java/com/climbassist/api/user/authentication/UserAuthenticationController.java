@@ -6,6 +6,8 @@ import com.climbassist.api.user.UserData;
 import com.climbassist.api.user.UserManager;
 import com.climbassist.api.user.authorization.AuthenticatedAuthorizationHandler;
 import com.climbassist.api.user.authorization.Authorization;
+import com.climbassist.common.recaptcha.RecaptchaVerificationException;
+import com.climbassist.common.recaptcha.RecaptchaVerifier;
 import com.climbassist.metrics.Metrics;
 import lombok.Builder;
 import lombok.NonNull;
@@ -18,8 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.SessionAttribute;
 
 import javax.annotation.Nullable;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -37,14 +41,18 @@ public class UserAuthenticationController {
     private final DeletedUsersDao deletedUsersDao;
     @NonNull
     private final Supplier<ZonedDateTime> currentZonedDateTimeSupplier;
-    @NonNull
     private final long userDataRetentionTimeMinutes;
+    @NonNull
+    private final RecaptchaVerifier recaptchaVerifier;
 
     @Metrics(api = "RegisterUser")
     @RequestMapping(path = "/v1/user/register", method = RequestMethod.POST,
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public RegisterUserResult register(@NonNull @Valid @RequestBody RegisterUserRequest registerUserRequest)
-            throws UsernameExistsException, EmailExistsException {
+    public RegisterUserResult register(@NonNull @Valid @RequestBody RegisterUserRequest registerUserRequest,
+                                       @NonNull HttpServletRequest httpServletRequest)
+            throws UsernameExistsException, EmailExistsException, IOException, RecaptchaVerificationException {
+        recaptchaVerifier.verifyRecaptchaResult(registerUserRequest.getRecaptchaResponse(),
+                httpServletRequest.getRemoteAddr());
         userManager.register(registerUserRequest.getUsername(), registerUserRequest.getEmail(),
                 registerUserRequest.getPassword());
         return RegisterUserResult.builder()

@@ -1,4 +1,4 @@
-package com.climbassist.api.contact.recaptcha;
+package com.climbassist.common.recaptcha;
 
 import com.climbassist.api.user.authentication.AuthenticationException;
 import lombok.NonNull;

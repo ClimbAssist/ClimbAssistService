@@ -1,4 +1,4 @@
-package com.climbassist.api.contact.recaptcha;
+package com.climbassist.common.recaptcha;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,6 +45,7 @@ class RecaptchaVerifierTest {
             .build();
     private static final String RECAPTCHA_RESPONSE = "recaptcha-response";
     private static final String REMOTE_IP = "0.0.0.0";
+    private static final String RECAPTCHA_BACK_DOOR_RESPONSE = "letmein";
 
     @Mock
     private RecaptchaKeysRetriever mockRecaptchaKeysRetriever;
@@ -71,6 +73,15 @@ class RecaptchaVerifierTest {
     }
 
     @Test
+    void verifyRecaptchaResult_doesNothing_whenRecaptchaResponseMatchesBackDoorResponse()
+            throws IOException, RecaptchaVerificationException {
+        when(mockRecaptchaKeysRetriever.retrieveRecaptchaBackDoorResponse()).thenReturn(RECAPTCHA_BACK_DOOR_RESPONSE);
+        recaptchaVerifier.verifyRecaptchaResult(RECAPTCHA_BACK_DOOR_RESPONSE, REMOTE_IP);
+        verify(mockRecaptchaKeysRetriever).retrieveRecaptchaBackDoorResponse();
+        verify(mockHttpClient, never()).execute(any());
+    }
+
+    @Test
     void verifyRecaptchaResult_doesNothing_whenRecaptchaIsSuccessful()
             throws IOException, RecaptchaVerificationException {
         RecaptchaVerificationResponse recaptchaVerificationResponse = RecaptchaVerificationResponse.builder()
@@ -95,6 +106,7 @@ class RecaptchaVerifierTest {
     }
 
     private void setUpMocks(RecaptchaVerificationResponse recaptchaVerificationResponse) throws IOException {
+        when(mockRecaptchaKeysRetriever.retrieveRecaptchaBackDoorResponse()).thenReturn(RECAPTCHA_BACK_DOOR_RESPONSE);
         when(mockRecaptchaKeysRetriever.retrieveRecaptchaKeys()).thenReturn(RECAPTCHA_KEYS);
         HttpResponse httpResponse = new BasicHttpResponse(new BasicStatusLine(HttpVersion.HTTP_1_1, 200, ""));
         httpResponse.setEntity(new StringEntity(OBJECT_MAPPER.writeValueAsString(recaptchaVerificationResponse)));
@@ -104,6 +116,7 @@ class RecaptchaVerifierTest {
     }
 
     private void verifyMocks(RecaptchaVerificationResponse recaptchaVerificationResponse) throws IOException {
+        verify(mockRecaptchaKeysRetriever).retrieveRecaptchaBackDoorResponse();
         verify(mockRecaptchaKeysRetriever).retrieveRecaptchaKeys();
         String expectedEntityString = IOUtils.toString(new UrlEncodedFormEntity(
                 ImmutableList.of(new BasicNameValuePair("secret", RECAPTCHA_KEYS.getSecretKey()),

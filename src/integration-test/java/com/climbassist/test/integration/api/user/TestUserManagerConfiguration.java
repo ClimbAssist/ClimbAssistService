@@ -1,6 +1,7 @@
 package com.climbassist.test.integration.api.user;
 
 import com.amazonaws.services.cognitoidp.AWSCognitoIdentityProviderClientBuilder;
+import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -22,7 +23,9 @@ public class TestUserManagerConfiguration {
     @Scope("prototype")
     public TestUserManager testUserManager(@NonNull String region, @NonNull ClimbAssistClient climbAssistClient,
                                            @Value("${userPoolId}") @NonNull String userPoolId,
-                                           @NonNull HttpClient httpClient) {
+                                           @NonNull HttpClient httpClient,
+                                           @NonNull @Value("${recaptchaBackDoorResponseSecretId}")
+                                                   String recaptchaBackDoorResponseSecretId) {
         return TestUserManager.builder()
                 .amazonSimpleEmailService(AmazonSimpleEmailServiceClientBuilder.standard()
                         .withRegion(region)
@@ -39,6 +42,10 @@ public class TestUserManagerConfiguration {
                 .climbAssistClient(climbAssistClient)
                 .userPoolId(userPoolId)
                 .httpClient(httpClient)
+                .awsSecretsManager(AWSSecretsManagerClientBuilder.standard()
+                        .withRegion(region)
+                        .build())
+                .recaptchaBackDoorResponseSecretId(recaptchaBackDoorResponseSecretId)
                 .build();
     }
 }

@@ -1,9 +1,10 @@
-package com.climbassist.api.contact.recaptcha;
+package com.climbassist.common.recaptcha;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import lombok.Builder;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -17,6 +18,7 @@ import java.io.IOException;
  * https://developers.google.com/recaptcha/docs/verify
  */
 @Builder
+@Slf4j
 public class RecaptchaVerifier {
 
     @NonNull
@@ -28,6 +30,12 @@ public class RecaptchaVerifier {
 
     public void verifyRecaptchaResult(@NonNull String recaptchaResponse, @NonNull String remoteIp)
             throws IOException, RecaptchaVerificationException {
+        String recaptchaBackDoorResponse = recaptchaKeysRetriever.retrieveRecaptchaBackDoorResponse();
+        if (recaptchaBackDoorResponse.equals(recaptchaResponse)) {
+            log.info(String.format("Received recaptcha response matching the back door response for remoteIp %s.",
+                    remoteIp));
+            return;
+        }
         RecaptchaKeys recaptchaKeys = recaptchaKeysRetriever.retrieveRecaptchaKeys();
         HttpPost httpPost = new HttpPost("https://www.google.com/recaptcha/api/siteverify");
         httpPost.setEntity(new UrlEncodedFormEntity(

@@ -308,6 +308,9 @@ Resources:
           - IsProd
           - 1051200 # 2 years
           - 1 # this avoids our dev and beta tables from getting filled up with deleted users from integration tests
+      - Namespace: aws:elasticbeanstalk:application:environment
+        OptionName: recaptchaBackDoorResponseSecretId
+        Value: !Sub RecaptchaBackDoorResponse${ResourceNameSuffix}
   EBInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Condition: CreateComputeResources
@@ -421,9 +424,9 @@ Resources:
           - Action: secretsmanager:GetSecretValue
             Effect: Allow
             Resource:
-            # These were created by hand
-            - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRsaPrivateKey-mzRTKi
-            - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRecaptchaKeys*
+            - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRsaPrivateKey-mzRTKi # created by hand
+            - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRecaptchaKeys* # created by hand
+            - !Ref RecaptchaBackDoorResponseSecret
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
 
@@ -2141,6 +2144,103 @@ Resources:
         - !Sub
           - ${Name}@climbassist.com
           - { Name: !Select [1, !Split ['-', !Ref ResourceNameSuffix]] }
+
+  RecaptchaBackDoorResponseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub RecaptchaBackDoorResponse${ResourceNameSuffix}
+      Description: Allow-listed reCAPTCHA response for which any reCAPTCHA-enabled API will accept successfully. This is mainly used for automated testing so that reCAPTCHA-enabled APIs can be tested.
+  #      GenerateSecretString:
+  #        SecretStringTemplate: '{}'
+  #        GenerateStringKey: 'backDoorResponse'
+  RecaptchaBackDoorResponseRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub RecaptchaBackDoorResponseRole${ResourceNameSuffix}
+      Policies:
+      - PolicyName: RecaptchaBackDoorResponsePolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: logs:*
+            Resource: '*'
+          - Effect: Allow
+            Action: secretsmanager:GetRandomPassword
+            Resource: '*'
+          - Effect: Allow
+            Action:
+            - secretsmanager:DescribeSecret
+            - secretsmanager:GetSecretValue
+            - secretsmanager:PutSecretValue
+            - secretsmanager:UpdateSecretVersionStage
+            Resource: !Ref RecaptchaBackDoorResponseSecret
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+  RecaptchaBackDoorResponseRotationFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub RecaptchaBackDoorResponseRotationFunction${ResourceNameSuffix}
+      Code:
+        ZipFile: |
+          import logging
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          import boto3
+
+
+          def handler(event, context):
+              logger.info('got event {}'.format(event))
+              secrets_manager = boto3.client('secretsmanager')
+              if event['Step'] == 'createSecret':
+                  logger.info('creating new secret')
+                  try:
+                      secrets_manager.get_secret_value(SecretId=event['SecretId'], VersionId=event['ClientRequestToken'], VersionStage="AWSPENDING")
+                      logger.info('successfully retrieved secret.')
+                  except secrets_manager.exceptions.ResourceNotFoundException:
+                      new_secret = secrets_manager.get_random_password()['RandomPassword']
+                      secrets_manager.put_secret_value(SecretId=event['SecretId'], ClientRequestToken=event['ClientRequestToken'], SecretString=new_secret, VersionStages=['AWSPENDING'])
+                      logger.info('saved new secret')
+              elif event['Step'] == 'finishSecret':
+                  logger.info('finishing secret')
+                  metadata = secrets_manager.describe_secret(SecretId=event['SecretId'])
+                  current_version = None
+                  for version in metadata['VersionIdsToStages']:
+                      if 'AWSCURRENT' in metadata['VersionIdsToStages'][version]:
+                          if version == event['ClientRequestToken']:
+                              logger.info('finishSecret: Version already marked as AWSCURRENT')
+                              return
+                          current_version = version
+                          break
+
+                  secrets_manager.update_secret_version_stage(SecretId=event['SecretId'], VersionStage="AWSCURRENT", MoveToVersionId=event['ClientRequestToken'], RemoveFromVersionId=current_version)
+                  logger.info('finished secret')
+              else:
+                  logger.info('skipping')
+                  pass
+      Handler: index.handler
+      Runtime: python3.7
+      Timeout: 60 # 15 minutes
+      Role: !GetAtt RecaptchaBackDoorResponseRole.Arn
+  RecaptchaBackDoorResponseRotationFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt RecaptchaBackDoorResponseRotationFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: secretsmanager.amazonaws.com
+  RecaptchaBackDoorResponseSecretRotationSchedule:
+    Type: AWS::SecretsManager::RotationSchedule
+    Properties:
+      SecretId: !Ref RecaptchaBackDoorResponseSecret
+      RotationLambdaARN: !GetAtt RecaptchaBackDoorResponseRotationFunction.Arn
+      RotationRules:
+        AutomaticallyAfterDays: 1
 
   CloudWatchDashboard:
     Type: AWS::CloudWatch::Dashboard

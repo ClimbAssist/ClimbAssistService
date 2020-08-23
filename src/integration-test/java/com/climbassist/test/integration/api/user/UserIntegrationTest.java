@@ -90,6 +90,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                         .username(testId)
                         .email(testId + "-other-user@test.climbassist.com")
                         .password(PASSWORD)
+                        .recaptchaResponse(testUserManager.retrieveRecaptchaBackDoorResponse())
                         .build());
         ExceptionUtils.assertSpecificException(registerUserResponse, 409, "UsernameExistsException");
     }
@@ -110,6 +111,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                         .username(testId + "-does-not-exist")
                         .email(testEmailContext.getEmail())
                         .password(PASSWORD)
+                        .recaptchaResponse(testUserManager.retrieveRecaptchaBackDoorResponse())
                         .build());
         ExceptionUtils.assertSpecificException(registerUserResponse, 409, "EmailExistsException");
     }
@@ -485,7 +487,8 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
-    public void resetPassword_returnsIncorrectVerificationCodeException_whenVerificationCodeIsWrong() throws IOException {
+    public void resetPassword_returnsIncorrectVerificationCodeException_whenVerificationCodeIsWrong()
+            throws IOException {
         TestUserContext testUserContext = testUserManager.registerUser(testId, testEmailContext);
         testUserManager.verifyNewAccountEmail(testUserContext);
         ApiResponse<ResetPasswordResult> apiResponse = climbAssistClient.resetPassword(ResetPasswordRequest.builder()
