@@ -1,6 +1,8 @@
 package com.climbassist.test.integration.client;
 
 import com.climbassist.api.contact.GetRecaptchaSiteKeyResult;
+import com.climbassist.api.contact.SendContactEmailRequest;
+import com.climbassist.api.contact.SendContactEmailResult;
 import com.climbassist.api.resource.area.Area;
 import com.climbassist.api.resource.area.CreateAreaResult;
 import com.climbassist.api.resource.area.NewArea;
@@ -510,6 +512,32 @@ public class ClimbAssistClient {
 
     public ApiResponse<GetRecaptchaSiteKeyResult> getRecaptchaSiteKey() {
         return get("/v1/recaptcha-site-key", new TypeReference<ApiResponse<GetRecaptchaSiteKeyResult>>() {});
+    }
+
+    public ApiResponse<SendContactEmailResult> sendContactEmail(@NonNull String replyToEmail, @NonNull String subject,
+                                                                @NonNull String emailBody,
+                                                                @NonNull Set<Cookie> cookies) {
+        return sendContactEmail(replyToEmail, subject, emailBody, Optional.empty(), cookies);
+    }
+
+    public ApiResponse<SendContactEmailResult> sendContactEmail(@NonNull String replyToEmail, @NonNull String subject,
+                                                                @NonNull String emailBody,
+                                                                @NonNull String recaptchaResponse,
+                                                                @NonNull Set<Cookie> cookies) {
+        return sendContactEmail(replyToEmail, subject, emailBody, Optional.of(recaptchaResponse), cookies);
+    }
+
+    private ApiResponse<SendContactEmailResult> sendContactEmail(@NonNull String replyToEmail, @NonNull String subject,
+                                                                 @NonNull String emailBody,
+                                                                 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+                                                                 @NonNull Optional<String> maybeRecaptchaResponse,
+                                                                 @NonNull Set<Cookie> cookies) {
+        return post("/v1/contact", SendContactEmailRequest.builder()
+                .replyToEmail(replyToEmail)
+                .subject(subject)
+                .emailBody(emailBody)
+                .recaptchaResponse(maybeRecaptchaResponse.orElse(null))
+                .build(), cookies, new TypeReference<ApiResponse<SendContactEmailResult>>() {});
     }
 
     private <Response extends ApiResponse<?>> Response get(String path, Set<Cookie> cookies,

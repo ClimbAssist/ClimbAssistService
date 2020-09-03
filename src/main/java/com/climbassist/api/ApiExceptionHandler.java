@@ -72,14 +72,14 @@ public class ApiExceptionHandler {
         log.warn(Throwables.getStackTraceAsString(methodArgumentNotValidException));
         String errorMessage = getErrorMessageFromBindingResult(methodArgumentNotValidException.getBindingResult(),
                 methodArgumentNotValidException);
-        return handleInvalidRequestException(errorMessage);
+        return handleBadRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = BindException.class)
     public ResponseEntity<Object> handleBindException(BindException bindException) throws JsonProcessingException {
         log.warn(Throwables.getStackTraceAsString(bindException));
         String errorMessage = getErrorMessageFromBindingResult(bindException, bindException);
-        return handleInvalidRequestException(errorMessage);
+        return handleBadRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = ConstraintViolationException.class)
@@ -90,7 +90,7 @@ public class ApiExceptionHandler {
                 .iterator()
                 .next()
                 .getMessage();
-        return handleInvalidRequestException(errorMessage);
+        return handleBadRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = HttpMessageNotReadableException.class)
@@ -100,13 +100,11 @@ public class ApiExceptionHandler {
         if (httpMessageNotReadableException.getMessage() != null) {
             if (httpMessageNotReadableException.getMessage()
                     .contains("Required request body is missing")) {
-                return handleInvalidRequestException("Required request body is missing.");
-
+                return handleBadRequestException("Required request body is missing.");
             }
             if (httpMessageNotReadableException.getMessage()
                     .contains("JSON parse error")) {
-                return handleInvalidRequestException("Unable to parse input.");
-
+                return handleBadRequestException("Unable to parse input.");
             }
         }
         return buildGenericResponseEntity();
@@ -117,14 +115,14 @@ public class ApiExceptionHandler {
             MissingServletRequestPartException missingServletRequestPartException) throws JsonProcessingException {
         log.warn(Throwables.getStackTraceAsString(missingServletRequestPartException));
         String errorMessage = missingServletRequestPartException.getMessage();
-        return handleInvalidRequestException(errorMessage);
+        return handleBadRequestException(errorMessage);
     }
 
     @ExceptionHandler(value = MultipartException.class)
     public ResponseEntity<Object> handleMultipartException(MultipartException multipartException)
             throws JsonProcessingException {
         log.warn(Throwables.getStackTraceAsString(multipartException));
-        return handleInvalidRequestException(multipartException.getMessage());
+        return handleBadRequestException(multipartException.getMessage());
     }
 
     @ExceptionHandler(value = MethodArgumentTypeMismatchException.class)
@@ -135,7 +133,7 @@ public class ApiExceptionHandler {
                 methodArgumentTypeMismatchException.getParameter()
                         .getParameterType()
                         .getSimpleName());
-        return handleInvalidRequestException(message);
+        return handleBadRequestException(message);
     }
 
     @ExceptionHandler(value = Exception.class)
@@ -144,7 +142,7 @@ public class ApiExceptionHandler {
         return buildGenericResponseEntity();
     }
 
-    private ResponseEntity<Object> handleInvalidRequestException(String message) throws JsonProcessingException {
+    private ResponseEntity<Object> handleBadRequestException(String message) throws JsonProcessingException {
         return buildResponseEntity("InvalidRequestException", message, HttpStatus.BAD_REQUEST);
     }
 

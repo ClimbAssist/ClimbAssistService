@@ -19,6 +19,8 @@ import com.climbassist.api.user.authentication.VerifyEmailRequest;
 import com.climbassist.test.integration.TestIdGenerator;
 import com.climbassist.test.integration.api.ApiResponse;
 import com.climbassist.test.integration.api.ExceptionUtils;
+import com.climbassist.test.integration.api.recaptcha.RecaptchaBackDoorResponseRetriever;
+import com.climbassist.test.integration.api.recaptcha.RecaptchaBackDoorResponseRetrieverConfiguration;
 import com.climbassist.test.integration.client.ClimbAssistClient;
 import com.climbassist.test.integration.client.ClimbAssistClientConfiguration;
 import com.google.common.collect.ImmutableSet;
@@ -44,7 +46,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
 //@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {ClimbAssistClientConfiguration.class, TestUserManagerConfiguration.class})
+@ContextConfiguration(classes = {ClimbAssistClientConfiguration.class, TestUserManagerConfiguration.class,
+        RecaptchaBackDoorResponseRetrieverConfiguration.class})
 public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
 
     private static final String VERIFICATION_CODE_GROUP_NAME = "verificationCode";
@@ -60,6 +63,8 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     private ClimbAssistClient climbAssistClient;
     @Autowired
     private TestUserManager testUserManager;
+    @Autowired
+    private RecaptchaBackDoorResponseRetriever recaptchaBackDoorResponseRetriever;
 
     private String testId;
     private TestEmailContext testEmailContext;
@@ -90,7 +95,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                         .username(testId)
                         .email(testId + "-other-user@test.climbassist.com")
                         .password(PASSWORD)
-                        .recaptchaResponse(testUserManager.retrieveRecaptchaBackDoorResponse())
+                        .recaptchaResponse(recaptchaBackDoorResponseRetriever.retrieveRecaptchaBackDoorResponse())
                         .build());
         ExceptionUtils.assertSpecificException(registerUserResponse, 409, "UsernameExistsException");
     }
@@ -111,7 +116,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
                         .username(testId + "-does-not-exist")
                         .email(testEmailContext.getEmail())
                         .password(PASSWORD)
-                        .recaptchaResponse(testUserManager.retrieveRecaptchaBackDoorResponse())
+                        .recaptchaResponse(recaptchaBackDoorResponseRetriever.retrieveRecaptchaBackDoorResponse())
                         .build());
         ExceptionUtils.assertSpecificException(registerUserResponse, 409, "EmailExistsException");
     }

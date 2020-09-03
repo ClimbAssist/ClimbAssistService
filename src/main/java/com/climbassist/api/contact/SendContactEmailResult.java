@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Builder
 @Data
-class SendContactEmailResult {
+public class SendContactEmailResult {
 
     private boolean successful;
 }

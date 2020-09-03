@@ -1,4 +1,4 @@
-package com.climbassist.common.recaptcha;
+package com.climbassist.api.recaptcha;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;

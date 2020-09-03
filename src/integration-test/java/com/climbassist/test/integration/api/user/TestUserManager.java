@@ -11,8 +11,6 @@ import com.amazonaws.services.cognitoidp.model.AdminAddUserToGroupRequest;
 import com.amazonaws.services.cognitoidp.model.AdminDeleteUserRequest;
 import com.amazonaws.services.cognitoidp.model.AdminRemoveUserFromGroupRequest;
 import com.amazonaws.services.cognitoidp.model.UserNotFoundException;
-import com.amazonaws.services.secretsmanager.AWSSecretsManager;
-import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.AlreadyExistsException;
 import com.amazonaws.services.simpleemail.model.CreateReceiptRuleRequest;
@@ -46,6 +44,7 @@ import com.climbassist.api.user.authentication.SignInUserRequest;
 import com.climbassist.api.user.authentication.SignInUserResult;
 import com.climbassist.test.integration.api.ApiResponse;
 import com.climbassist.test.integration.api.ExceptionUtils;
+import com.climbassist.test.integration.api.recaptcha.RecaptchaBackDoorResponseRetriever;
 import com.climbassist.test.integration.client.ClimbAssistClient;
 import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
@@ -110,9 +109,7 @@ public class TestUserManager {
     @NonNull
     private final HttpClient httpClient;
     @NonNull
-    private final AWSSecretsManager awsSecretsManager;
-    @NonNull
-    private final String recaptchaBackDoorResponseSecretId;
+    private final RecaptchaBackDoorResponseRetriever recaptchaBackDoorResponseRetriever;
 
     public Set<Cookie> createVerifyAndSignInTestUser(@NonNull String testId) throws IOException {
         TestEmailContext testEmailContext = setUpTestEmail(testId);
@@ -215,7 +212,7 @@ public class TestUserManager {
                         .username(username)
                         .email(testEmailContext.getEmail())
                         .password(TEST_PASSWORD)
-                        .recaptchaResponse(retrieveRecaptchaBackDoorResponse())
+                        .recaptchaResponse(recaptchaBackDoorResponseRetriever.retrieveRecaptchaBackDoorResponse())
                         .build());
         ExceptionUtils.assertNoException(registerUserResponse);
         testUsernames.add(username);
@@ -328,12 +325,6 @@ public class TestUserManager {
                 .filter(message -> new JSONObject(message.getBody()).getString(SQS_EMAIL_MESSAGE_SUBJECT_FIELD_NAME)
                         .equals(VERIFICATION_EMAIL_SUBJECT))
                 .findAny();
-    }
-
-    public String retrieveRecaptchaBackDoorResponse() {
-        return awsSecretsManager.getSecretValue(
-                new GetSecretValueRequest().withSecretId(recaptchaBackDoorResponseSecretId))
-                .getSecretString();
     }
 
 }

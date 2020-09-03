@@ -2,8 +2,8 @@ package com.climbassist.api.user.authentication;
 
 import com.climbassist.api.user.UserConfiguration;
 import com.climbassist.api.user.UserManager;
-import com.climbassist.common.recaptcha.RecaptchaConfiguration;
-import com.climbassist.common.recaptcha.RecaptchaVerifier;
+import com.climbassist.api.recaptcha.RecaptchaConfiguration;
+import com.climbassist.api.recaptcha.RecaptchaVerifier;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package com.climbassist.common.recaptcha;
+package com.climbassist.api.recaptcha;
 
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.climbassist.common.CommonConfiguration;
@@ -49,6 +49,13 @@ public class RecaptchaConfiguration {
                 .httpClient(HttpClientBuilder.create()
                         .build())
                 .objectMapper(objectMapper)
+                .recaptchaKeysRetriever(recaptchaKeysRetriever)
+                .build();
+    }
+
+    @Bean
+    public RecaptchaController recaptchaController(@NonNull RecaptchaKeysRetriever recaptchaKeysRetriever) {
+        return RecaptchaController.builder()
                 .recaptchaKeysRetriever(recaptchaKeysRetriever)
                 .build();
     }

@@ -6,12 +6,12 @@ import com.amazonaws.services.simpleemail.model.Content;
 import com.amazonaws.services.simpleemail.model.Destination;
 import com.amazonaws.services.simpleemail.model.Message;
 import com.amazonaws.services.simpleemail.model.SendEmailRequest;
-import com.climbassist.common.recaptcha.RecaptchaKeys;
-import com.climbassist.common.recaptcha.RecaptchaKeysRetriever;
-import com.climbassist.common.recaptcha.RecaptchaVerificationException;
-import com.climbassist.common.recaptcha.RecaptchaVerifier;
+import com.climbassist.api.InvalidRequestException;
+import com.climbassist.api.recaptcha.RecaptchaVerificationException;
+import com.climbassist.api.recaptcha.RecaptchaVerifier;
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import com.climbassist.metrics.Metrics;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
 import lombok.Builder;
 import lombok.NonNull;
@@ -21,10 +21,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Optional;
 
 @Builder
 @RestController
@@ -37,17 +39,25 @@ public class ContactController {
     @NonNull
     private final AmazonSimpleEmailService amazonSimpleEmailService;
     @NonNull
-    private final RecaptchaKeysRetriever recaptchaKeysRetriever;
-    @NonNull
     private final RecaptchaVerifier recaptchaVerifier;
 
     @Metrics(api = "SendContactEmail")
     @RequestMapping(path = "/v1/contact", method = RequestMethod.POST)
     public SendContactEmailResult sendContactEmail(
             @NonNull @Valid @RequestBody SendContactEmailRequest sendContactEmailRequest,
-            @NonNull HttpServletRequest httpServletRequest) throws IOException, RecaptchaVerificationException {
-        recaptchaVerifier.verifyRecaptchaResult(sendContactEmailRequest.getRecaptchaResponse(),
-                httpServletRequest.getRemoteAddr());
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+            @NonNull Optional<UserData> maybeUserData, @NonNull HttpServletRequest httpServletRequest)
+            throws IOException, RecaptchaVerificationException, InvalidRequestException {
+        if (!maybeUserData.isPresent()) {
+            if (sendContactEmailRequest.getRecaptchaResponse() == null) {
+                throw new InvalidRequestException("reCAPTCHA response must be present if user is not signed-in.");
+            }
+            else {
+                recaptchaVerifier.verifyRecaptchaResult(sendContactEmailRequest.getRecaptchaResponse(),
+                        httpServletRequest.getRemoteAddr());
+            }
+        }
         amazonSimpleEmailService.sendEmail(new SendEmailRequest().withSource(climbAssistEmail)
                 .withDestination(new Destination(ImmutableList.of(climbAssistEmail)))
                 .withReplyToAddresses(sendContactEmailRequest.getReplyToEmail())
@@ -55,15 +65,6 @@ public class ContactController {
                         new Body(new Content(sendContactEmailRequest.getEmailBody())))));
         return SendContactEmailResult.builder()
                 .successful(true)
-                .build();
-    }
-
-    @Metrics(api = "GetRecaptchaSiteKey")
-    @RequestMapping(path = "/v1/recaptcha-site-key", method = RequestMethod.GET)
-    public GetRecaptchaSiteKeyResult getRecaptchaSiteKey() throws JsonProcessingException {
-        RecaptchaKeys recaptchaKeys = recaptchaKeysRetriever.retrieveRecaptchaKeys();
-        return GetRecaptchaSiteKeyResult.builder()
-                .siteKey(recaptchaKeys.getSiteKey())
                 .build();
     }
 }

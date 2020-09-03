@@ -2,6 +2,7 @@ package com.climbassist;
 
 import com.climbassist.api.ApiConfiguration;
 import com.climbassist.api.contact.ContactConfiguration;
+import com.climbassist.api.recaptcha.RecaptchaConfiguration;
 import com.climbassist.api.resource.area.AreaConfiguration;
 import com.climbassist.api.resource.country.CountryConfiguration;
 import com.climbassist.api.resource.crag.CragConfiguration;
@@ -33,8 +34,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @Import({ApiConfiguration.class, AreaConfiguration.class, ContactConfiguration.class, CountryConfiguration.class,
         CragConfiguration.class, HealthConfiguration.class, LoggingConfiguration.class, MainConfiguration.class,
         MetricsConfiguration.class, PathConfiguration.class, PathPointConfiguration.class, PitchConfiguration.class,
-        PointConfiguration.class, RegionConfiguration.class, RouteConfiguration.class, SubAreaConfiguration.class,
-        UserAuthenticationConfiguration.class, UserConfiguration.class, WallConfiguration.class})
+        PointConfiguration.class, RecaptchaConfiguration.class, RegionConfiguration.class, RouteConfiguration.class,
+        SubAreaConfiguration.class, UserAuthenticationConfiguration.class, UserConfiguration.class,
+        WallConfiguration.class})
 public class MvcConfiguration implements WebMvcConfigurer {
 
     @Override

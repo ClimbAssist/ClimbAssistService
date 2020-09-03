@@ -1,11 +1,13 @@
 package com.climbassist.api.contact;
 
+import com.climbassist.api.recaptcha.ValidOptionalRecaptchaResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.annotation.Nullable;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -14,7 +16,7 @@ import javax.validation.constraints.Size;
 @Builder
 @Data
 @NoArgsConstructor
-class SendContactEmailRequest {
+public class SendContactEmailRequest {
 
     @NotNull(message = "Subject must be present.")
     @Size(min = 1, max = 100, message = "Subject must be between 1 and 100 characters.")
@@ -29,8 +31,8 @@ class SendContactEmailRequest {
     @Size(min = 3, max = 100, message = "Reply-to email must be between 3 and 100 characters.")
     private String replyToEmail;
 
-    @NotNull(message = "ReCAPTCHA response must be present.")
-    @Size(min = 1, max = 500, message = "ReCAPTCHA response must be between 1 and 500 characters.")
+    @Nullable
+    @ValidOptionalRecaptchaResponse
     @JsonProperty("recaptchaRes")
     private String recaptchaResponse;
 }
