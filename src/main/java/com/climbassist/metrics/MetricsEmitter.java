@@ -8,11 +8,12 @@ import com.amazonaws.services.cloudwatch.model.StandardUnit;
 import com.google.common.collect.ImmutableSet;
 import lombok.Builder;
 import lombok.NonNull;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Optional;
 import java.util.Set;
 
-@Builder
+@SuperBuilder
 public class MetricsEmitter {
 
     private static final String API_DIMENSION_NAME = "api";

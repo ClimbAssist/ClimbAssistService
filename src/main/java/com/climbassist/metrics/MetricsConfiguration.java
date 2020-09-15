@@ -20,7 +20,7 @@ public class MetricsConfiguration {
                                        @NonNull @Value("${metricsNamespace}") String metricsNamespace,
                                        @NonNull RequestMappingHandlerMapping requestMappingHandlerMapping) {
         return MetricsFilter.builder()
-                .metricsEmitter(MetricsEmitter.builder()
+                .metricsEmitter(NullMetricsEmitter.builder()
                         .amazonCloudWatch(AmazonCloudWatchClientBuilder.standard()
                                 .withRegion(region)
                                 .build())

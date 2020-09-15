@@ -343,6 +343,7 @@
                         <exclude>**/RequestIdFilter.class</exclude>
                         <exclude>**/RequestResponseLoggingFilter.class</exclude>
                         <exclude>**/ApiResponseFilter.class</exclude>
+                        <exclude>**/NullMetricsEmitter.class</exclude>
                         <!-- The extra * is required to exclude any anonymous classes within TypeConverter classes-->
                         <exclude>**/*TypeConverter*.class</exclude>
                         <exclude>**/ApiExceptionHandler.class</exclude>
