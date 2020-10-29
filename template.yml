@@ -387,9 +387,6 @@ Resources:
               - TableArn: !GetAtt PathPointsTable.Arn
             - !Sub
               - ${TableArn}*
-              - TableArn: !GetAtt RouteCommentsTable.Arn
-            - !Sub
-              - ${TableArn}*
               - TableArn: !GetAtt DeletedUsersTable.Arn
           - Action:
             - cognito-idp:SignUp
