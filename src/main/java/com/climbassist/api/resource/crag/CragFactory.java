@@ -43,9 +43,10 @@ public class CragFactory extends ResourceFactory<Crag, NewCrag> implements Resou
     }
 
     @Override
-    public Crag create(Crag crag, String imageLocation) {
+    public Crag create(@NonNull Crag crag, @NonNull String imageLocation, @NonNull String jpgImageLocation) {
         return crag.toBuilder()
                 .imageLocation(imageLocation)
+                .jpgImageLocation(jpgImageLocation)
                 .build();
     }
 }

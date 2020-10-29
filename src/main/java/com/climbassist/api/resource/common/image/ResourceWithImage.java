@@ -6,4 +6,6 @@ public interface ResourceWithImage extends Resource {
 
     String getImageLocation();
 
+    String getJpgImageLocation();
+
 }

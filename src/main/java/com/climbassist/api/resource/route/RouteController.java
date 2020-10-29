@@ -12,6 +12,7 @@ import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.ValidDepth;
 import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
 import com.climbassist.api.resource.common.image.UploadImageResult;
+import com.climbassist.api.resource.common.image.webpconverter.WebpConverterException;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.pitch.PitchesDao;
 import com.climbassist.api.resource.wall.ValidWallId;
@@ -44,8 +45,7 @@ import java.util.Optional;
 @Validated
 public class RouteController {
 
-    private static final String IMAGE_NAME = "photo.webp";
-    private static final String IMAGE_KEY_TEMPLATE = "%s/%s.webp";
+    private static final String IMAGE_NAME = "photo.jpg";
 
     @NonNull
     private final ResourceWithParentControllerDelegate<Route, NewRoute, Wall> resourceWithParentControllerDelegate;
@@ -70,20 +70,18 @@ public class RouteController {
     @Metrics(api = "GetRoute")
     @RequestMapping(path = "/v1/routes/{routeId}", method = RequestMethod.GET)
     public Route getResource(@ValidRouteId @NonNull @PathVariable String routeId,
-                             @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth,
-                             @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                             @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
-                             @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
+            @ValidDepth @RequestParam(required = false, defaultValue = "0") int depth,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+            @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
         return resourceWithChildrenControllerDelegate.getResource(routeId, depth, maybeUserData);
     }
 
     @Metrics(api = "ListRoutes")
     @RequestMapping(path = "/v1/walls/{wallId}/routes", method = RequestMethod.GET)
     public List<Route> getResourcesForParent(@ValidWallId @NonNull @PathVariable String wallId,
-                                             @RequestParam(required = false) boolean ordered,
-                                             @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                                             @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
-                                             @NonNull Optional<UserData> maybeUserData)
+            @RequestParam(required = false) boolean ordered, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME) @NonNull Optional<UserData> maybeUserData)
             throws InvalidOrderingException, ResourceNotFoundException {
         return orderableResourceWithParentControllerDelegate.getResourcesForParent(wallId, ordered, maybeUserData);
     }
@@ -92,11 +90,9 @@ public class RouteController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/routes", method = RequestMethod.PUT)
     public CreateResourceResult<Route> createResource(@NonNull @Valid @RequestBody NewRoute newRoute,
-                                                      @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                                                      @SessionAttribute(
-                                                              value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
-                                                      @NonNull Optional<UserData> maybeUserData)
-            throws ResourceNotFoundException {
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+            @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
         return resourceWithParentControllerDelegate.createResource(newRoute, maybeUserData);
     }
 
@@ -104,10 +100,9 @@ public class RouteController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/routes", method = RequestMethod.POST)
     public UpdateResourceResult updateResource(@NonNull @Valid @RequestBody Route route,
-                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
-                                               @NonNull Optional<UserData> maybeUserData)
-            throws ResourceNotFoundException {
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+            @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException {
         return resourceWithParentControllerDelegate.updateResource(route, maybeUserData);
     }
 
@@ -115,10 +110,9 @@ public class RouteController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/routes/{routeId}", method = RequestMethod.DELETE)
     public DeleteResourceResult deleteResource(@NonNull @ValidRouteId @PathVariable String routeId,
-                                               @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                                               @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
-                                               @NonNull Optional<UserData> maybeUserData)
-            throws ResourceNotFoundException, ResourceNotEmptyException {
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+            @NonNull Optional<UserData> maybeUserData) throws ResourceNotFoundException, ResourceNotEmptyException {
         Route route = routesDao.getResource(routeId, maybeUserData)
                 .orElseThrow(() -> routeNotFoundExceptionFactory.create(routeId));
         if (!pitchesDao.getResources(routeId, maybeUserData)
@@ -130,6 +124,10 @@ public class RouteController {
             AmazonS3URI amazonS3URI = new AmazonS3URI(route.getImageLocation());
             s3Proxy.deleteObject(amazonS3URI.getBucket(), amazonS3URI.getKey());
         }
+        if (route.getJpgImageLocation() != null) {
+            AmazonS3URI amazonS3URI = new AmazonS3URI(route.getJpgImageLocation());
+            s3Proxy.deleteObject(amazonS3URI.getBucket(), amazonS3URI.getKey());
+        }
         return DeleteResourceResult.builder()
                 .successful(true)
                 .build();
@@ -139,11 +137,11 @@ public class RouteController {
     @Authorization(AdministratorAuthorizationHandler.class)
     @RequestMapping(path = "/v1/routes/{routeId}/photo", method = RequestMethod.POST)
     public UploadImageResult uploadImage(@ValidRouteId @NonNull @PathVariable String routeId,
-                                         @NonNull @RequestParam(IMAGE_NAME) MultipartFile image,
-                                         @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                                         @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
-                                         @NonNull Optional<UserData> maybeUserData)
-            throws ResourceNotFoundException, IOException {
+            @NonNull @RequestParam(IMAGE_NAME) MultipartFile image,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+            @SessionAttribute(value = SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME)
+            @NonNull Optional<UserData> maybeUserData)
+            throws ResourceNotFoundException, IOException, WebpConverterException {
         return resourceWithImageControllerDelegate.uploadImage(routeId, image, maybeUserData);
     }
 }

@@ -1,6 +1,7 @@
 package com.climbassist.common.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -18,13 +19,13 @@ public class S3Proxy {
     @NonNull
     private final AmazonS3 amazonS3;
 
-    public String putPublicObject(@NonNull String bucket, @NonNull String key, @NonNull InputStream inputStream,
-                                  long contentLength) {
+    public AmazonS3URI putPublicObject(@NonNull String bucket, @NonNull String key, @NonNull InputStream inputStream,
+                                       long contentLength) {
         ObjectMetadata objectMetadata = new ObjectMetadata();
         objectMetadata.setContentLength(contentLength);
         amazonS3.putObject(new PutObjectRequest(bucket, key, inputStream, objectMetadata).withCannedAcl(
                 CannedAccessControlList.PublicRead));
-        return String.format(OBJECT_URL_TEMPLATE, bucket, key);
+        return AmazonS3UriBuilder.buildAmazonS3Uri(bucket, key);
     }
 
     public void deleteObject(@NonNull String bucket, @NonNull String key) {

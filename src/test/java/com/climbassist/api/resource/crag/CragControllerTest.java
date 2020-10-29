@@ -1,5 +1,6 @@
 package com.climbassist.api.resource.crag;
 
+import com.amazonaws.services.s3.AmazonS3URI;
 import com.climbassist.api.resource.MultipartFileTestUtils;
 import com.climbassist.api.resource.common.DeleteResourceResult;
 import com.climbassist.api.resource.common.ResourceNotEmptyException;
@@ -9,12 +10,14 @@ import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
 import com.climbassist.api.resource.common.image.UploadImageResult;
+import com.climbassist.api.resource.common.image.webpconverter.WebpConverterException;
 import com.climbassist.api.resource.path.Path;
 import com.climbassist.api.resource.path.PathsDao;
 import com.climbassist.api.resource.subarea.SubArea;
 import com.climbassist.api.resource.wall.Wall;
 import com.climbassist.api.resource.wall.WallsDao;
 import com.climbassist.api.user.UserData;
+import com.climbassist.common.s3.AmazonS3UriBuilder;
 import com.climbassist.common.s3.S3Proxy;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
@@ -52,16 +55,22 @@ class CragControllerTest {
     private static final String CRAG_1_ID = "crag-1";
     private static final String IMAGES_BUCKET_NAME = "photos";
     private static final String MODELS_BUCKET_NAME = "models";
-    private static final String EXPECTED_IMAGE_KEY = String.format("%s/%s.webp", CRAG_1_ID, CRAG_1_ID);
+    private static final String EXPECTED_JPG_IMAGE_KEY = String.format("%s/%s.jpg", CRAG_1_ID, CRAG_1_ID);
+    private static final String EXPECTED_WEBP_IMAGE_KEY = String.format("%s/%s.webp", CRAG_1_ID, CRAG_1_ID);
     private static final String EXPECTED_HIGH_RESOLUTION_MODEL_KEY = String.format("%s/%s.glb", CRAG_1_ID, CRAG_1_ID);
-    private static final String EXPECTED_LOW_RESOLUTION_MODEL_KEY = String.format("%s/%s-low-resolution.glb", CRAG_1_ID,
-            CRAG_1_ID);
+    private static final String EXPECTED_LOW_RESOLUTION_MODEL_KEY =
+            String.format("%s/%s-low-resolution.glb", CRAG_1_ID, CRAG_1_ID);
     private static final Crag CRAG_1 = Crag.builder()
             .cragId(CRAG_1_ID)
             .subAreaId("sub-area-1")
             .name("Crag 1")
             .description("Crag 1")
-            .imageLocation(String.format("https://%s.s3.amazonaws.com/%s", IMAGES_BUCKET_NAME, EXPECTED_IMAGE_KEY))
+            .imageLocation(AmazonS3UriBuilder.buildAmazonS3Uri(IMAGES_BUCKET_NAME, EXPECTED_WEBP_IMAGE_KEY)
+                    .getURI()
+                    .toString())
+            .jpgImageLocation(AmazonS3UriBuilder.buildAmazonS3Uri(IMAGES_BUCKET_NAME, EXPECTED_JPG_IMAGE_KEY)
+                    .getURI()
+                    .toString())
             .location(Location.builder()
                     .latitude(1.0)
                     .longitude(1.0)
@@ -168,10 +177,10 @@ class CragControllerTest {
                             .build())
                     .collect(Collectors.toSet()))
             .build();
-    private static final MultipartFile HIGH_RESOLUTION_MODEL = MultipartFileTestUtils.buildMultipartFile(
-            "high-resolution-model.glb", "high resolution model");
-    private static final MultipartFile LOW_RESOLUTION_MODEL = MultipartFileTestUtils.buildMultipartFile(
-            "low-resolution-model.glb", "low resolution model");
+    private static final MultipartFile HIGH_RESOLUTION_MODEL =
+            MultipartFileTestUtils.buildMultipartFile("high-resolution-model.glb", "high resolution model");
+    private static final MultipartFile LOW_RESOLUTION_MODEL =
+            MultipartFileTestUtils.buildMultipartFile("low-resolution-model.glb", "low resolution model");
     private static final MultipartFile IMAGE = MultipartFileTestUtils.buildMultipartFile("image.webp", "image");
     private static final DeleteResourceResult DELETE_RESOURCE_RESULT = DeleteResourceResult.builder()
             .successful(true)
@@ -282,7 +291,8 @@ class CragControllerTest {
         verify(mockCragsDao).getResource(CRAG_1.getId(), MAYBE_USER_DATA);
         verify(mockWallsDao).getResources(CRAG_1.getId(), MAYBE_USER_DATA);
         verify(mockCragsDao).deleteResource(CRAG_1.getId());
-        verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, EXPECTED_IMAGE_KEY);
+        verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, EXPECTED_WEBP_IMAGE_KEY);
+        verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, EXPECTED_JPG_IMAGE_KEY);
         verify(mockS3Proxy).deleteObject(MODELS_BUCKET_NAME, EXPECTED_LOW_RESOLUTION_MODEL_KEY);
         verify(mockS3Proxy).deleteObject(MODELS_BUCKET_NAME, EXPECTED_HIGH_RESOLUTION_MODEL_KEY);
     }
@@ -342,7 +352,7 @@ class CragControllerTest {
 
     @Test
     void uploadImage_callsResourceWithImageAndChildrenControllerDelegate()
-            throws ResourceNotFoundException, IOException {
+            throws ResourceNotFoundException, IOException, WebpConverterException {
         UploadImageResult uploadImageResult = UploadImageResult.builder()
                 .successful(true)
                 .build();
@@ -365,11 +375,11 @@ class CragControllerTest {
     void uploadModels_uploadsToS3AndUpdatesRecord_whenExistingCragHasModel() throws IOException, CragNotFoundException {
         when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(CRAG_1));
         //noinspection ConstantConditions
-        doReturn(CRAG_1.getModel()
-                .getModelLocation()).when(mockS3Proxy)
+        doReturn(new AmazonS3URI(CRAG_1.getModel()
+                .getModelLocation())).when(mockS3Proxy)
                 .putPublicObject(any(), eq(EXPECTED_HIGH_RESOLUTION_MODEL_KEY), any(), anyLong());
-        doReturn(CRAG_1.getModel()
-                .getLowResModelLocation()).when(mockS3Proxy)
+        doReturn(new AmazonS3URI(CRAG_1.getModel()
+                .getLowResModelLocation())).when(mockS3Proxy)
                 .putPublicObject(any(), eq(EXPECTED_LOW_RESOLUTION_MODEL_KEY), any(), anyLong());
 
         assertThat(cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL,
@@ -407,11 +417,11 @@ class CragControllerTest {
                         .build())
                 .build();
         when(mockCragsDao.getResource(any(), any())).thenReturn(Optional.of(cragWithoutModel));
-        doReturn(CRAG_1.getModel()
-                .getModelLocation()).when(mockS3Proxy)
+        doReturn(new AmazonS3URI(CRAG_1.getModel()
+                .getModelLocation())).when(mockS3Proxy)
                 .putPublicObject(any(), eq(EXPECTED_HIGH_RESOLUTION_MODEL_KEY), any(), anyLong());
-        doReturn(CRAG_1.getModel()
-                .getLowResModelLocation()).when(mockS3Proxy)
+        doReturn(new AmazonS3URI(CRAG_1.getModel()
+                .getLowResModelLocation())).when(mockS3Proxy)
                 .putPublicObject(any(), eq(EXPECTED_LOW_RESOLUTION_MODEL_KEY), any(), anyLong());
 
         assertThat(cragController.uploadModels(CRAG_1.getCragId(), HIGH_RESOLUTION_MODEL, LOW_RESOLUTION_MODEL,

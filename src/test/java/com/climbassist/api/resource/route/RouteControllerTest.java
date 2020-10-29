@@ -10,11 +10,13 @@ import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
 import com.climbassist.api.resource.common.UpdateResourceResult;
 import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
 import com.climbassist.api.resource.common.image.UploadImageResult;
+import com.climbassist.api.resource.common.image.webpconverter.WebpConverterException;
 import com.climbassist.api.resource.common.ordering.InvalidOrderingException;
 import com.climbassist.api.resource.pitch.Pitch;
 import com.climbassist.api.resource.pitch.PitchesDao;
 import com.climbassist.api.resource.wall.Wall;
 import com.climbassist.api.user.UserData;
+import com.climbassist.common.s3.AmazonS3UriBuilder;
 import com.climbassist.common.s3.S3Proxy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -46,7 +48,8 @@ class RouteControllerTest {
 
     private static final String ROUTE_1_ID = "crag-1";
     private static final String IMAGES_BUCKET_NAME = "photos";
-    private static final String IMAGE_KEY = String.format("%s/%s.webp", ROUTE_1_ID, ROUTE_1_ID);
+    private static final String WEBP_IMAGE_KEY = String.format("%s/%s.webp", ROUTE_1_ID, ROUTE_1_ID);
+    private static final String JPG_IMAGE_KEY = String.format("%s/%s.jpg", ROUTE_1_ID, ROUTE_1_ID);
     private static final Route ROUTE_1 = Route.builder()
             .routeId(ROUTE_1_ID)
             .wallId("wall-1")
@@ -59,7 +62,12 @@ class RouteControllerTest {
                     .build())
             .grade(1)
             .gradeModifier("a")
-            .mainImageLocation(String.format("https://%s.s3.amazonaws.com/%s", IMAGES_BUCKET_NAME, IMAGE_KEY))
+            .mainImageLocation(AmazonS3UriBuilder.buildAmazonS3Uri(IMAGES_BUCKET_NAME, WEBP_IMAGE_KEY)
+                    .getURI()
+                    .toString())
+            .jpgMainImageLocation(AmazonS3UriBuilder.buildAmazonS3Uri(IMAGES_BUCKET_NAME, JPG_IMAGE_KEY)
+                    .getURI()
+                    .toString())
             .protection("protection")
             .style("sport")
             .first(true)
@@ -111,6 +119,7 @@ class RouteControllerTest {
             .grade(2)
             .gradeModifier("b")
             .mainImageLocation(ROUTE_1.getMainImageLocation())
+            .jpgMainImageLocation(ROUTE_1.getJpgMainImageLocation())
             .protection("new protection")
             .style("trad")
             .first(false)
@@ -230,7 +239,7 @@ class RouteControllerTest {
     }
 
     @Test
-    void deleteResource_deletesResourceAndImage_whenResourceExistsAndIsEmptyAndHasImageLocation()
+    void deleteResource_deletesResourceAndImages_whenResourceExistsAndIsEmptyAndHasImageLocations()
             throws ResourceNotFoundException, ResourceNotEmptyException {
         when(mockRoutesDao.getResource(any(), any())).thenReturn(Optional.of(ROUTE_1));
         when(mockPitchesDao.getResources(any(), any())).thenReturn(ImmutableSet.of());
@@ -239,7 +248,8 @@ class RouteControllerTest {
         verify(mockRoutesDao).getResource(ROUTE_1.getId(), MAYBE_USER_DATA);
         verify(mockPitchesDao).getResources(ROUTE_1.getId(), MAYBE_USER_DATA);
         verify(mockRoutesDao).deleteResource(ROUTE_1.getId());
-        verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, IMAGE_KEY);
+        verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, WEBP_IMAGE_KEY);
+        verify(mockS3Proxy).deleteObject(IMAGES_BUCKET_NAME, WEBP_IMAGE_KEY);
     }
 
     @Test
@@ -285,7 +295,7 @@ class RouteControllerTest {
 
     @Test
     void uploadImage_callsResourceWithImageAndChildrenControllerDelegate()
-            throws ResourceNotFoundException, IOException {
+            throws ResourceNotFoundException, IOException, WebpConverterException {
         UploadImageResult uploadImageResult = UploadImageResult.builder()
                 .successful(true)
                 .build();

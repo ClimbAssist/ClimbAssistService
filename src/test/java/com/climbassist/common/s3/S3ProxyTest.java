@@ -1,6 +1,7 @@
 package com.climbassist.common.s3;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -28,7 +29,7 @@ class S3ProxyTest {
     private static final String KEY = "key";
     private static final String OBJECT_CONTENT = "this is an object";
     private static final InputStream INPUT_STREAM = IOUtils.toInputStream(OBJECT_CONTENT);
-    private static final String EXPECTED_OBJECT_URL = String.format("https://%s.s3.amazonaws.com/%s", BUCKET, KEY);
+    private static final AmazonS3URI EXPECTED_OBJECT_URI = AmazonS3UriBuilder.buildAmazonS3Uri(BUCKET, KEY);
 
     @Mock
     private AmazonS3 mockAmazonS3;
@@ -52,9 +53,9 @@ class S3ProxyTest {
     @Test
     void putPublicObject_putsObjectWithMetadata() throws IOException {
         assertThat(s3Proxy.putPublicObject(BUCKET, KEY, INPUT_STREAM, OBJECT_CONTENT.length()),
-                is(equalTo(EXPECTED_OBJECT_URL)));
-        ArgumentCaptor<PutObjectRequest> putObjectRequestArgumentCaptor = ArgumentCaptor.forClass(
-                PutObjectRequest.class);
+                is(equalTo(EXPECTED_OBJECT_URI)));
+        ArgumentCaptor<PutObjectRequest> putObjectRequestArgumentCaptor =
+                ArgumentCaptor.forClass(PutObjectRequest.class);
         verify(mockAmazonS3).putObject(putObjectRequestArgumentCaptor.capture());
         PutObjectRequest putObjectRequest = putObjectRequestArgumentCaptor.getValue();
         assertThat(putObjectRequest.getBucketName(), equalTo(BUCKET));
@@ -68,8 +69,8 @@ class S3ProxyTest {
     @Test
     void deleteObject_deletesObject() {
         s3Proxy.deleteObject(BUCKET, KEY);
-        ArgumentCaptor<DeleteObjectRequest> deleteObjectRequestArgumentCaptor = ArgumentCaptor.forClass(
-                DeleteObjectRequest.class);
+        ArgumentCaptor<DeleteObjectRequest> deleteObjectRequestArgumentCaptor =
+                ArgumentCaptor.forClass(DeleteObjectRequest.class);
         verify(mockAmazonS3).deleteObject(deleteObjectRequestArgumentCaptor.capture());
         DeleteObjectRequest actualDeleteObjectRequest = deleteObjectRequestArgumentCaptor.getValue();
         assertThat(actualDeleteObjectRequest.getBucketName(), is(equalTo(BUCKET)));

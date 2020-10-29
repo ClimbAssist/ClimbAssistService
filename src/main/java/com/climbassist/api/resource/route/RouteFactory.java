@@ -36,9 +36,10 @@ public class RouteFactory extends ResourceFactory<Route, NewRoute> implements Re
     }
 
     @Override
-    public Route create(@NonNull Route route, @NonNull String imageLocation) {
+    public Route create(@NonNull Route route, @NonNull String imageLocation, @NonNull String jpgImageLocation) {
         return route.toBuilder()
                 .mainImageLocation(imageLocation)
+                .jpgMainImageLocation(jpgImageLocation)
                 .build();
     }
 }

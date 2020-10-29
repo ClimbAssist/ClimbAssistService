@@ -1,11 +1,9 @@
 package com.climbassist.api.resource.crag;
 
-import com.climbassist.api.resource.common.CommonDaoConfiguration;
-import com.climbassist.api.resource.common.ResourceControllerDelegate;
-import com.climbassist.api.resource.common.ResourceIdGenerator;
-import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
+import com.climbassist.api.resource.common.*;
 import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
-import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
+import com.climbassist.api.resource.common.image.webpconverter.WebpConverter;
+import com.climbassist.api.resource.common.image.webpconverter.WebpConverterConfiguration;
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetriever;
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetrieverConfiguration;
 import com.climbassist.api.resource.path.Path;
@@ -27,20 +25,20 @@ import org.springframework.context.annotation.PropertySource;
 
 @Configuration
 @PropertySource("classpath:application.properties")
-@Import({CommonConfiguration.class, CommonDaoConfiguration.class, RecursiveResourceRetrieverConfiguration.class})
+@Import({CommonConfiguration.class, CommonDaoConfiguration.class, RecursiveResourceRetrieverConfiguration.class,
+        WebpConverterConfiguration.class})
 public class CragConfiguration {
 
     @Bean
     public CragController cragsController(@NonNull CragsDao cragsDao, @NonNull SubAreasDao subAreasDao,
-                                          @NonNull WallsDao wallsDao, @NonNull PathsDao pathsDao,
-                                          @NonNull S3Proxy s3Proxy,
-                                          @Value("${modelsBucketName}") @NonNull String modelsBucketName,
-                                          @NonNull String imagesBucketName,
-                                          @NonNull ResourceIdGenerator resourceIdGenerator,
-                                          @NonNull CragNotFoundExceptionFactory cragNotFoundExceptionFactory,
-                                          @NonNull SubAreaNotFoundExceptionFactory subAreaNotFoundExceptionFactory,
-                                          @NonNull RecursiveResourceRetriever<Wall, Crag> recursiveWallRetriever,
-                                          @NonNull RecursiveResourceRetriever<Path, Crag> recursivePathRetriever) {
+            @NonNull WallsDao wallsDao, @NonNull PathsDao pathsDao, @NonNull S3Proxy s3Proxy,
+            @Value("${modelsBucketName}") @NonNull String modelsBucketName, @NonNull String imagesBucketName,
+            @NonNull ResourceIdGenerator resourceIdGenerator,
+            @NonNull CragNotFoundExceptionFactory cragNotFoundExceptionFactory,
+            @NonNull SubAreaNotFoundExceptionFactory subAreaNotFoundExceptionFactory,
+            @NonNull RecursiveResourceRetriever<Wall, Crag> recursiveWallRetriever,
+            @NonNull RecursiveResourceRetriever<Path, Crag> recursivePathRetriever,
+            @NonNull WebpConverter webpConverter) {
         CragFactory cragFactory = CragFactory.builder()
                 .resourceIdGenerator(resourceIdGenerator)
                 .build();
@@ -66,13 +64,14 @@ public class CragConfiguration {
                                         ImmutableSet.of(recursiveWallRetriever, recursivePathRetriever))
                                 .resourceControllerDelegate(resourceControllerDelegate)
                                 .build())
-                .resourceWithImageControllerDelegate(ResourceWithImageControllerDelegate.<Crag>builder().resourceDao(
-                        cragsDao)
-                        .resourceNotFoundExceptionFactory(cragNotFoundExceptionFactory)
-                        .s3Proxy(s3Proxy)
-                        .imagesBucketName(imagesBucketName)
-                        .resourceFactory(cragFactory)
-                        .build())
+                .resourceWithImageControllerDelegate(
+                        ResourceWithImageControllerDelegate.<Crag>builder().resourceDao(cragsDao)
+                                .resourceNotFoundExceptionFactory(cragNotFoundExceptionFactory)
+                                .s3Proxy(s3Proxy)
+                                .imagesBucketName(imagesBucketName)
+                                .resourceFactory(cragFactory)
+                                .webpConverter(webpConverter)
+                                .build())
                 .cragsDao(cragsDao)
                 .s3Proxy(s3Proxy)
                 .modelsBucketName(modelsBucketName)

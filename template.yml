@@ -297,7 +297,7 @@ Resources:
           # this strips out the '-' from the beginning of ResourceNameSuffix and then appends '@climbassist.com'
           - !Sub
             - ${Name}@climbassist.com
-            - { Name: !Select [1, !Split ['-', !Ref ResourceNameSuffix]] }
+            - { Name: !Select [ 1, !Split [ '-', !Ref ResourceNameSuffix ] ] }
       - Namespace: aws:elasticbeanstalk:application:environment
         OptionName: stage
         Value: !Ref Stage
@@ -427,6 +427,9 @@ Resources:
             - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRsaPrivateKey-mzRTKi # created by hand
             - arn:aws:secretsmanager:us-west-2:172776452117:secret:ClimbAssistRecaptchaKeys* # created by hand
             - !Ref RecaptchaBackDoorResponseSecret
+          - Action: lambda:InvokeFunction
+            Effect: Allow
+            Resource: !Sub arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:ClimbAssistWebpConverter*
       ManagedPolicyArns:
       - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
 
@@ -2143,7 +2146,7 @@ Resources:
         # this strips out the '-' from the beginning of ResourceNameSuffix and then appends '@climbassist.com'
         - !Sub
           - ${Name}@climbassist.com
-          - { Name: !Select [1, !Split ['-', !Ref ResourceNameSuffix]] }
+          - { Name: !Select [ 1, !Split [ '-', !Ref ResourceNameSuffix ] ] }
 
   RecaptchaBackDoorResponseSecret:
     Type: AWS::SecretsManager::Secret

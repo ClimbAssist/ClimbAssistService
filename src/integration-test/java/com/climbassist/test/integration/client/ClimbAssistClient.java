@@ -147,12 +147,12 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<UserData> updateUser(@NonNull UpdateUserRequest updateUserRequest,
-                                            @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return post("/v1/user", updateUserRequest, cookies, new TypeReference<ApiResponse<UserData>>() {});
     }
 
     public ApiResponse<UserData> verifyEmail(@NonNull VerifyEmailRequest verifyEmailRequest,
-                                             @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return post("/v1/user/verify-email", verifyEmailRequest, cookies,
                 new TypeReference<ApiResponse<UserData>>() {});
     }
@@ -162,7 +162,7 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<UserData> changePassword(@NonNull ChangePasswordRequest changePasswordRequest,
-                                                @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return post("/v1/user/change-password", changePasswordRequest, cookies,
                 new TypeReference<ApiResponse<UserData>>() {});
     }
@@ -187,7 +187,7 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<CreateCountryResult> createCountry(@NonNull NewCountry newCountry,
-                                                          @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return put("/v1/countries", newCountry, cookies, new TypeReference<ApiResponse<CreateCountryResult>>() {});
     }
 
@@ -253,7 +253,7 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<CreateSubAreaResult> createSubArea(@NonNull NewSubArea newSubArea,
-                                                          @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return put("/v1/sub-areas", newSubArea, cookies, new TypeReference<ApiResponse<CreateSubAreaResult>>() {});
     }
 
@@ -299,16 +299,15 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<UploadModelsResult> uploadCragModel(@NonNull String cragId, @NonNull File highResolutionModel,
-                                                           @NonNull File lowResolutionModel,
-                                                           @NonNull Set<Cookie> cookies) {
+            @NonNull File lowResolutionModel, @NonNull Set<Cookie> cookies) {
         return post("/v1/crags/" + cragId + "/models",
                 ImmutableMap.of("high-resolution-model.glb", highResolutionModel, "low-resolution-model.glb",
                         lowResolutionModel), cookies, new TypeReference<ApiResponse<UploadModelsResult>>() {});
     }
 
     public ApiResponse<UploadImageResult> uploadCragImage(@NonNull String cragId, @NonNull File image,
-                                                          @NonNull Set<Cookie> cookies) {
-        return post("/v1/crags/" + cragId + "/photo", ImmutableMap.of("photo.webp", image), cookies,
+            @NonNull Set<Cookie> cookies) {
+        return post("/v1/crags/" + cragId + "/photo", ImmutableMap.of("photo.jpg", image), cookies,
                 new TypeReference<ApiResponse<UploadImageResult>>() {});
     }
 
@@ -370,6 +369,12 @@ public class ClimbAssistClient {
         return post("/v1/routes", route, cookies, new TypeReference<ApiResponse<UpdateResourceResult>>() {});
     }
 
+    public ApiResponse<UploadImageResult> uploadRouteImage(@NonNull String routeId, @NonNull File image,
+            @NonNull Set<Cookie> cookies) {
+        return post("/v1/routes/" + routeId + "/photo", ImmutableMap.of("photo.jpg", image), cookies,
+                new TypeReference<ApiResponse<UploadImageResult>>() {});
+    }
+
     public ApiResponse<DeleteResourceResult> deleteRoute(@NonNull String routeId, @NonNull Set<Cookie> cookies) {
         return delete("/v1/routes/" + routeId, cookies, new TypeReference<ApiResponse<DeleteResourceResult>>() {});
     }
@@ -408,7 +413,7 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<BatchCreatePointsResult> batchCreatePoints(@NonNull String pitchId, @NonNull Set<Cookie> cookies,
-                                                                  @NonNull BatchNewPoint... batchNewPoints) {
+            @NonNull BatchNewPoint... batchNewPoints) {
         return put("/v1/pitches/" + pitchId + "/points", BatchNewPoints.builder()
                 .newPoints(Arrays.asList(batchNewPoints))
                 .build(), cookies, new TypeReference<ApiResponse<BatchCreatePointsResult>>() {});
@@ -465,14 +470,13 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<CreatePathPointResult> createPathPoint(@NonNull NewPathPoint newPathPoint,
-                                                              @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return put("/v1/path-points", newPathPoint, cookies,
                 new TypeReference<ApiResponse<CreatePathPointResult>>() {});
     }
 
     public ApiResponse<BatchCreatePathPointsResult> batchCreatePathPoints(@NonNull String pathId,
-                                                                          @NonNull Set<Cookie> cookies,
-                                                                          @NonNull BatchNewPathPoint... batchNewPathPoints) {
+            @NonNull Set<Cookie> cookies, @NonNull BatchNewPathPoint... batchNewPathPoints) {
         return put("/v1/paths/" + pathId + "/path-points", BatchNewPathPoints.builder()
                 .newPathPoints((Arrays.asList(batchNewPathPoints)))
                 .build(), cookies, new TypeReference<ApiResponse<BatchCreatePathPointsResult>>() {});
@@ -488,24 +492,24 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<List<PathPoint>> listPathPoints(@NonNull String pathId, boolean ordered,
-                                                       @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return get("/v1/paths/" + pathId + "/path-points?ordered=" + ordered,
                 new TypeReference<ApiResponse<List<PathPoint>>>() {});
     }
 
     public ApiResponse<UpdateResourceResult> updatePathPoint(@NonNull PathPoint pathPoint,
-                                                             @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return post("/v1/path-points", pathPoint, cookies, new TypeReference<ApiResponse<UpdateResourceResult>>() {});
     }
 
     public ApiResponse<DeleteResourceResult> deletePathPoint(@NonNull String pathPointId,
-                                                             @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return delete("/v1/path-points/" + pathPointId, cookies,
                 new TypeReference<ApiResponse<DeleteResourceResult>>() {});
     }
 
     public ApiResponse<DeleteResourceResult> batchDeletePathPoints(@NonNull String pathId,
-                                                                   @NonNull Set<Cookie> cookies) {
+            @NonNull Set<Cookie> cookies) {
         return delete("/v1/paths/" + pathId + "/path-points", cookies,
                 new TypeReference<ApiResponse<DeleteResourceResult>>() {});
     }
@@ -515,23 +519,19 @@ public class ClimbAssistClient {
     }
 
     public ApiResponse<SendContactEmailResult> sendContactEmail(@NonNull String replyToEmail, @NonNull String subject,
-                                                                @NonNull String emailBody,
-                                                                @NonNull Set<Cookie> cookies) {
+            @NonNull String emailBody, @NonNull Set<Cookie> cookies) {
         return sendContactEmail(replyToEmail, subject, emailBody, Optional.empty(), cookies);
     }
 
     public ApiResponse<SendContactEmailResult> sendContactEmail(@NonNull String replyToEmail, @NonNull String subject,
-                                                                @NonNull String emailBody,
-                                                                @NonNull String recaptchaResponse,
-                                                                @NonNull Set<Cookie> cookies) {
+            @NonNull String emailBody, @NonNull String recaptchaResponse, @NonNull Set<Cookie> cookies) {
         return sendContactEmail(replyToEmail, subject, emailBody, Optional.of(recaptchaResponse), cookies);
     }
 
     private ApiResponse<SendContactEmailResult> sendContactEmail(@NonNull String replyToEmail, @NonNull String subject,
-                                                                 @NonNull String emailBody,
-                                                                 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                                                                 @NonNull Optional<String> maybeRecaptchaResponse,
-                                                                 @NonNull Set<Cookie> cookies) {
+            @NonNull String emailBody,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @NonNull Optional<String> maybeRecaptchaResponse,
+            @NonNull Set<Cookie> cookies) {
         return post("/v1/contact", SendContactEmailRequest.builder()
                 .replyToEmail(replyToEmail)
                 .subject(subject)
@@ -541,42 +541,39 @@ public class ClimbAssistClient {
     }
 
     private <Response extends ApiResponse<?>> Response get(String path, Set<Cookie> cookies,
-                                                           TypeReference<? extends Response> responseTypeReference) {
+            TypeReference<? extends Response> responseTypeReference) {
         return executeCall(new HttpGet(applicationEndpoint + path), cookies, responseTypeReference);
     }
 
     private <Response extends ApiResponse<?>> Response get(String path,
-                                                           TypeReference<? extends Response> responseTypeReference) {
+            TypeReference<? extends Response> responseTypeReference) {
         return get(path, ImmutableSet.of(), responseTypeReference);
     }
 
     // @formatter:off
     private <Request, Response extends ApiResponse<?>> Response post(String path, Request request,
-                                                                     TypeReference<? extends Response>
-                                                                             responseTypeReference) {
-    // @formatter:on
+            TypeReference<? extends Response> responseTypeReference) {
+        // @formatter:on
         return post(path, Optional.of(request), ImmutableSet.of(), responseTypeReference);
     }
 
     private <Response extends ApiResponse<?>> Response post(String path, Set<Cookie> cookies,
-                                                            TypeReference<? extends Response> responseTypeReference) {
+            TypeReference<? extends Response> responseTypeReference) {
         return post(path, Optional.empty(), cookies, responseTypeReference);
     }
 
     // @formatter:off
     private <Request, Response extends ApiResponse<?>> Response post(String path, Request request, Set<Cookie> cookies,
-                                                                     TypeReference<? extends Response>
-                                                                             responseTypeReference) {
-    // @formatter:on
+            TypeReference<? extends Response> responseTypeReference) {
+        // @formatter:on
         return post(path, Optional.of(request), cookies, responseTypeReference);
     }
 
     // @formatter:off
-    private <Request, Response extends ApiResponse<?>> Response post(String path, @SuppressWarnings(
-            "OptionalUsedAsFieldOrParameterType") Optional<Request> maybeRequest, Set<Cookie> cookies,
-                                                                     TypeReference<? extends Response>
-                                                                             responseTypeReference) {
-    // @formatter:on
+    private <Request, Response extends ApiResponse<?>> Response post(String path,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<Request> maybeRequest, Set<Cookie> cookies,
+            TypeReference<? extends Response> responseTypeReference) {
+        // @formatter:on
         HttpPost httpPost = new HttpPost(applicationEndpoint + path);
         httpPost.setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
         maybeRequest.ifPresent(request -> httpPost.setEntity(toStringEntity(request)));
@@ -584,7 +581,7 @@ public class ClimbAssistClient {
     }
 
     private <Response extends ApiResponse<?>> Response post(String path, Map<String, File> fileMap, Set<Cookie> cookies,
-                                                            TypeReference<? extends Response> responseTypeReference) {
+            TypeReference<? extends Response> responseTypeReference) {
         MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
         fileMap.forEach(multipartEntityBuilder::addBinaryBody);
         HttpPost httpPost = new HttpPost(applicationEndpoint + path);
@@ -594,18 +591,16 @@ public class ClimbAssistClient {
 
     // @formatter:off
     private <Request, Response extends ApiResponse<?>> Response put(String path, Request request, Set<Cookie> cookies,
-                                                                    TypeReference<? extends Response>
-                                                                            responseTypeReference) {
-    // @formatter:on
+            TypeReference<? extends Response> responseTypeReference) {
+        // @formatter:on
         return put(path, Optional.of(request), cookies, responseTypeReference);
     }
 
     // @formatter:off
-    private <Request, Response extends ApiResponse<?>> Response put(String path, @SuppressWarnings(
-            "OptionalUsedAsFieldOrParameterType") Optional<Request> maybeRequest, Set<Cookie> cookies,
-                                                                    TypeReference<? extends Response>
-                                                                            responseTypeReference) {
-    // @formatter:on
+    private <Request, Response extends ApiResponse<?>> Response put(String path,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<Request> maybeRequest, Set<Cookie> cookies,
+            TypeReference<? extends Response> responseTypeReference) {
+        // @formatter:on
         HttpPut httpPut = new HttpPut(applicationEndpoint + path);
         httpPut.setHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE);
         maybeRequest.ifPresent(request -> httpPut.setEntity(toStringEntity(request)));
@@ -613,15 +608,14 @@ public class ClimbAssistClient {
     }
 
     private <Response extends ApiResponse<?>> Response delete(String path, Set<Cookie> cookies,
-                                                              TypeReference<? extends Response> responseTypeReference) {
+            TypeReference<? extends Response> responseTypeReference) {
         return executeCall(new HttpDelete(applicationEndpoint + path), cookies, responseTypeReference);
     }
 
     // @formatter:off
     private <Response extends ApiResponse<?>> Response executeCall(HttpRequestBase httpRequestBase, Set<Cookie> cookies,
-                                                                   TypeReference<? extends Response>
-                                                                           responseTypeReference) {
-    // @formatter:on
+            TypeReference<? extends Response> responseTypeReference) {
+        // @formatter:on
         try {
             HttpClientContext httpClientContext = new HttpClientContext();
             BasicCookieStore basicCookieStore = new BasicCookieStore();
@@ -648,16 +642,15 @@ public class ClimbAssistClient {
         }
     }
 
-    private HttpResponse call(HttpRequestBase httpRequestBase, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-            Optional<HttpClientContext> maybeHttpClientContext)
+    private HttpResponse call(HttpRequestBase httpRequestBase,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<HttpClientContext> maybeHttpClientContext)
             throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, IOException {
         //noinspection UnstableApiUsage
         rateLimiter.acquire();
         if (maybeHttpClientContext.isPresent()) {
             return httpClientFactory.create()
                     .execute(httpRequestBase, maybeHttpClientContext.get());
-        }
-        else {
+        } else {
             return httpClientFactory.create()
                     .execute(httpRequestBase);
         }

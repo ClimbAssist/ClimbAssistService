@@ -2,6 +2,7 @@ package com.climbassist.test.integration.api.resource;
 
 import com.climbassist.api.resource.common.DeleteResourceResult;
 import com.climbassist.api.resource.common.UpdateResourceResult;
+import com.climbassist.api.resource.common.image.UploadImageResult;
 import com.climbassist.api.resource.country.Country;
 import com.climbassist.api.resource.route.Center;
 import com.climbassist.api.resource.route.CreateRouteResult;
@@ -15,6 +16,8 @@ import com.climbassist.test.integration.api.user.TestUserManager;
 import com.climbassist.test.integration.api.user.TestUserManagerConfiguration;
 import com.climbassist.test.integration.client.ClimbAssistClient;
 import com.climbassist.test.integration.client.ClimbAssistClientConfiguration;
+import com.climbassist.test.integration.s3.S3Configuration;
+import com.climbassist.test.integration.s3.S3Proxy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.http.cookie.Cookie;
@@ -26,6 +29,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -37,14 +42,21 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 
-@ContextConfiguration(classes = {ClimbAssistClientConfiguration.class, ResourceManagerConfiguration.class,
-        TestUserManagerConfiguration.class})
+@ContextConfiguration(
+        classes = {ClimbAssistClientConfiguration.class, ResourceManagerConfiguration.class, S3Configuration.class,
+                TestUserManagerConfiguration.class})
 public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
 
     private static final String NAME = "integ";
     private static final String DESCRIPTION = "integ";
     private static final int RESOURCE_DEPTH = 6;
+    private static final File IMAGE_1_JPG = new File("testData/image-1.jpg");
+    private static final File IMAGE_1_WEBP = new File("testData/image-1.webp");
+    private static final File IMAGE_2_JPG = new File("testData/image-2.jpg");
+    private static final File IMAGE_2_WEBP = new File("testData/image-2.webp");
+    private static final File INVALID_JPG = new File("testData/not-an-image.txt");
 
     @Autowired
     private ClimbAssistClient climbAssistClient;
@@ -52,6 +64,8 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
     private TestUserManager testUserManager;
     @Autowired
     private ResourceManager resourceManager;
+    @Autowired
+    private S3Proxy s3Proxy;
 
     private String username;
     private Set<Cookie> cookies;
@@ -218,8 +232,8 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         testUserManager.makeUserAdministrator(username);
         Wall wall = ResourceManager.getWall(resourceManager.createCountry(cookies, RESOURCE_DEPTH - 1));
         Route expectedRoute2 = resourceManager.createRoute(wall.getWallId(), cookies, false, 0);
-        Route expectedRoute1 = resourceManager.createRoute(wall.getWallId(), cookies, true, expectedRoute2.getRouteId(),
-                0);
+        Route expectedRoute1 =
+                resourceManager.createRoute(wall.getWallId(), cookies, true, expectedRoute2.getRouteId(), 0);
         Route actualRoute1 = climbAssistClient.getRoute(expectedRoute1.getRouteId(), cookies)
                 .getData();
         Route actualRoute2 = climbAssistClient.getRoute(expectedRoute2.getRouteId(), cookies)
@@ -325,9 +339,55 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
     }
 
     @Test
+    public void uploadImage_returnsAuthorizationException_whenUserIsNotSignedIn() {
+        ApiResponse<UploadImageResult> apiResponse =
+                climbAssistClient.uploadRouteImage("does-not-exist", IMAGE_1_JPG, ImmutableSet.of());
+        ExceptionUtils.assertAuthorizationException(apiResponse);
+    }
+
+    @Test
+    public void uploadImage_returnsAuthorizationException_whenUserIsNotAdministrator() {
+        ApiResponse<UploadImageResult> apiResponse =
+                climbAssistClient.uploadRouteImage("does-not-exist", IMAGE_1_JPG, cookies);
+        ExceptionUtils.assertAuthorizationException(apiResponse);
+    }
+
+    @Test
+    public void uploadImage_returnsRouteNotFoundException_whenRouteDoesNotExist() {
+        testUserManager.makeUserAdministrator(username);
+        ApiResponse<UploadImageResult> apiResponse =
+                climbAssistClient.uploadRouteImage("does-not-exist", IMAGE_1_JPG, cookies);
+        ExceptionUtils.assertResourceNotFoundException(apiResponse);
+    }
+
+    @Test
+    public void uploadImage_uploadsImage() throws IOException {
+        testUserManager.makeUserAdministrator(username);
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        uploadImage(route.getRouteId(), IMAGE_1_JPG, IMAGE_1_WEBP);
+    }
+
+    @Test
+    public void uploadImage_replacesOldImage_whenRouteAlreadyHasAnImage() throws IOException {
+        testUserManager.makeUserAdministrator(username);
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        uploadImage(route.getRouteId(), IMAGE_1_JPG, IMAGE_1_WEBP);
+        uploadImage(route.getRouteId(), IMAGE_2_JPG, IMAGE_2_WEBP);
+    }
+
+    @Test
+    public void uploadImage_returnsWebpConverterException_whenImageIsNotAValidJpg() {
+        testUserManager.makeUserAdministrator(username);
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        ApiResponse<UploadImageResult> apiResponse =
+                climbAssistClient.uploadRouteImage(route.getRouteId(), INVALID_JPG, cookies);
+        ExceptionUtils.assertSpecificException(apiResponse, 400, "WebpConverterException");
+    }
+
+    @Test
     public void deleteRoute_returnsAuthorizationException_whenUserIsNotSignedIn() {
-        ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRoute("does-not-exist",
-                ImmutableSet.of());
+        ApiResponse<DeleteResourceResult> apiResponse =
+                climbAssistClient.deleteRoute("does-not-exist", ImmutableSet.of());
         ExceptionUtils.assertAuthorizationException(apiResponse);
     }
 
@@ -364,14 +424,51 @@ public class RouteIntegrationTest extends AbstractTestNGSpringContextTests {
         ExceptionUtils.assertResourceNotEmptyException(apiResponse);
     }
 
-    private void runGetRouteTest(int actualDepth, @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-            Optional<Integer> maybeRequestDepth) {
+    @Test
+    public void deleteRoute_deletesImages_whenRouteHasImages() throws IOException {
+        testUserManager.makeUserAdministrator(username);
+        Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, RESOURCE_DEPTH));
+        uploadImage(route.getRouteId(), IMAGE_1_JPG, IMAGE_1_WEBP);
+        route = climbAssistClient.getRoute(route.getRouteId(), cookies)
+                .getData();
+        ApiResponse<DeleteResourceResult> apiResponse = climbAssistClient.deleteRoute(route.getRouteId(), cookies);
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData()
+                .isSuccessful(), is(true));
+        ApiResponse<Route> getRouteResult = climbAssistClient.getRoute(route.getRouteId(), cookies);
+        ExceptionUtils.assertResourceNotFoundException(getRouteResult);
+        s3Proxy.assertS3ObjectDoesNotExist(route.getImageLocation());
+        s3Proxy.assertS3ObjectDoesNotExist(route.getJpgImageLocation());
+    }
+
+    private void runGetRouteTest(int actualDepth,
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<Integer> maybeRequestDepth) {
         testUserManager.makeUserAdministrator(username);
         Route route = ResourceManager.getRoute(resourceManager.createCountry(cookies, actualDepth + RESOURCE_DEPTH));
         resourceManager.removeChildren(route, Route.class, maybeRequestDepth.orElse(0));
-        ApiResponse<Route> apiResponse = maybeRequestDepth.isPresent() ? climbAssistClient.getRoute(route.getRouteId(),
-                maybeRequestDepth.get(), cookies) : climbAssistClient.getRoute(route.getRouteId(), cookies);
+        ApiResponse<Route> apiResponse = maybeRequestDepth.isPresent() ?
+                climbAssistClient.getRoute(route.getRouteId(), maybeRequestDepth.get(), cookies) :
+                climbAssistClient.getRoute(route.getRouteId(), cookies);
         ExceptionUtils.assertNoException(apiResponse);
         assertThat(apiResponse.getData(), is(equalTo(route)));
+    }
+
+    private void uploadImage(String routeId, File jpgImage, File webpImage) throws IOException {
+        Route originalRoute = climbAssistClient.getRoute(routeId, cookies)
+                .getData();
+        ApiResponse<UploadImageResult> apiResponse = climbAssistClient.uploadRouteImage(routeId, jpgImage, cookies);
+        ExceptionUtils.assertNoException(apiResponse);
+        assertThat(apiResponse.getData()
+                .isSuccessful(), is(true));
+        Route actualRoute = climbAssistClient.getRoute(routeId, cookies)
+                .getData();
+        assertThat(actualRoute.getImageLocation(), is(not(nullValue())));
+        assertThat(actualRoute.getJpgImageLocation(), is(not(nullValue())));
+        originalRoute.setMainImageLocation(actualRoute.getImageLocation());
+        originalRoute.setJpgMainImageLocation(actualRoute.getJpgImageLocation());
+        assertThat(actualRoute, is(equalTo(originalRoute)));
+
+        s3Proxy.assertS3ObjectEquals(actualRoute.getJpgImageLocation(), new FileInputStream(jpgImage));
+        s3Proxy.assertS3ObjectEquals(actualRoute.getImageLocation(), new FileInputStream(webpImage));
     }
 }

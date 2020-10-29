@@ -1,12 +1,9 @@
 package com.climbassist.api.resource.route;
 
-import com.climbassist.api.resource.common.CommonDaoConfiguration;
-import com.climbassist.api.resource.common.OrderableResourceWithParentControllerDelegate;
-import com.climbassist.api.resource.common.ResourceControllerDelegate;
-import com.climbassist.api.resource.common.ResourceIdGenerator;
-import com.climbassist.api.resource.common.ResourceWithChildrenControllerDelegate;
+import com.climbassist.api.resource.common.*;
 import com.climbassist.api.resource.common.image.ResourceWithImageControllerDelegate;
-import com.climbassist.api.resource.common.ResourceWithParentControllerDelegate;
+import com.climbassist.api.resource.common.image.webpconverter.WebpConverter;
+import com.climbassist.api.resource.common.image.webpconverter.WebpConverterConfiguration;
 import com.climbassist.api.resource.common.ordering.OrderableListBuilder;
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetriever;
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetrieverConfiguration;
@@ -24,17 +21,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
 @Configuration
-@Import({CommonConfiguration.class, CommonDaoConfiguration.class, RecursiveResourceRetrieverConfiguration.class})
+@Import({CommonConfiguration.class, CommonDaoConfiguration.class, RecursiveResourceRetrieverConfiguration.class,
+        WebpConverterConfiguration.class})
 public class RouteConfiguration {
 
     @Bean
     public RouteController routeController(@NonNull RoutesDao routesDao, @NonNull WallsDao wallsDao,
-                                           @NonNull PitchesDao pitchesDao,
-                                           @NonNull ResourceIdGenerator resourceIdGenerator,
-                                           @NonNull RouteNotFoundExceptionFactory routeNotFoundExceptionFactory,
-                                           @NonNull WallNotFoundExceptionFactory wallNotFoundExceptionFactory,
-                                           @NonNull S3Proxy s3Proxy, @NonNull String imagesBucketName,
-                                           @NonNull RecursiveResourceRetriever<Pitch, Route> recursiveResourceRetriever) {
+            @NonNull PitchesDao pitchesDao, @NonNull ResourceIdGenerator resourceIdGenerator,
+            @NonNull RouteNotFoundExceptionFactory routeNotFoundExceptionFactory,
+            @NonNull WallNotFoundExceptionFactory wallNotFoundExceptionFactory, @NonNull S3Proxy s3Proxy,
+            @NonNull String imagesBucketName,
+            @NonNull RecursiveResourceRetriever<Pitch, Route> recursiveResourceRetriever,
+            @NonNull WebpConverter webpConverter) {
         RouteFactory routeFactory = RouteFactory.builder()
                 .resourceIdGenerator(resourceIdGenerator)
                 .build();
@@ -65,13 +63,14 @@ public class RouteConfiguration {
                                 .recursiveResourceRetrievers(ImmutableSet.of(recursiveResourceRetriever))
                                 .resourceControllerDelegate(resourceControllerDelegate)
                                 .build())
-                .resourceWithImageControllerDelegate(ResourceWithImageControllerDelegate.<Route>builder().resourceDao(
-                        routesDao)
-                        .resourceNotFoundExceptionFactory(routeNotFoundExceptionFactory)
-                        .s3Proxy(s3Proxy)
-                        .imagesBucketName(imagesBucketName)
-                        .resourceFactory(routeFactory)
-                        .build())
+                .resourceWithImageControllerDelegate(
+                        ResourceWithImageControllerDelegate.<Route>builder().resourceDao(routesDao)
+                                .resourceNotFoundExceptionFactory(routeNotFoundExceptionFactory)
+                                .s3Proxy(s3Proxy)
+                                .imagesBucketName(imagesBucketName)
+                                .resourceFactory(routeFactory)
+                                .webpConverter(webpConverter)
+                                .build())
                 .routesDao(routesDao)
                 .routeNotFoundExceptionFactory(routeNotFoundExceptionFactory)
                 .pitchesDao(pitchesDao)

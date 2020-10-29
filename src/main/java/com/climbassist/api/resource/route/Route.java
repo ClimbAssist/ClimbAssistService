@@ -1,10 +1,6 @@
 package com.climbassist.api.resource.route;
 
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIgnore;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBIndexHashKey;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTypeConverted;
+import com.amazonaws.services.dynamodbv2.datamodeling.*;
 import com.climbassist.api.resource.common.InvalidChildException;
 import com.climbassist.api.resource.common.ResourceWithParent;
 import com.climbassist.api.resource.common.ValidName;
@@ -74,6 +70,9 @@ public class Route implements OrderableResourceWithParentAndChildren<Route, Wall
     @Size(min = 1, max = 500, message = "Main image location must be between 1 and 500 characters.")
     private String mainImageLocation;
 
+    @Size(min = 1, max = 500, message = "JPG main image location must be between 1 and 500 characters.")
+    private String jpgMainImageLocation;
+
     @ValidProtection
     @Nullable
     private String protection;
@@ -118,6 +117,13 @@ public class Route implements OrderableResourceWithParentAndChildren<Route, Wall
     @Override
     public String getImageLocation() {
         return mainImageLocation;
+    }
+
+    @DynamoDBIgnore
+    @JsonIgnore
+    @Override
+    public String getJpgImageLocation() {
+        return jpgMainImageLocation;
     }
 
     @DynamoDBIgnore

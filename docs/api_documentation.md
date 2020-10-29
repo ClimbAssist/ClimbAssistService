@@ -823,11 +823,11 @@ Form-data request with two files included. The first file is the high-resolution
 
 |Method|Path|Description|Authorization|
 |---|---|---|---|
-|`POST`|`/v1/crags/{cragId}/photo`|Uploads a new photo for the specified crag. Replaces the existing photo, if there is one.|Administrator|
+|`POST`|`/v1/crags/{cragId}/photo`|Converts to .webp format and uploads both formats of the photo for the specified crag. Replaces the existing photo, if there is one.|Administrator|
 
 ##### Input
-Form-data request with one file included. The file is the image, in .webp format, which needs to have the key
-`photo.webp`.
+Form-data request with one file included. The file is the image, in .jpg format, which needs to have the key
+`photo.jpg`.
 
 ##### Output
 ```json
@@ -835,6 +835,11 @@ Form-data request with one file included. The file is the image, in .webp format
     "successful": true
 }
 ```
+
+##### Throws
+|Error Type|Status Code|Reason|
+|---|---|---|
+|`WebpConverterException`|400|Thrown when the .jpg file cannot be converted to .webp format. May be caused by an invalid or corrupt .jpg file.|
 
 #### DeleteCrag
 
@@ -1004,11 +1009,11 @@ Form-data request with one file included. The file is the image, in .webp format
 
 |Method|Path|Description|Authorization|
 |---|---|---|---|
-|`POST`|`/v1/routes/{routeId}/photo`|Uploads a new photo for the specified route. Replaces the existing photo, if there is one.|Administrator|
+|`POST`|`/v1/routes/{routeId}/photo`|Converts to .webp format and uploads both formats of the photo for the specified route. Replaces the existing photo, if there is one.|Administrator|
 
 ##### Input
-Form-data request with one file included. The file is the image, in .webp format, which needs to have the key
-`photo.webp`.
+Form-data request with one file included. The file is the image, in .jpg format, which needs to have the key
+`photo.jpg`.
 
 ##### Output
 ```json
@@ -1016,6 +1021,11 @@ Form-data request with one file included. The file is the image, in .webp format
     "successful": true
 }
 ```
+
+##### Throws
+|Error Type|Status Code|Reason|
+|---|---|---|
+|`WebpConverterException`|400|Thrown when the .jpg file cannot be converted to .webp format. May be caused by an invalid or corrupt .jpg file.|
 
 #### DeleteRoute
 
@@ -1048,7 +1058,7 @@ Form-data request with one file included. The file is the image, in .webp format
 
 |Method|Path|Description|Authorization|
 |---|---|---|---|
-|`GET`|`/v1/pitches/{pitchId}`|Returns a single pitch and its children, if specified|
+|`GET`|`/v1/pitches/{pitchId}`|Returns a single pitch and its children, if specified.|
 
 ##### Query Parameters
 `depth`: `int`

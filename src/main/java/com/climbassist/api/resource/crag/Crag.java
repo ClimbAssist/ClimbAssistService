@@ -62,6 +62,10 @@ public class Crag implements ResourceWithParentAndChildren<Crag, SubArea>, Resou
     @Size(min = 1, max = 500, message = "Image location must be between 1 and 500 characters.")
     private String imageLocation;
 
+    @Nullable
+    @Size(min = 1, max = 500, message = "JPG image location must be between 1 and 500 characters.")
+    private String jpgImageLocation;
+
     @DynamoDBTypeConverted(converter = Location.TypeConverter.class)
     @Valid
     @ValidLocation
