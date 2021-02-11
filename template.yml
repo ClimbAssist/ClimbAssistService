@@ -1885,6 +1885,7 @@ Resources:
         # Lambda functions have a limit of 4 KB.
         # This was created using https://dflook.github.io/python-minifier/
         # TODO automate this in some way in the future
+        # This comment was added to force an update on this function's code
         ZipFile: |
           d='aws4_request'
           F='utf-8'
@@ -1964,6 +1965,7 @@ Resources:
       FunctionName: !Sub CognitoUserPoolDomainFunction${ResourceNameSuffix}
       Code:
         ZipFile: |
+          # This comment was added to force an update on this function's code
           import cfnresponse
           import logging
           import boto3
@@ -2057,6 +2059,7 @@ Resources:
       FunctionName: !Sub SesVerifiedEmailIdentityFunction${ResourceNameSuffix}
       Code:
         ZipFile: |
+          # This comment was added to force an update on this function's code
           import time
 
           import cfnresponse
@@ -2205,6 +2208,7 @@ Resources:
       FunctionName: !Sub RecaptchaBackDoorResponseRotationFunction${ResourceNameSuffix}
       Code:
         ZipFile: |
+          # This comment was added to force an update on this function's code
           import logging
 
           logger = logging.getLogger()
