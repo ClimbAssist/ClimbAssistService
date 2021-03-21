@@ -47,6 +47,7 @@ import com.climbassist.test.integration.api.ExceptionUtils;
 import com.climbassist.test.integration.api.recaptcha.RecaptchaBackDoorResponseRetriever;
 import com.climbassist.test.integration.client.ClimbAssistClient;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.Builder;
 import lombok.NonNull;
 import org.apache.commons.io.IOUtils;
@@ -77,11 +78,11 @@ public class TestUserManager {
     private static final String QUEUE_ARN_ATTRIBUTE_NAME = "QueueArn";
     private static final String TEST_PASSWORD = "integ-password";
     private static final String VERIFICATION_LINK_GROUP_NAME = "verificationLink";
-    private static final Pattern VERIFICATION_LINK_PATTERN = Pattern.compile(
-            String.format(".*<a href=(?<%s>.*)>Verify Email.*", VERIFICATION_LINK_GROUP_NAME));
+    private static final Pattern VERIFICATION_LINK_PATTERN =
+            Pattern.compile(String.format(".*<a href=(?<%s>.*)>Verify Email.*", VERIFICATION_LINK_GROUP_NAME));
     private static final String VERIFICATION_CODE_GROUP_NAME = "verificationCode";
-    private static final Pattern VERIFICATION_CODE_PATTERN = Pattern.compile(
-            String.format(".*Your verification code is (?<%s>\\d+).*", VERIFICATION_CODE_GROUP_NAME));
+    private static final Pattern VERIFICATION_CODE_PATTERN =
+            Pattern.compile(String.format(".*Your verification code is (?<%s>\\d+).*", VERIFICATION_CODE_GROUP_NAME));
     private static final String PASSWORD_RESET_CODE_GROUP_NAME = "passwordResetCode";
     private static final Pattern PASSWORD_RESET_CODE_PATTERN = Pattern.compile(
             String.format(".*Your password reset code is (?<%s>\\d+).*", PASSWORD_RESET_CODE_GROUP_NAME));
@@ -98,6 +99,9 @@ public class TestUserManager {
     private final AmazonSNS amazonSNS;
     @NonNull
     private final AmazonSQS amazonSQS;
+    @SuppressWarnings("UnstableApiUsage")
+    @NonNull
+    private final RateLimiter amazonSimpleEmailServiceRateLimiter;
     @NonNull
     private final AmazonSimpleEmailService amazonSimpleEmailService;
     @NonNull
@@ -130,6 +134,8 @@ public class TestUserManager {
         testUsernames.clear();
 
         testEmailContexts.forEach(testEmailContext -> {
+            //noinspection UnstableApiUsage
+            amazonSimpleEmailServiceRateLimiter.acquire();
             amazonSimpleEmailService.deleteReceiptRule(new DeleteReceiptRuleRequest().withRuleSetName(SES_RULE_SET_NAME)
                     .withRuleName(testEmailContext.getRuleSetName()));
             amazonSNS.unsubscribe(new UnsubscribeRequest(testEmailContext.getSubscriptionArn()));
@@ -146,10 +152,10 @@ public class TestUserManager {
     }
 
     public void makeUserNotAdministrator(@NonNull String username) {
-        awsCognitoIdentityProvider.adminRemoveUserFromGroup(new AdminRemoveUserFromGroupRequest().withUserPoolId(
-                userPoolId)
-                .withUsername(username)
-                .withGroupName(ADMINISTRATORS_GROUP_NAME));
+        awsCognitoIdentityProvider.adminRemoveUserFromGroup(
+                new AdminRemoveUserFromGroupRequest().withUserPoolId(userPoolId)
+                        .withUsername(username)
+                        .withGroupName(ADMINISTRATORS_GROUP_NAME));
     }
 
     public TestEmailContext setUpTestEmail(@NonNull String testId) {
@@ -162,9 +168,8 @@ public class TestUserManager {
                 new GetQueueAttributesRequest(queueUrl).withAttributeNames(QUEUE_ARN_ATTRIBUTE_NAME))
                 .getAttributes()
                 .get(QUEUE_ARN_ATTRIBUTE_NAME);
-        amazonSQS.setQueueAttributes(new SetQueueAttributesRequest(queueUrl,
-                ImmutableMap.of("Policy", new Policy().withStatements(new Statement(Statement.Effect.Allow).withActions(
-                        SQSActions.SendMessage)
+        amazonSQS.setQueueAttributes(new SetQueueAttributesRequest(queueUrl, ImmutableMap.of("Policy",
+                new Policy().withStatements(new Statement(Statement.Effect.Allow).withActions(SQSActions.SendMessage)
                         .withPrincipals(Principal.All)
                         .withResources(new Resource(queueArn))
                         .withConditions(new Condition().withType("ArnEquals")
@@ -173,6 +178,8 @@ public class TestUserManager {
                         .toJson())));
         String subscriptionArn = amazonSNS.subscribe(new SubscribeRequest(topicArn, "sqs", queueArn))
                 .getSubscriptionArn();
+        //noinspection UnstableApiUsage
+        amazonSimpleEmailServiceRateLimiter.acquire();
         DescribeActiveReceiptRuleSetResult describeActiveReceiptRuleSetResult =
                 amazonSimpleEmailService.describeActiveReceiptRuleSet(new DescribeActiveReceiptRuleSetRequest());
         if (describeActiveReceiptRuleSetResult.getMetadata() == null ||
@@ -180,15 +187,21 @@ public class TestUserManager {
                         .getName()
                         .equals(SES_RULE_SET_NAME)) {
             try {
+                //noinspection UnstableApiUsage
+                amazonSimpleEmailServiceRateLimiter.acquire();
                 amazonSimpleEmailService.createReceiptRuleSet(
                         new CreateReceiptRuleSetRequest().withRuleSetName(SES_RULE_SET_NAME));
             } catch (AlreadyExistsException ignored) {
                 // this is the end state we want anyway
             }
 
+            //noinspection UnstableApiUsage
+            amazonSimpleEmailServiceRateLimiter.acquire();
             amazonSimpleEmailService.setActiveReceiptRuleSet(
                     new SetActiveReceiptRuleSetRequest().withRuleSetName(SES_RULE_SET_NAME));
         }
+        //noinspection UnstableApiUsage
+        amazonSimpleEmailServiceRateLimiter.acquire();
         amazonSimpleEmailService.createReceiptRule(new CreateReceiptRuleRequest().withRuleSetName(SES_RULE_SET_NAME)
                 .withRule(new ReceiptRule().withName(testId)
                         .withEnabled(true)
@@ -236,8 +249,7 @@ public class TestUserManager {
                             .getQueueUrl()));
                     if (findEmailReceiptMessage(messages).isPresent()) {
                         return true;
-                    }
-                    else {
+                    } else {
                         climbAssistClient.resendInitialVerificationEmail(AliasRequest.builder()
                                 .username(testUserContext.getUsername())
                                 .build());
@@ -259,7 +271,7 @@ public class TestUserManager {
     }
 
     public Set<Cookie> signInWithUsername(@NonNull String username, @NonNull String password,
-                                          @NonNull String expectedEmail) {
+            @NonNull String expectedEmail) {
         return signIn(SignInUserRequest.builder()
                 .username(username)
                 .password(password)
@@ -267,7 +279,7 @@ public class TestUserManager {
     }
 
     public Set<Cookie> signInWithEmail(@NonNull String email, @NonNull String password,
-                                       @NonNull String expectedUsername) {
+            @NonNull String expectedUsername) {
         return signIn(SignInUserRequest.builder()
                 .email(email)
                 .password(password)
@@ -283,7 +295,7 @@ public class TestUserManager {
     }
 
     public Set<Cookie> signIn(@NonNull SignInUserRequest signInUserRequest, @NonNull String expectedUsername,
-                              @NonNull String expectedEmail) {
+            @NonNull String expectedEmail) {
         ApiResponse<SignInUserResult> signInUserResponse = climbAssistClient.signIn(signInUserRequest);
         ExceptionUtils.assertNoException(signInUserResponse);
         assertThat(signInUserResponse.getData()

@@ -8,6 +8,7 @@ import com.climbassist.test.integration.CommonConfiguration;
 import com.climbassist.test.integration.api.recaptcha.RecaptchaBackDoorResponseRetriever;
 import com.climbassist.test.integration.api.recaptcha.RecaptchaBackDoorResponseRetrieverConfiguration;
 import com.climbassist.test.integration.client.ClimbAssistClient;
+import com.google.common.util.concurrent.RateLimiter;
 import lombok.NonNull;
 import org.apache.http.client.HttpClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,10 +24,12 @@ public class TestUserManagerConfiguration {
     @Bean
     @Scope("prototype")
     public TestUserManager testUserManager(@NonNull String region, @NonNull ClimbAssistClient climbAssistClient,
-                                           @Value("${userPoolId}") @NonNull String userPoolId,
-                                           @NonNull HttpClient httpClient,
-                                           @NonNull RecaptchaBackDoorResponseRetriever recaptchaBackDoorResponseRetriever) {
+            @Value("${userPoolId}") @NonNull String userPoolId, @NonNull HttpClient httpClient,
+            @NonNull RecaptchaBackDoorResponseRetriever recaptchaBackDoorResponseRetriever) {
+        //noinspection UnstableApiUsage
         return TestUserManager.builder()
+                // https://docs.aws.amazon.com/ses/latest/DeveloperGuide/quotas.html
+                .amazonSimpleEmailServiceRateLimiter(RateLimiter.create(2))
                 .amazonSimpleEmailService(AmazonSimpleEmailServiceClientBuilder.standard()
                         .withRegion(region)
                         .build())
