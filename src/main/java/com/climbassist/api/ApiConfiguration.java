@@ -1,7 +1,5 @@
 package com.climbassist.api;
 
-import com.climbassist.api.user.UserConfiguration;
-import com.climbassist.api.user.UserManager;
 import com.climbassist.api.user.authorization.AdministratorAuthorizationHandler;
 import com.climbassist.api.user.authorization.AuthenticatedAuthorizationHandler;
 import com.climbassist.api.user.authorization.AuthorizationHandlerFactory;
@@ -16,7 +14,7 @@ import org.springframework.validation.beanvalidation.MethodValidationPostProcess
 import org.springframework.web.servlet.handler.MappedInterceptor;
 
 @Configuration
-@Import({CommonConfiguration.class, UserConfiguration.class})
+@Import(CommonConfiguration.class)
 public class ApiConfiguration {
 
     static final String API_PATH = "/v1/**";
@@ -39,12 +37,10 @@ public class ApiConfiguration {
     }
 
     @Bean
-    public MappedInterceptor mappedAuthorizationInterceptor(@NonNull UserManager userManager) {
+    public MappedInterceptor mappedAuthorizationInterceptor() {
         AuthorizationHandlerFactory authorizationHandlerFactory = new AuthorizationHandlerFactory(
                 AuthenticatedAuthorizationHandler.builder()
-                        .userManager(userManager)
                         .build(), AdministratorAuthorizationHandler.builder()
-                .userManager(userManager)
                 .build());
         return new MappedInterceptor(new String[]{API_PATH}, AuthorizationInterceptor.builder()
                 .authorizationHandlerFactory(authorizationHandlerFactory)

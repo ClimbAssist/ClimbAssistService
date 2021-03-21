@@ -23,7 +23,7 @@ public class SessionUtils {
     // This uses output parameters which is a bad practice, but we can't get around it because this is how Spring
     // implements setting cookies within a controller
     public static void setSessionCookies(@NonNull HttpServletResponse httpServletResponse,
-                                         @NonNull UserSessionData userSessionData) {
+            @NonNull UserSessionData userSessionData) {
         httpServletResponse.addCookie(buildCookie(ACCESS_TOKEN_COOKIE_NAME, userSessionData.getAccessToken()));
         httpServletResponse.addCookie(buildCookie(REFRESH_TOKEN_COOKIE_NAME, userSessionData.getRefreshToken()));
     }

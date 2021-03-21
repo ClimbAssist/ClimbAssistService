@@ -45,7 +45,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 
-//@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {ClimbAssistClientConfiguration.class, TestUserManagerConfiguration.class,
         RecaptchaBackDoorResponseRetrieverConfiguration.class})
 public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
@@ -59,6 +58,7 @@ public class UserIntegrationTest extends AbstractTestNGSpringContextTests {
     private static final String PASSWORD = "integ-password";
     private static final String SQS_EMAIL_MESSAGE_SUBJECT_FIELD_NAME = "Subject";
     private static final String VERIFICATION_EMAIL_SUBJECT = "Amazon SES Email Receipt Notification";
+
     @Autowired
     private ClimbAssistClient climbAssistClient;
     @Autowired

@@ -1,9 +1,13 @@
 package com.climbassist.api.user.authorization;
 
-import com.climbassist.api.user.authentication.UserSessionData;
+import com.climbassist.api.user.UserData;
 import lombok.NonNull;
+
+import java.util.Optional;
 
 public interface AuthorizationHandler {
 
-    void checkAuthorization(@NonNull UserSessionData userSessionData) throws AuthorizationException;
+    void checkAuthorization(
+            @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @NonNull Optional<UserData> maybeUserData)
+            throws AuthorizationException;
 }

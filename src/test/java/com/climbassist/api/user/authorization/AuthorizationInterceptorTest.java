@@ -1,7 +1,7 @@
 package com.climbassist.api.user.authorization;
 
-import com.climbassist.api.user.CookieTestUtils;
-import com.climbassist.api.user.authentication.UserSessionData;
+import com.climbassist.api.user.SessionUtils;
+import com.climbassist.api.user.UserData;
 import lombok.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,10 +12,11 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.method.HandlerMethod;
 
+import java.util.Optional;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,16 +27,18 @@ class AuthorizationInterceptorTest {
     private static class NullAuthorizationHandler implements AuthorizationHandler {
 
         @Override
-        public void checkAuthorization(@NonNull UserSessionData userSessionData) {
+        public void checkAuthorization(@NonNull Optional<UserData> maybeUserData) {
         }
     }
 
-    private static final String ACCESS_TOKEN = "access token";
-    private static final String REFRESH_TOKEN = "refresh token";
-    private static final UserSessionData USER_SESSION_DATA = UserSessionData.builder()
-            .accessToken(ACCESS_TOKEN)
-            .refreshToken(REFRESH_TOKEN)
-            .build();
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static final Optional<UserData> MAYBE_USER_DATA = Optional.of(UserData.builder()
+            .userId("kirby")
+            .username("popopo")
+            .email("kirby@dreamland.com")
+            .isEmailVerified(true)
+            .isAdministrator(false)
+            .build());
 
     @Mock
     private AuthorizationHandlerFactory mockAuthorizationHandlerFactory;
@@ -69,28 +72,7 @@ class AuthorizationInterceptorTest {
     }
 
     @Test
-    void preHandle_throwsAuthorizationException_whenRequestDoesNotHaveSessionCookies() throws NoSuchMethodException {
-        class TestClass {
-
-            @Authorization(NullAuthorizationHandler.class)
-            public void testMethod() {
-
-            }
-        }
-
-        MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
-        mockHttpServletRequest.setCookies();
-        MockHttpServletResponse mockHttpServletResponse = new MockHttpServletResponse();
-
-        HandlerMethod handlerMethod = new HandlerMethod(new TestClass(), TestClass.class.getMethod("testMethod"));
-        assertThrows(AuthorizationException.class,
-                () -> authorizationInterceptor.preHandle(mockHttpServletRequest, mockHttpServletResponse,
-                        handlerMethod));
-    }
-
-    @Test
-    void preHandle_setsCookiesAndSetsAccessTokenSessionAttributeAndReturnsTrue_whenRequestHasSessionCookies()
-            throws NoSuchMethodException, AuthorizationException {
+    void preHandle_returnsTrue_whenRequestHasUserData() throws NoSuchMethodException, AuthorizationException {
 
         class TestClass {
 
@@ -100,7 +82,9 @@ class AuthorizationInterceptorTest {
         }
 
         MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
-        mockHttpServletRequest.setCookies(CookieTestUtils.buildSessionCookies(ACCESS_TOKEN, REFRESH_TOKEN));
+        //noinspection ConstantConditions
+        mockHttpServletRequest.getSession()
+                .setAttribute(SessionUtils.USER_DATA_SESSION_ATTRIBUTE_NAME, MAYBE_USER_DATA);
         MockHttpServletResponse mockHttpServletResponse = new MockHttpServletResponse();
 
         HandlerMethod handlerMethod = new HandlerMethod(new TestClass(), TestClass.class.getMethod("testMethod"));
@@ -108,6 +92,6 @@ class AuthorizationInterceptorTest {
         assertThat(authorizationInterceptor.preHandle(mockHttpServletRequest, mockHttpServletResponse, handlerMethod),
                 is(equalTo(true)));
         verify(mockAuthorizationHandlerFactory).create(NullAuthorizationHandler.class);
-        verify(mockAuthorizationHandler).checkAuthorization(USER_SESSION_DATA);
+        verify(mockAuthorizationHandler).checkAuthorization(MAYBE_USER_DATA);
     }
 }

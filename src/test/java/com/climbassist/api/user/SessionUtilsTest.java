@@ -22,10 +22,10 @@ class SessionUtilsTest {
             .accessToken("access token")
             .refreshToken("refresh token")
             .build();
-    private static final Cookie ACCESS_TOKEN_COOKIE = new Cookie(CookieTestUtils.ACCESS_TOKEN_COOKIE_NAME,
-            USER_SESSION_DATA.getAccessToken());
-    private static final Cookie REFRESH_TOKEN_COOKIE = new Cookie(CookieTestUtils.REFRESH_TOKEN_COOKIE_NAME,
-            USER_SESSION_DATA.getRefreshToken());
+    private static final Cookie ACCESS_TOKEN_COOKIE =
+            new Cookie(CookieTestUtils.ACCESS_TOKEN_COOKIE_NAME, USER_SESSION_DATA.getAccessToken());
+    private static final Cookie REFRESH_TOKEN_COOKIE =
+            new Cookie(CookieTestUtils.REFRESH_TOKEN_COOKIE_NAME, USER_SESSION_DATA.getRefreshToken());
     private static final Cookie[] COOKIES = new Cookie[]{ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE};
 
     private MockHttpServletRequest mockHttpServletRequest;
