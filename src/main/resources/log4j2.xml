@@ -4,7 +4,7 @@
         <File name="FileAppender" fileName="${sys:catalina.base}/logs/application.log" immediateFlush="true"
               append="false">
             <PatternLayout>
-                <Pattern>%X{RequestId} %d{yyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</Pattern>
+                <Pattern>%X{RequestId} %d{yyy-MM-dd HH:mm:ss.SSS} %-5level %location - %msg%n</Pattern>
             </PatternLayout>
         </File>
         <Rewrite name="RedactingRewritePolicy">
