@@ -388,6 +388,9 @@ Resources:
             - !Sub
               - ${TableArn}*
               - TableArn: !GetAtt DeletedUsersTable.Arn
+            - !Sub
+              - ${TableArn}*
+              - TableArn: !GetAtt ResourcesTable.Arn
           - Action:
             - cognito-idp:SignUp
             - cognito-idp:InitiateAuth
