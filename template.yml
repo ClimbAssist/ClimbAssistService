@@ -1845,6 +1845,101 @@ Resources:
         PredefinedMetricSpecification:
           PredefinedMetricType: DynamoDBReadCapacityUtilization
 
+  ResourcesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub Resources${ResourceNameSuffix}
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: type
+        AttributeType: S
+      - AttributeName: state
+        AttributeType: S
+      - AttributeName: parentId
+        AttributeType: S
+      - AttributeName: parentType
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: type
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+      - IndexName: TypeIndex
+        KeySchema:
+        - AttributeName: type
+          KeyType: HASH
+        - AttributeName: state
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      - IndexName: ParentIndex
+        KeySchema:
+        - AttributeName: parentId
+          KeyType: HASH
+        - AttributeName: parentType
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+  ResourcesTableWriteCapacityScalableTarget:
+    Condition: IsProd
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 1
+      ResourceId: !Sub table/${ResourcesTable}
+      RoleARN: !GetAtt DynamoDbAutoScalingRole.Arn
+      ScalableDimension: dynamodb:table:WriteCapacityUnits
+      ServiceNamespace: dynamodb
+  ResourcesTableWriteAutoScalingPolicy:
+    Condition: IsProd
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub ResourcesTableWriteAutoScalingPolicy${ResourceNameSuffix}
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ResourcesTableWriteCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBWriteCapacityUtilization
+  ResourcesTableReadCapacityScalableTarget:
+    Condition: IsProd
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 100
+      MinCapacity: 1
+      ResourceId: !Sub table/${ResourcesTable}
+      RoleARN: !GetAtt DynamoDbAutoScalingRole.Arn
+      ScalableDimension: dynamodb:table:ReadCapacityUnits
+      ServiceNamespace: dynamodb
+  ResourcesTableReadAutoScalingPolicy:
+    Condition: IsProd
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub ResourcesTableReadAutoScalingPolicy${ResourceNameSuffix}
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ResourcesTableReadCapacityScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 70
+        ScaleInCooldown: 60
+        ScaleOutCooldown: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: DynamoDBReadCapacityUtilization
+
   # S3 buckets
   ModelsS3Bucket:
     Type: AWS::S3::Bucket

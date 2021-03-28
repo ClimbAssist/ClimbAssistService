@@ -46,7 +46,7 @@ public class ApiExceptionHandler {
      * This is only here to catch any requests to an API that doesn't exist and throw an PathNotFoundException instead
      * of falling back to Spring's default exception handling
      */
-    @RequestMapping(path = ApiConfiguration.API_PATH)
+    @RequestMapping(path = {ApiConfiguration.V1_API_PATH, ApiConfiguration.V2_API_PATH})
     public void handleApiWithNoMapping(HttpServletRequest httpServletRequest) throws ApiNotFoundException {
         throw new ApiNotFoundException(httpServletRequest.getServletPath(), httpServletRequest.getMethod());
     }
@@ -97,6 +97,10 @@ public class ApiExceptionHandler {
     public ResponseEntity<Object> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException httpMessageNotReadableException) throws JsonProcessingException {
         log.warn(Throwables.getStackTraceAsString(httpMessageNotReadableException));
+        if (httpMessageNotReadableException.getMostSpecificCause() instanceof ConstraintViolationException) {
+            return handleConstraintViolationException(
+                    (ConstraintViolationException) httpMessageNotReadableException.getMostSpecificCause());
+        }
         if (httpMessageNotReadableException.getMessage() != null) {
             if (httpMessageNotReadableException.getMessage()
                     .contains("Required request body is missing")) {
@@ -160,7 +164,7 @@ public class ApiExceptionHandler {
     }
 
     private ResponseEntity<Object> buildResponseEntity(String exceptionType, String exceptionMessage,
-                                                       HttpStatus httpStatus) throws JsonProcessingException {
+            HttpStatus httpStatus) throws JsonProcessingException {
         MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
         String error = objectMapper.writeValueAsString(ApiResponse.Error.builder()
                 .type(exceptionType)

@@ -528,6 +528,34 @@ public class ClimbAssistClient {
         return sendContactEmail(replyToEmail, subject, emailBody, Optional.of(recaptchaResponse), cookies);
     }
 
+    public ApiResponse<com.climbassist.api.v2.Country> getCountryV2(@NonNull String countryId,
+            @NonNull Set<Cookie> cookies) {
+        return get("/v2/countries/" + countryId, cookies,
+                new TypeReference<ApiResponse<com.climbassist.api.v2.Country>>() {});
+    }
+
+    public ApiResponse<Set<com.climbassist.api.v2.Country>> listCountriesV2(@NonNull Set<Cookie> cookies) {
+        return get("/v2/countries", cookies, new TypeReference<ApiResponse<Set<com.climbassist.api.v2.Country>>>() {});
+    }
+
+    public ApiResponse<com.climbassist.api.v2.Country> createCountryV2(@NonNull NewCountry newCountry,
+            @NonNull Set<Cookie> cookies) {
+        return put("/v2/countries", newCountry, cookies,
+                new TypeReference<ApiResponse<com.climbassist.api.v2.Country>>() {});
+    }
+
+    public ApiResponse<com.climbassist.api.v2.Country> deleteCountryV2(@NonNull String id,
+            @NonNull Set<Cookie> cookies) {
+        return delete("/v2/countries/" + id, cookies,
+                new TypeReference<ApiResponse<com.climbassist.api.v2.Country>>() {});
+    }
+
+    public ApiResponse<com.climbassist.api.v2.Country> updateCountryV2(@NonNull com.climbassist.api.v2.Country country,
+            @NonNull Set<Cookie> cookies) {
+        return post("/v2/countries", country, cookies,
+                new TypeReference<ApiResponse<com.climbassist.api.v2.Country>>() {});
+    }
+
     private ApiResponse<SendContactEmailResult> sendContactEmail(@NonNull String replyToEmail, @NonNull String subject,
             @NonNull String emailBody,
             @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @NonNull Optional<String> maybeRecaptchaResponse,

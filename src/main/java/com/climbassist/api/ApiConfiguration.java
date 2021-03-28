@@ -17,7 +17,11 @@ import org.springframework.web.servlet.handler.MappedInterceptor;
 @Import(CommonConfiguration.class)
 public class ApiConfiguration {
 
-    static final String API_PATH = "/v1/**";
+    public static final String V1_VERSION = "v1";
+    public static final String V2_VERSION = "v2";
+
+    static final String V1_API_PATH = "/" + V1_VERSION + "/**";
+    static final String V2_API_PATH = "/" + V2_VERSION + "/**";
 
     @Bean
     public ApiResponseFilter apiResponseFilter(@NonNull ObjectMapper objectMapper) {
@@ -42,7 +46,7 @@ public class ApiConfiguration {
                 AuthenticatedAuthorizationHandler.builder()
                         .build(), AdministratorAuthorizationHandler.builder()
                 .build());
-        return new MappedInterceptor(new String[]{API_PATH}, AuthorizationInterceptor.builder()
+        return new MappedInterceptor(new String[]{V1_API_PATH, V2_API_PATH}, AuthorizationInterceptor.builder()
                 .authorizationHandlerFactory(authorizationHandlerFactory)
                 .build());
     }

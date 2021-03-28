@@ -1,5 +1,6 @@
 package com.climbassist;
 
+import com.climbassist.api.ApiConfiguration;
 import org.springframework.web.filter.DelegatingFilterProxy;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
@@ -17,8 +18,8 @@ public class ClimbAssistInitializer extends AbstractAnnotationConfigDispatcherSe
         // These use beans that are defined with names matching the DeletingFilterProxy name.
         // These have to be registered in this order in order for the logging to occur after the response is wrapped.
 
-        FilterRegistration.Dynamic dynamicFilterRegistration = servletContext.addFilter("RequestIdFilter",
-                new DelegatingFilterProxy("requestIdFilter"));
+        FilterRegistration.Dynamic dynamicFilterRegistration =
+                servletContext.addFilter("RequestIdFilter", new DelegatingFilterProxy("requestIdFilter"));
         dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/*");
 
         dynamicFilterRegistration = servletContext.addFilter("UserDataDecorationFilter",
@@ -29,16 +30,17 @@ public class ClimbAssistInitializer extends AbstractAnnotationConfigDispatcherSe
                 new DelegatingFilterProxy("requestResponseLoggingFilter"));
         dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/*");
 
-        dynamicFilterRegistration = servletContext.addFilter("ApiResponseFilter",
-                new DelegatingFilterProxy("apiResponseFilter"));
-        dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/v1/*");
+        dynamicFilterRegistration =
+                servletContext.addFilter("ApiResponseFilter", new DelegatingFilterProxy("apiResponseFilter"));
+        dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/" + ApiConfiguration.V1_VERSION + "/*",
+                "/" + ApiConfiguration.V2_VERSION + "/*");
 
         dynamicFilterRegistration = servletContext.addFilter("CharacterEncodingFilter",
                 new DelegatingFilterProxy("characterEncodingFilter"));
         dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/*");
 
-        dynamicFilterRegistration = servletContext.addFilter("MetricsFilter",
-                new DelegatingFilterProxy("metricsFilter"));
+        dynamicFilterRegistration =
+                servletContext.addFilter("MetricsFilter", new DelegatingFilterProxy("metricsFilter"));
         dynamicFilterRegistration.addMappingForUrlPatterns(null, false, "/*");
 
         super.onStartup(servletContext);

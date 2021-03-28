@@ -17,6 +17,8 @@ import com.climbassist.api.resource.wall.WallsDao;
 import com.climbassist.api.user.UserConfiguration;
 import com.climbassist.api.user.UserManager;
 import com.climbassist.api.user.authentication.DeletedUsersDao;
+import com.climbassist.api.v2.ResourceFactory;
+import com.climbassist.api.v2.ResourcesDao;
 import com.climbassist.common.CommonConfiguration;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,8 +38,8 @@ public class CommonDaoConfiguration {
 
     @Bean
     public CountriesDao countriesDao(@NonNull String region,
-                                     @Value("${countriesTableName}") @NonNull String countriesTableName,
-                                     @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @Value("${countriesTableName}") @NonNull String countriesTableName,
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return CountriesDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -50,7 +52,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public RegionsDao regionsDao(@NonNull String region, @Value("${regionsTableName}") @NonNull String regionsTableName,
-                                 @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return RegionsDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -63,7 +65,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public AreasDao areasDao(@NonNull String region, @Value("${areasTableName}") @NonNull String areasTableName,
-                             @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return AreasDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -76,8 +78,8 @@ public class CommonDaoConfiguration {
 
     @Bean
     public SubAreasDao subAreasDao(@NonNull String region,
-                                   @Value("${subAreasTableName}") @NonNull String subAreasTableName,
-                                   @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @Value("${subAreasTableName}") @NonNull String subAreasTableName,
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return SubAreasDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -90,8 +92,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public CragsDao cragsDao(@NonNull String region, @Value("${cragsTableName}") @NonNull String cragsTableName,
-                             @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder,
-                             @NonNull UserManager userManager) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder, @NonNull UserManager userManager) {
         return CragsDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -105,7 +106,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public WallsDao wallsDao(@NonNull String region, @Value("${wallsTableName}") @NonNull String wallsTableName,
-                             @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return WallsDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -118,7 +119,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public RoutesDao routesDao(@NonNull String region, @Value("${routesTableName}") @NonNull String routesTableName,
-                               @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return RoutesDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -131,7 +132,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public PitchesDao pitchesDao(@NonNull String region, @Value("${pitchesTableName}") @NonNull String pitchesTableName,
-                                 @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return PitchesDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -144,7 +145,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public PointsDao pointsDao(@NonNull String region, @Value("${pointsTableName}") @NonNull String pointsTableName,
-                               @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return PointsDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -157,7 +158,7 @@ public class CommonDaoConfiguration {
 
     @Bean
     public PathsDao pathsDao(@NonNull String region, @Value("${pathsTableName}") @NonNull String pathsTableName,
-                             @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return PathsDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -170,8 +171,8 @@ public class CommonDaoConfiguration {
 
     @Bean
     public PathPointsDao pathPointsDao(@NonNull String region,
-                                       @Value("${pathPointsTableName}") @NonNull String pathPointsTableName,
-                                       @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @Value("${pathPointsTableName}") @NonNull String pathPointsTableName,
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return PathPointsDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -184,8 +185,8 @@ public class CommonDaoConfiguration {
 
     @Bean
     public DeletedUsersDao deletedUsersDao(@NonNull String region,
-                                           @Value("${deletedUsersTableName}") @NonNull String deletedUsersTableName,
-                                           @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+            @Value("${deletedUsersTableName}") @NonNull String deletedUsersTableName,
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
         return DeletedUsersDao.builder()
                 .dynamoDBMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
                         .withRegion(region)
@@ -194,5 +195,21 @@ public class CommonDaoConfiguration {
                         new DynamoDBMapperConfig.TableNameOverride(deletedUsersTableName))
                         .build())
                 .build();
+    }
+
+    @Bean
+    public ResourcesDao resourcesDao(@NonNull final String region,
+            @Value("${resourcesTableName}") @NonNull final String resourcesTableName,
+            @NonNull DynamoDBMapperConfig.Builder dynamoDbMapperConfigBuilder) {
+        return ResourcesDao.builder()
+                .dynamoDbMapper(new DynamoDBMapper(AmazonDynamoDBClientBuilder.standard()
+                        .withRegion(region)
+                        .build()))
+                .dynamoDbMapperConfig(dynamoDbMapperConfigBuilder.withTableNameOverride(
+                        new DynamoDBMapperConfig.TableNameOverride(resourcesTableName))
+                        .build())
+                .resourceFactory(new ResourceFactory())
+                .build();
+
     }
 }

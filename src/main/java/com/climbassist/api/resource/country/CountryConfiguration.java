@@ -8,6 +8,7 @@ import com.climbassist.api.resource.common.recursion.RecursiveResourceRetriever;
 import com.climbassist.api.resource.common.recursion.RecursiveResourceRetrieverConfiguration;
 import com.climbassist.api.resource.region.Region;
 import com.climbassist.api.resource.region.RegionsDao;
+import com.climbassist.api.v2.ResourcesDao;
 import com.climbassist.common.CommonConfiguration;
 import com.google.common.collect.ImmutableSet;
 import lombok.NonNull;
@@ -21,9 +22,9 @@ public class CountryConfiguration {
 
     @Bean
     public CountryController countryController(@NonNull CountriesDao countriesDao, @NonNull RegionsDao regionsDao,
-                                               @NonNull ResourceIdGenerator resourceIdGenerator,
-                                               @NonNull CountryNotFoundExceptionFactory countryNotFoundExceptionFactory,
-                                               @NonNull RecursiveResourceRetriever<Region, Country> recursiveResourceRetriever) {
+            @NonNull ResourceIdGenerator resourceIdGenerator,
+            @NonNull CountryNotFoundExceptionFactory countryNotFoundExceptionFactory,
+            @NonNull RecursiveResourceRetriever<Region, Country> recursiveResourceRetriever) {
         ResourceControllerDelegate<Country, NewCountry> resourceControllerDelegate =
                 ResourceControllerDelegate.<Country, NewCountry>builder().resourceDao(countriesDao)
                         .resourceFactory(CountryFactory.builder()
@@ -42,6 +43,15 @@ public class CountryConfiguration {
                                 .recursiveResourceRetrievers(ImmutableSet.of(recursiveResourceRetriever))
                                 .build())
                 .countriesDao(countriesDao)
+                .build();
+    }
+
+    @Bean
+    public com.climbassist.api.v2.CountryController countryControllerV2(@NonNull final ResourcesDao resourcesDao,
+            @NonNull final ResourceIdGenerator resourceIdGenerator) {
+        return com.climbassist.api.v2.CountryController.builder()
+                .resourcesDao(resourcesDao)
+                .resourceIdGenerator(resourceIdGenerator)
                 .build();
     }
 }
